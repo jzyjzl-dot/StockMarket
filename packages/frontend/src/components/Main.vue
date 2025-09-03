@@ -42,7 +42,9 @@ const logout = () => {
 };
 
 const switchUser = () => {
-  logout();
+  // 先登出当前用户，然后跳转到用户选择页面
+  userStore.logout();
+  router.push('/user-selection');
 };
 
 const openPasswordDialog = () => {
@@ -133,7 +135,7 @@ const unlock = () => {
           class="el-menu-vertical-demo"
           :router="true"
         >
-          <el-menu-item index="/"> 首页 </el-menu-item>
+          <el-menu-item index="/home"> 首页 </el-menu-item>
           <el-menu-item index="/products"> 产品管理 </el-menu-item>
           <el-menu-item index="/monitoring"> 交易监控 </el-menu-item>
           <el-menu-item index="/trade"> 交易 </el-menu-item>

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: 'http://localhost:3003',
+  baseURL: 'http://localhost:3004',
   timeout: 10000,
 });
 
@@ -12,7 +12,7 @@ export const orderAPI = {
   async getOrders() {
     try {
       // 从我们的自定义服务器获取订单数据
-      const response = await fetch('http://localhost:3003/orders');
+      const response = await fetch('http://localhost:3004/orders');
       if (response.ok) {
         const orders = await response.json();
         console.log('Orders loaded from server:', orders);
@@ -36,7 +36,7 @@ export const orderAPI = {
   async saveOrders(orders) {
     try {
       // 尝试保存到json-server
-      const response = await fetch('http://localhost:3003/orders', {
+      const response = await fetch('http://localhost:3004/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export const orderAPI = {
   // 更新单个订单
   async updateOrder(orderId, updates) {
     try {
-      const response = await fetch(`http://localhost:3003/orders/${orderId}`, {
+      const response = await fetch(`http://localhost:3004/orders/${orderId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export const userAPI = {
   // 获取所有用户
   async getUsers() {
     try {
-      const response = await fetch('http://localhost:3003/users');
+      const response = await fetch('http://localhost:3004/users');
       if (response.ok) {
         const users = await response.json();
         console.log('Users loaded from server:', users);
@@ -117,7 +117,7 @@ export const userAPI = {
     });
 
     try {
-      const response = await fetch(`http://localhost:3003/users/${userId}`, {
+      const response = await fetch(`http://localhost:3004/users/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ export const userAPI = {
   // 删除用户
   async deleteUser(userId) {
     try {
-      const response = await fetch(`http://localhost:3003/users/${userId}`, {
+      const response = await fetch(`http://localhost:3004/users/${userId}`, {
         method: 'DELETE',
       });
 

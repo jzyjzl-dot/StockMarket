@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useUserStore } from '../stores/userStore';
 import { useRouter } from 'vue-router';
 
@@ -31,6 +31,16 @@ const formData = ref({
   confirmPassword: '',
 });
 
+// 检查是否有预选的用户名
+onMounted(() => {
+  const selectedUsername = sessionStorage.getItem('selectedUsername');
+  if (selectedUsername) {
+    formData.value.account = selectedUsername;
+    // 清除sessionStorage中的数据，避免重复使用
+    sessionStorage.removeItem('selectedUsername');
+  }
+});
+
 const toggleMode = () => {
   isLogin.value = !isLogin.value;
   // 清除表单
@@ -48,7 +58,7 @@ const handleSubmit = async () => {
     if (isLogin.value) {
       await userStore.login(formData.value.account, formData.value.password);
       alert('登录成功');
-      router.push('/');
+      router.push('/main');
     } else {
       if (formData.value.password === formData.value.confirmPassword) {
         await userStore.register(
@@ -57,7 +67,7 @@ const handleSubmit = async () => {
           formData.value.password
         );
         alert('注册成功');
-        router.push('/');
+        router.push('/main');
       } else {
         alert('密码不匹配');
       }

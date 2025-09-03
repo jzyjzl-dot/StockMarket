@@ -3,17 +3,27 @@ import { useUserStore } from '../stores/userStore';
 
 const routes = [
   {
-    path: '/login',
+    path: '/',
     name: 'Login',
     component: () => import('../components/LoginRegister.vue'),
   },
   {
-    path: '/',
+    path: '/user-selection',
+    name: 'UserSelection',
+    component: () => import('../components/UserSelection.vue'),
+  },
+  {
+    path: '/login',
+    name: 'LoginAlt',
+    component: () => import('../components/LoginRegister.vue'),
+  },
+  {
+    path: '/main',
     name: 'Main',
     component: () => import('../components/Main.vue'),
     children: [
       {
-        path: '',
+        path: '/home',
         name: 'Home',
         component: () => import('../views/Home.vue'),
         meta: { requiresAuth: true },
@@ -62,13 +72,13 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore();
 
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
-    next('/login');
+    next('/');
     return;
   }
 
   if (to.meta.roles && !to.meta.roles.includes(userStore.userInfo?.role)) {
     alert('无权限访问此页面');
-    next('/');
+    next('/main');
     return;
   }
 
