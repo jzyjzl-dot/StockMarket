@@ -1,0 +1,16 @@
+{
+  "name": "@stock-market/backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npx json-server --watch db.json --port 3003 --host 0.0.0.0",
+    "start": "npx json-server --watch db.json --port 3003 --host 0.0.0.0",
+    "json-server": "npx json-server --watch db.json --port 3003 --host 0.0.0.0",
+    "clean": "rm -rf *.log"
+  },
+  "dependencies": {
+    "json-server": "1.0.0-beta.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

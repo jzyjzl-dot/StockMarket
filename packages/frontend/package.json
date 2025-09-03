@@ -1,0 +1,41 @@
+{
+  "name": "@stock-market/frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.ts",
+    "format": "prettier --write .",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "@stock-market/shared": "file:../shared",
+    "@stock-market/ui": "file:../ui",
+    "axios": "^1.11.0",
+    "element-plus": "^2.11.1",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.0",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-vue": "^10.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.5",
+    "prettier": "^3.6.2",
+    "vite": "^5.1.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}

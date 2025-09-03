@@ -1,53 +1,69 @@
-# Vue 3 股票交易应用
+# Stock Market Monorepo
 
-一个基于Vue 3 + Vite + Element Plus的现代化股票交易应用，包含完整的订单管理系统。
+一个基于 Vue 3 的股票交易应用，使用 monorepo 架构组织代码。
 
 ## ✨ 功能特性
 
 - 👥 **用户管理** - 完整的用户权限管理系统，支持用户注册、登录、角色管理
 - 🏢 **权限控制** - 基于角色的访问控制，支持管理员和普通用户角色
-- 📈 **股票数据** - 实时股票价格和变动信息展示
+- � **产品管理** - 完整的增删改查功能，支持产品信息管理
+- �📈 **股票数据** - 实时股票价格和变动信息展示
 - 🛒 **交易功能** - 支持股票购买和订单管理
 - 🔍 **订单查询** - 支持订单搜索和分页浏览
-- 💾 **数据持久化** - 用户和订单数据保存到db.json文件
+- 💾 **数据持久化** - 用户、产品和订单数据保存到db.json文件
 - 🎨 **现代化UI** - 基于Element Plus的现代化界面设计
+- 📦 **Monorepo架构** - 使用npm workspaces组织多包结构
 
 ## 🚀 快速开始
 
 ### 安装依赖
 
 ```bash
+# 安装所有包的依赖
 npm install
+
+# 或者使用 pnpm
+pnpm install
 ```
 
 ### 启动开发服务器
 
 ```bash
+# 启动前端开发服务器
 npm run dev
-```
 
-### 启动API服务器（订单数据持久化）
-
-```bash
-# 方式1：使用自定义服务器（推荐）
+# 启动后端 API 服务
 npm run server
-
-# 方式2：使用json-server
-npm run json-server
 ```
 
-应用将在 `http://localhost:5173` 启动，API服务器将在 `http://localhost:3001` 启动。
+应用将在 `http://localhost:5175` 启动，API服务器将在 `http://localhost:3002` 启动。
 
 ## 📁 项目结构
 
 ```
-src/
-├── components/          # Vue组件
-│   ├── LoginRegister.vue # 用户登录注册组件
-│   ├── Main.vue         # 主应用组件
-│   ├── StockPreview.vue # 股票预览组件
-│   └── OrderList.vue    # 订单列表组件
-├── stores/             # Pinia状态管理
+packages/
+├── frontend/              # 前端应用 (Vue 3 + Vite)
+│   ├── src/
+│   │   ├── components/    # Vue组件
+│   │   ├── views/         # 页面视图
+│   │   ├── stores/        # Pinia状态管理
+│   │   ├── router/        # 路由配置
+│   │   └── utils/         # 工具函数
+│   ├── package.json
+│   └── vite.config.js
+├── backend/               # 后端服务 (JSON Server)
+│   ├── server.js
+│   ├── db.json
+│   └── package.json
+├── shared/                # 共享类型和工具函数
+│   ├── src/
+│   │   ├── types/         # TypeScript类型定义
+│   │   └── utils/         # 共享工具函数
+│   └── package.json
+└── ui/                   # 可复用 UI 组件库
+    ├── src/components/   # 可复用组件
+    └── package.json
+```
 │   ├── orderStore.js   # 订单状态管理
 │   └── userStore.js    # 用户状态管理
 ├── utils/              # 工具函数
