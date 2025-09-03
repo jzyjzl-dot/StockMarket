@@ -242,39 +242,8 @@ const unlock = () => {
   background-color: #f4f4f4;
 }
 
-.menu-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.menu-list li {
-  margin-bottom: 10px;
-}
-
-.menu-list a {
-  text-decoration: none;
-  color: #333;
-  display: block;
-  padding: 10px;
-  border-radius: 4px;
-}
-
-.menu-list a:hover,
-.menu-list a.router-link-active {
-  background-color: #ddd;
-}
-
 .main-content {
   flex: 1;
   padding: 20px;
-}
-
-.login-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100vw;
 }
 </style>

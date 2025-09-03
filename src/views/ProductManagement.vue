@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="text-align: center">
     <h2>产品管理</h2>
     <el-button type="primary" @click="loadProducts">加载产品</el-button>
     <el-table :data="products" style="width: 100%">

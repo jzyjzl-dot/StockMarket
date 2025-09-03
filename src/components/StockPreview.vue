@@ -134,24 +134,8 @@ const buyStock = async (stock) => {
   border-color: #333;
 }
 
-:deep(.el-table--striped .el-table__row--striped td) {
-  background-color: #000;
-}
-
-:deep(.el-table tr) {
-  background-color: #000;
-}
-
 :deep(.el-table tr:hover td) {
   background-color: #222;
-}
-
-:deep(.el-table .el-table__row--striped td) {
-  background-color: #111;
-}
-
-:deep(.el-table .el-table__row--striped:hover td) {
-  background-color: #333;
 }
 
 .positive {
@@ -165,27 +149,12 @@ const buyStock = async (stock) => {
 }
 
 /* 确保高亮状态下的数据颜色对比度 */
-:deep(.el-table tr:hover .positive) {
-  color: #4caf50 !important;
-}
-
-:deep(.el-table tr:hover .negative) {
-  color: #f44336 !important;
-}
-
-:deep(.el-table .el-table__row--striped .positive) {
-  color: #4caf50 !important;
-}
-
-:deep(.el-table .el-table__row--striped .negative) {
-  color: #f44336 !important;
-}
-
-:deep(.el-table .el-table__row--striped:hover .positive) {
-  color: #4caf50 !important;
-}
-
+:deep(.el-table tr:hover .positive),
+:deep(.el-table tr:hover .negative),
+:deep(.el-table .el-table__row--striped .positive),
+:deep(.el-table .el-table__row--striped .negative),
+:deep(.el-table .el-table__row--striped:hover .positive),
 :deep(.el-table .el-table__row--striped:hover .negative) {
-  color: #f44336 !important;
+  color: inherit !important;
 }
 </style>

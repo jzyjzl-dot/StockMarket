@@ -26,7 +26,6 @@ import OrderList from '@/components/OrderList.vue';
   gap: 12px;
   height: 100%;
   min-height: 0;
-  /* overflow: auto; */
 }
 
 .top-section {
@@ -49,7 +48,6 @@ import OrderList from '@/components/OrderList.vue';
   padding: 12px;
   box-sizing: border-box;
   height: 100%;
-  /* min-height: 200px; */
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;

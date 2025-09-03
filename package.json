@@ -9,8 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.ts",
     "format": "prettier --write .",
-    "json-server": "json-server --watch db.json --port 3001",
-    "server": "node server.js",
+    "json-server": "json-server --watch db.json --port 3001 --host 0.0.0.0",
+    "server": "node src/utils/server.js",
     "prepare": "husky"
   },
   "dependencies": {

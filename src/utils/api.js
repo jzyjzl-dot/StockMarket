@@ -90,7 +90,77 @@ export const orderAPI = {
   },
 };
 
-// 统一的拦截器配置
+// 用户管理API
+export const userAPI = {
+  // 获取所有用户
+  async getUsers() {
+    try {
+      const response = await fetch('http://localhost:3001/users');
+      if (response.ok) {
+        const users = await response.json();
+        console.log('Users loaded from server:', users);
+        console.log('First user ID type:', typeof users[0]?.id);
+        return users;
+      }
+    } catch (error) {
+      console.warn('Server not available for users:', error.message);
+    }
+    return [];
+  },
+
+  // 更新用户权限
+  async updateUserRole(userId, newRole) {
+    console.log('updateUserRole called with:', {
+      userId,
+      newRole,
+      type: typeof userId,
+    });
+
+    try {
+      const response = await fetch(`http://localhost:3001/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        console.log('User role updated:', updatedUser);
+        return updatedUser;
+      } else {
+        console.error('Update failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+      }
+    } catch (error) {
+      console.warn('Failed to update user role:', error.message);
+      console.error('Full error:', error);
+    }
+    return null;
+  },
+
+  // 删除用户
+  async deleteUser(userId) {
+    try {
+      const response = await fetch(`http://localhost:3001/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        console.log('User deleted:', userId);
+        return true;
+      }
+    } catch (error) {
+      console.warn('Failed to delete user:', error.message);
+    }
+    return false;
+  },
+};
 const setupInterceptors = (apiInstance) => {
   // 请求拦截器
   apiInstance.interceptors.request.use(

@@ -1,84 +1,66 @@
-<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
+# Vue 3 股票交易应用 - Copilot 自定义指令
 
-- [x] Verify that the copilot-instructions.md file in the .github directory is created.
+## 项目概述
 
-- [x] Clarify Project Requirements
-<!-- Skipped, project type Vue 3 with Vite already specified. -->
+这是一个基于Vue 3 + Vite + Element Plus的现代化股票交易应用，包含完整的用户管理系统和订单管理功能。
 
-- [x] Scaffold the Project
-<!-- Completed: Created Vue 3 project structure manually using file creation tools. -->
+## 开发指南
 
-- [x] Customize the Project
-<!-- Skipped for Hello World project. -->
+### 进度跟踪
 
-- [x] Install Required Extensions
-<!-- No extensions specified by get_project_setup_info. -->
+- 在开始每个步骤之前读取当前待办事项状态
+- 完成每个步骤后标记为完成并添加摘要
+- 系统地处理每个检查清单项目
 
-- [ ] Compile the Project
-<!-- Dependencies installed, but lint errors remain due to missing modules. Need to resolve. -->
+### 沟通规则
 
-- [ ] Create and Run Task
-<!-- Check if task needed based on package.json. -->
+- 避免冗长的解释或打印完整的命令输出
+- 如果跳过某个步骤，简要说明原因
+- 除非询问，否则不要解释项目结构
+- 保持解释简洁而专注
 
-- [ ] Launch the Project
-<!-- Prompt user for debug mode. -->
+### 开发规则
 
-- [ ] Ensure Documentation is Complete
-  <!-- Verify README.md and clean up comments. -->
-  Verify that all previous steps have been completed.
-  Verify that README.md and the copilot-instructions.md file in the .github directory exists and contains current project information.
-  Clean up the copilot-instructions.md file in the .github directory by removing all HTML comments.
-  -->
+- 使用'.'作为工作目录，除非用户指定其他目录
+- 除非明确请求，否则避免添加媒体或外部链接
+- 仅在VS Code扩展项目中使用VS Code API工具
+- 项目创建后就已经打开在VS Code中 - 不要建议重新打开项目
+- 如果项目设置信息有额外规则，严格遵循它们
 
-<!--
-## Execution Guidelines
-PROGRESS TRACKING:
-- If any tools are available to manage the above todo list, use it to track progress through this checklist.
-- After completing each step, mark it complete and add a summary.
-- Read current todo list status before starting each step.
+### 文件夹创建规则
 
-COMMUNICATION RULES:
-- Avoid verbose explanations or printing full command outputs.
-- If a step is skipped, state that briefly (e.g. "No extensions needed").
-- Do not explain project structure unless asked.
-- Keep explanations concise and focused.
+- 始终使用当前目录作为项目根目录
+- 如果运行终端命令，始终使用'.'参数确保使用当前工作目录
+- 除非用户明确请求，否则不要创建新文件夹（.vscode文件夹除外，用于tasks.json）
+- 如果任何脚手架命令提到文件夹名称不正确，请告知用户创建具有正确名称的新文件夹并重新打开
 
-DEVELOPMENT RULES:
-- Use '.' as the working directory unless user specifies otherwise.
-- Avoid adding media or external links unless explicitly requested.
-- Use placeholders only with a note that they should be replaced.
-- Use VS Code API tool only for VS Code extension projects.
-- Once the project is created, it is already opened in Visual Studio Code—do not suggest commands to open this project in vscode again.
-- If the project setup information has additional rules, follow them strictly.
+### 扩展安装规则
 
-FOLDER CREATION RULES:
-- Always use the current directory as the project root.
-- If you are running any terminal commands, use the '.' argument to ensure that the current working directory is used ALWAYS.
-- Do not create a new folder unless the user explicitly requests it besides a .vscode folder for a tasks.json file.
-- If any of the scaffolding commands mention that the folder name is not correct, let the user know to create a new folder with the correct name and then reopen it again in vscode.
+- 仅安装get_project_setup_info工具指定的扩展。不要安装任何其他扩展。
 
-EXTENSION INSTALLATION RULES:
-- Only install extension specified by the get_project_setup_info tool. DO NOT INSTALL any other extensions.
+### 项目内容规则
 
-PROJECT CONTENT RULES:
-- If the user has not specified project details, assume they want a "Hello World" project as a starting point.
-- Avoid adding links of any type (URLs, files, folders, etc.) or integrations that are not explicitly required.
-- Avoid generating images, videos, or any other media files unless explicitly requested.
-- If you need to use any media assets as placeholders, let the user know that these are placeholders and should be replaced with the actual assets later.
-- Ensure all generated components serve a clear purpose within the user's requested workflow.
-- If a feature is assumed but not confirmed, prompt the user for clarification before including it.
-- If you are working on a VS Code extension, use the VS Code API tool with a query to find relevant VS Code API references and samples related to that query.
+- 如果用户没有指定项目细节，假设他们想要一个"Hello World"项目作为起点
+- 避免添加任何类型的链接（URL、文件、文件夹等）或集成，除非明确要求
+- 除非明确请求，否则避免生成图像、视频或其他媒体文件
+- 如果需要使用媒体资产作为占位符，请告知用户这些是占位符，应该稍后替换为实际资产
+- 确保所有生成的组件服务于用户请求的工作流程的明确目的
+- 如果某个功能被假设但未确认，在包含它之前提示用户澄清
+- 如果正在开发VS Code扩展，使用VS Code API工具查询相关VS Code API引用和示例
 
-TASK COMPLETION RULES:
-- Your task is complete when:
-  - Project is successfully scaffolded and compiled without errors
-  - copilot-instructions.md file in the .github directory exists in the project
-  - README.md file exists and is up to date
-  - User is provided with clear instructions to debug/launch the project
+### 任务完成规则
 
-Before starting a new task in the above plan, update progress in the plan.
--->
+任务完成的标准：
 
-- Work through each checklist item systematically.
-- Keep communication concise and focused.
-- Follow development best practices.
+- 项目成功搭建并编译无错误
+- .github目录中的copilot-instructions.md文件存在于项目中
+- README.md文件存在且是最新的
+- 为用户提供清晰的调试/启动项目说明
+
+在开始上述计划中的新任务之前，更新计划中的进度。
+
+## 工作流程
+
+- 系统地处理每个检查清单项目
+- 保持沟通简洁而专注
+- 遵循开发最佳实践

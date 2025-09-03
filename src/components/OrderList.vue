@@ -243,14 +243,6 @@ const handleCurrentChange = (newPage) => {
   border-color: #333;
 }
 
-:deep(.el-table--striped .el-table__row--striped td) {
-  background-color: #000;
-}
-
-:deep(.el-table tr) {
-  background-color: #000;
-}
-
 :deep(.el-table tr:hover td) {
   background-color: #222;
 }
@@ -308,30 +300,5 @@ const handleCurrentChange = (newPage) => {
   border-color: #333;
   color: #666;
   cursor: not-allowed;
-}
-
-:deep(.el-pagination .btn-prev.is-disabled:hover),
-:deep(.el-pagination .btn-next.is-disabled:hover) {
-  background-color: #000;
-  border-color: #333;
-  color: #666;
-}
-
-:deep(.el-pagination .btn-next) {
-  background-color: #000 !important;
-  border-color: #333 !important;
-  color: #fff !important;
-}
-
-:deep(.el-pagination .btn-next:hover:not(.is-disabled)) {
-  background-color: #000 !important;
-  border-color: #409eff !important;
-  color: #409eff !important;
-}
-
-:deep(.el-pagination .btn-next.is-disabled) {
-  background-color: #000 !important;
-  border-color: #333 !important;
-  color: #666 !important;
 }
 </style>
