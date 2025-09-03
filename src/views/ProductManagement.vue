@@ -27,12 +27,11 @@
       </template>
 
       <el-table v-loading="loading" :data="products" style="width: 100%">
-        <el-table-column
-          prop="id"
-          label="ID"
-          width="80"
-          align="center"
-        ></el-table-column>
+        <el-table-column label="ID" width="80" align="center">
+          <template #default="scope">
+            {{ scope.$index + 1 }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="name"
           label="产品名称"
