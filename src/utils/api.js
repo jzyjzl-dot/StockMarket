@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: 'http://localhost:3001',
+  baseURL: 'http://localhost:3002',
   timeout: 10000,
 });
 
@@ -12,7 +12,7 @@ export const orderAPI = {
   async getOrders() {
     try {
       // 从我们的自定义服务器获取订单数据
-      const response = await fetch('http://localhost:3001/orders');
+      const response = await fetch('http://localhost:3002/orders');
       if (response.ok) {
         const orders = await response.json();
         console.log('Orders loaded from server:', orders);
@@ -36,7 +36,7 @@ export const orderAPI = {
   async saveOrders(orders) {
     try {
       // 尝试保存到json-server
-      const response = await fetch('http://localhost:3001/orders', {
+      const response = await fetch('http://localhost:3002/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export const orderAPI = {
   // 更新单个订单
   async updateOrder(orderId, updates) {
     try {
-      const response = await fetch(`http://localhost:3001/orders/${orderId}`, {
+      const response = await fetch(`http://localhost:3002/orders/${orderId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export const userAPI = {
   // 获取所有用户
   async getUsers() {
     try {
-      const response = await fetch('http://localhost:3001/users');
+      const response = await fetch('http://localhost:3002/users');
       if (response.ok) {
         const users = await response.json();
         console.log('Users loaded from server:', users);
@@ -117,7 +117,7 @@ export const userAPI = {
     });
 
     try {
-      const response = await fetch(`http://localhost:3001/users/${userId}`, {
+      const response = await fetch(`http://localhost:3002/users/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ export const userAPI = {
   // 删除用户
   async deleteUser(userId) {
     try {
-      const response = await fetch(`http://localhost:3001/users/${userId}`, {
+      const response = await fetch(`http://localhost:3002/users/${userId}`, {
         method: 'DELETE',
       });
 
@@ -199,5 +199,52 @@ const setupInterceptors = (apiInstance) => {
 
 // 设置拦截器
 setupInterceptors(api);
+
+// 产品管理API
+export const productAPI = {
+  // 获取所有产品
+  async getProducts() {
+    try {
+      const response = await api.get('/products');
+      return response.data;
+    } catch (error) {
+      console.error('获取产品失败:', error);
+      throw error;
+    }
+  },
+
+  // 添加产品
+  async addProduct(product) {
+    try {
+      const response = await api.post('/products', product);
+      return response.data;
+    } catch (error) {
+      console.error('添加产品失败:', error);
+      throw error;
+    }
+  },
+
+  // 更新产品
+  async updateProduct(id, product) {
+    try {
+      const response = await api.put(`/products/${id}`, product);
+      return response.data;
+    } catch (error) {
+      console.error('更新产品失败:', error);
+      throw error;
+    }
+  },
+
+  // 删除产品
+  async deleteProduct(id) {
+    try {
+      const response = await api.delete(`/products/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('删除产品失败:', error);
+      throw error;
+    }
+  },
+};
 
 export default api;
