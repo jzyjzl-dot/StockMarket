@@ -1,0 +1,52 @@
+{
+  "accountGroups": [
+    {
+      "id": "1",
+      "groupId": "1",
+      "name": "交易账户",
+      "description": "用于股票、期权、外汇等交易的账户组",
+      "createdDate": "2025-01-01T00:00:00.000Z",
+      "lastUpdated": "2025-09-03T07:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "groupId": "2",
+      "name": "退休账户",
+      "description": "IRA、Roth IRA等退休投资账户",
+      "createdDate": "2025-01-01T00:00:00.000Z",
+      "lastUpdated": "2025-09-03T07:00:00.000Z"
+    },
+    {
+      "id": "3",
+      "groupId": "3",
+      "name": "个人投资",
+      "description": "个人长期投资组合",
+      "createdDate": "2025-01-01T00:00:00.000Z",
+      "lastUpdated": "2025-09-03T07:00:00.000Z"
+    },
+    {
+      "id": "4",
+      "groupId": "4",
+      "name": "外汇交易",
+      "description": "外汇交易专用账户",
+      "createdDate": "2025-01-01T00:00:00.000Z",
+      "lastUpdated": "2025-09-03T07:00:00.000Z"
+    },
+    {
+      "id": "5",
+      "groupId": "5",
+      "name": "机构投资",
+      "description": "机构投资者和创业投资账户",
+      "createdDate": "2025-01-01T00:00:00.000Z",
+      "lastUpdated": "2025-09-03T07:00:00.000Z"
+    },
+    {
+      "id": "6",
+      "groupId": "0",
+      "name": "未分组",
+      "description": "未分配到特定组别的账户",
+      "createdDate": "2025-01-01T00:00:00.000Z",
+      "lastUpdated": "2025-09-03T07:00:00.000Z"
+    }
+  ]
+}

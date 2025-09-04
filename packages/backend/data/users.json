@@ -1,0 +1,46 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "username": "admin",
+      "email": "admin@example.com",
+      "password": "199801",
+      "role": "manager"
+    },
+    {
+      "id": "2",
+      "username": "trader1",
+      "email": "trader1@example.com",
+      "password": "123456",
+      "role": "trader"
+    },
+    {
+      "id": "3",
+      "username": "trader2",
+      "email": "trader2@example.com",
+      "password": "123456",
+      "role": "trader"
+    },
+    {
+      "id": "4",
+      "username": "viewer1",
+      "email": "viewer1@example.com",
+      "password": "123456",
+      "role": "viewer"
+    },
+    {
+      "id": "5",
+      "username": "viewer2",
+      "email": "viewer2@example.com",
+      "password": "123456",
+      "role": "viewer"
+    },
+    {
+      "id": "6",
+      "username": "manager2",
+      "email": "manager2@example.com",
+      "password": "123456",
+      "role": "manager"
+    }
+  ]
+}

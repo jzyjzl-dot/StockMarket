@@ -1,0 +1,11 @@
+{
+  "trades": [
+    {
+      "id": "1",
+      "userId": 1,
+      "productId": 1,
+      "amount": 10,
+      "status": "completed"
+    }
+  ]
+}

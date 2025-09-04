@@ -1,0 +1,31 @@
+{
+  "products": [
+    {
+      "id": "1",
+      "name": "产品A",
+      "price": 100,
+      "description": "这是一个产品"
+    },
+    {
+      "id": "2",
+      "name": "产品B",
+      "price": 200,
+      "description": "另一个产品"
+    },
+    {
+      "id": "9ed2",
+      "name": "产品C",
+      "price": 1000,
+      "description": "产品C"
+    }
+  ],
+  "trades": [
+    {
+      "id": "1",
+      "userId": 1,
+      "productId": 1,
+      "amount": 10,
+      "status": "completed"
+    }
+  ]
+}

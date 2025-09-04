@@ -1,0 +1,44 @@
+{
+  "stocks": [
+    {
+      "id": "1",
+      "name": "Apple Inc.",
+      "symbol": "AAPL",
+      "price": 150.25,
+      "change": 2.5,
+      "changePercent": 1.69
+    },
+    {
+      "id": "2",
+      "name": "Microsoft Corporation",
+      "symbol": "MSFT",
+      "price": 305.5,
+      "change": -1.2,
+      "changePercent": -0.39
+    },
+    {
+      "id": "3",
+      "name": "Amazon.com Inc.",
+      "symbol": "AMZN",
+      "price": 3200,
+      "change": 15.75,
+      "changePercent": 0.49
+    },
+    {
+      "id": "4",
+      "name": "Tesla Inc.",
+      "symbol": "TSLA",
+      "price": 750.8,
+      "change": -10.2,
+      "changePercent": -1.34
+    },
+    {
+      "id": "5",
+      "name": "Alphabet Inc.",
+      "symbol": "GOOGL",
+      "price": 2800,
+      "change": 25,
+      "changePercent": 0.9
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "_comment": "主数据索引文件 - 引用所有分离的数据文件",
+  "dataFiles": {
+    "users": "./data/users.json",
+    "products": "./data/products.json",
+    "trades": "./data/trades.json",
+    "orders": "./data/orders.json",
+    "stocks": "./data/stocks.json",
+    "stockAccounts": "./data/stockAccounts.json",
+    "accountGroups": "./data/accountGroups.json"
+  },
+  "description": {
+    "users": "用户账户信息",
+    "products": "产品信息",
+    "trades": "交易记录",
+    "orders": "订单记录",
+    "stocks": "股票信息",
+    "stockAccounts": "股票账户",
+    "accountGroups": "账户组别"
+  },
+  "version": "1.0.0",
+  "lastUpdated": "2025-09-04"
+}

@@ -1,6 +1,10 @@
-const jsonServer = require('json-server');
-const fs = require('fs');
-const path = require('path');
+import jsonServer from 'json-server';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 读取所有分离的数据文件
 const dataDir = path.join(__dirname, 'data');
@@ -17,6 +21,7 @@ const dataFiles = [
   'accountGroups.json'
 ];
 
+console.log('正在加载数据文件...');
 dataFiles.forEach(file => {
   const filePath = path.join(dataDir, file);
   if (fs.existsSync(filePath)) {
@@ -48,7 +53,7 @@ server.use(router);
 // 启动服务器
 const port = 3004;
 server.listen(port, () => {
-  console.log(`JSON Server is running on http://localhost:${port}`);
+  console.log(`\nJSON Server is running on http://localhost:${port}`);
   console.log('Available routes:');
   Object.keys(db).forEach(table => {
     console.log(`  GET    /${table}`);
@@ -56,6 +61,5 @@ server.listen(port, () => {
     console.log(`  PUT    /${table}/:id`);
     console.log(`  DELETE /${table}/:id`);
   });
+  console.log('\n♡( ◡‿◡ )');
 });
-
-module.exports = server;
