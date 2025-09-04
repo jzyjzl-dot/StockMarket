@@ -21,7 +21,11 @@
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="目标股票池">
-                  <el-select v-model="t0Config.stockPool" multiple placeholder="选择股票池">
+                  <el-select
+                    v-model="t0Config.stockPool"
+                    multiple
+                    placeholder="选择股票池"
+                  >
                     <el-option label="沪深300" value="hs300"></el-option>
                     <el-option label="创业板" value="cyb"></el-option>
                     <el-option label="科创板" value="kcb"></el-option>
@@ -31,37 +35,67 @@
               </el-col>
               <el-col :span="12">
                 <el-form-item label="单股持仓比例">
-                  <el-slider v-model="t0Config.positionRatio" :min="1" :max="10" :step="0.5" show-input></el-slider>
+                  <el-slider
+                    v-model="t0Config.positionRatio"
+                    :min="1"
+                    :max="10"
+                    :step="0.5"
+                    show-input
+                  ></el-slider>
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="20">
               <el-col :span="8">
                 <el-form-item label="买入阈值(%)">
-                  <el-input-number v-model="t0Config.buyThreshold" :min="0.1" :max="5" :step="0.1"></el-input-number>
+                  <el-input-number
+                    v-model="t0Config.buyThreshold"
+                    :min="0.1"
+                    :max="5"
+                    :step="0.1"
+                  ></el-input-number>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="卖出阈值(%)">
-                  <el-input-number v-model="t0Config.sellThreshold" :min="0.1" :max="5" :step="0.1"></el-input-number>
+                  <el-input-number
+                    v-model="t0Config.sellThreshold"
+                    :min="0.1"
+                    :max="5"
+                    :step="0.1"
+                  ></el-input-number>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="最大持仓时间(分钟)">
-                  <el-input-number v-model="t0Config.maxHoldTime" :min="5" :max="240" :step="5"></el-input-number>
+                  <el-input-number
+                    v-model="t0Config.maxHoldTime"
+                    :min="5"
+                    :max="240"
+                    :step="5"
+                  ></el-input-number>
                 </el-form-item>
               </el-col>
             </el-row>
             <el-form-item>
-              <el-button type="primary" @click="saveT0Config">保存配置</el-button>
-              <el-button type="success" @click="startT0Strategy" :loading="strategyLoading">启动T0策略</el-button>
-              <el-button type="danger" @click="stopT0Strategy">停止策略</el-button>
+              <el-button type="primary" @click="saveT0Config"
+                >保存配置</el-button
+              >
+              <el-button
+                type="success"
+                @click="startT0Strategy"
+                :loading="strategyLoading"
+                >启动T0策略</el-button
+              >
+              <el-button type="danger" @click="stopT0Strategy"
+                >停止策略</el-button
+              >
             </el-form-item>
           </el-form>
         </el-card>
 
         <!-- 多账户状态监控 -->
-        <el-row :gutter="20" style="margin-top: 20px;">
+        <el-row :gutter="20" style="margin-top: 20px">
           <el-col :span="12">
             <el-card class="account-monitor" shadow="hover">
               <template #header>
@@ -74,12 +108,20 @@
                 <el-table-column prop="account" label="账户"></el-table-column>
                 <el-table-column prop="status" label="状态" width="80">
                   <template #default="scope">
-                    <el-tag :type="scope.row.status === '正常' ? 'success' : 'warning'">
+                    <el-tag
+                      :type="
+                        scope.row.status === '正常' ? 'success' : 'warning'
+                      "
+                    >
                       {{ scope.row.status }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="balance" label="可用资金" align="right"></el-table-column>
+                <el-table-column
+                  prop="balance"
+                  label="可用资金"
+                  align="right"
+                ></el-table-column>
               </el-table>
             </el-card>
           </el-col>
@@ -107,7 +149,7 @@
                     </div>
                   </el-col>
                 </el-row>
-                <el-row :gutter="20" style="margin-top: 15px;">
+                <el-row :gutter="20" style="margin-top: 15px">
                   <el-col :span="12">
                     <div class="stat-item">
                       <div class="stat-label">交易次数</div>
@@ -127,7 +169,7 @@
         </el-row>
 
         <!-- 实时交易记录 -->
-        <el-card class="trade-records" style="margin-top: 20px;">
+        <el-card class="trade-records" style="margin-top: 20px">
           <template #header>
             <div class="records-header">
               <el-icon><List /></el-icon>
@@ -135,27 +177,60 @@
               <el-tag type="success" size="small">运行中</el-tag>
             </div>
           </template>
-          <el-table :data="tradeRecords" style="width: 100%" size="small" height="300">
-            <el-table-column prop="time" label="时间" width="140"></el-table-column>
-            <el-table-column prop="account" label="账户" width="100"></el-table-column>
-            <el-table-column prop="stockCode" label="股票代码" width="100"></el-table-column>
+          <el-table
+            :data="tradeRecords"
+            style="width: 100%"
+            size="small"
+            height="300"
+          >
+            <el-table-column
+              prop="time"
+              label="时间"
+              width="140"
+            ></el-table-column>
+            <el-table-column
+              prop="account"
+              label="账户"
+              width="100"
+            ></el-table-column>
+            <el-table-column
+              prop="stockCode"
+              label="股票代码"
+              width="100"
+            ></el-table-column>
             <el-table-column prop="type" label="操作" width="80">
               <template #default="scope">
-                <el-tag :type="scope.row.type === '买入' ? 'success' : 'danger'" size="small">
+                <el-tag
+                  :type="scope.row.type === '买入' ? 'success' : 'danger'"
+                  size="small"
+                >
                   {{ scope.row.type }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="price" label="价格" width="80"></el-table-column>
-            <el-table-column prop="quantity" label="数量" width="80"></el-table-column>
+            <el-table-column
+              prop="price"
+              label="价格"
+              width="80"
+            ></el-table-column>
+            <el-table-column
+              prop="quantity"
+              label="数量"
+              width="80"
+            ></el-table-column>
             <el-table-column prop="pnl" label="盈亏" width="80">
               <template #default="scope">
                 <span :class="scope.row.pnl >= 0 ? 'positive' : 'negative'">
-                  {{ scope.row.pnl >= 0 ? '+' : '' }}{{ scope.row.pnl.toFixed(2) }}
+                  {{ scope.row.pnl >= 0 ? '+' : ''
+                  }}{{ scope.row.pnl.toFixed(2) }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="holdTime" label="持仓时间" width="100"></el-table-column>
+            <el-table-column
+              prop="holdTime"
+              label="持仓时间"
+              width="100"
+            ></el-table-column>
           </el-table>
         </el-card>
       </div>
@@ -164,26 +239,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { Setting, User, TrendCharts, List } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted } from 'vue';
+import { Setting, User, TrendCharts, List } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const t0Config = ref({
   stockPool: [],
   positionRatio: 5,
   buyThreshold: 1.5,
   sellThreshold: 2.0,
-  maxHoldTime: 60
-})
+  maxHoldTime: 60,
+});
 
-const strategyLoading = ref(false)
+const strategyLoading = ref(false);
 
 const accountStatus = ref([
   { account: '主账户', status: '正常', balance: '500,000.00' },
   { account: '账户A', status: '正常', balance: '300,000.00' },
   { account: '账户B', status: '正常', balance: '250,000.00' },
-  { account: '账户C', status: '正常', balance: '200,000.00' }
-])
+  { account: '账户C', status: '正常', balance: '200,000.00' },
+]);
 
 const tradeRecords = ref([
   {
@@ -194,7 +269,7 @@ const tradeRecords = ref([
     price: 15.25,
     quantity: 1000,
     pnl: 0,
-    holdTime: '-'
+    holdTime: '-',
   },
   {
     time: '14:35:22',
@@ -203,46 +278,46 @@ const tradeRecords = ref([
     type: '卖出',
     price: 15.45,
     quantity: 1000,
-    pnl: 200.00,
-    holdTime: '3分8秒'
+    pnl: 200.0,
+    holdTime: '3分8秒',
   },
   {
     time: '14:38:45',
     account: '账户B',
     stockCode: '000002',
     type: '买入',
-    price: 28.50,
+    price: 28.5,
     quantity: 500,
     pnl: 0,
-    holdTime: '-'
-  }
-])
+    holdTime: '-',
+  },
+]);
 
 const saveT0Config = () => {
-  ElMessage.success('T0策略配置已保存')
-  console.log('保存T0配置:', t0Config.value)
-}
+  ElMessage.success('T0策略配置已保存');
+  console.log('保存T0配置:', t0Config.value);
+};
 
 const startT0Strategy = async () => {
-  strategyLoading.value = true
+  strategyLoading.value = true;
   try {
-    await new Promise(resolve => setTimeout(resolve, 2000)) // 模拟启动时间
-    ElMessage.success('T0策略已启动，开始监控市场机会')
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // 模拟启动时间
+    ElMessage.success('T0策略已启动，开始监控市场机会');
   } catch (error) {
-    ElMessage.error('启动策略失败')
+    ElMessage.error('启动策略失败');
   } finally {
-    strategyLoading.value = false
+    strategyLoading.value = false;
   }
-}
+};
 
 const stopT0Strategy = () => {
-  ElMessage.warning('T0策略已停止')
-  console.log('停止T0策略')
-}
+  ElMessage.warning('T0策略已停止');
+  console.log('停止T0策略');
+};
 
 onMounted(() => {
-  console.log('T0多账户号交易页面加载完成')
-})
+  console.log('T0多账户号交易页面加载完成');
+});
 </script>
 
 <style scoped>
@@ -267,17 +342,24 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.config-header, .monitor-header, .records-header {
+.config-header,
+.monitor-header,
+.records-header {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.config-header .el-icon, .monitor-header .el-icon, .records-header .el-icon {
+.config-header .el-icon,
+.monitor-header .el-icon,
+.records-header .el-icon {
   color: #409eff;
 }
 
-.t0-config, .account-monitor, .performance-monitor, .trade-records {
+.t0-config,
+.account-monitor,
+.performance-monitor,
+.trade-records {
   margin-top: 20px;
 }
 

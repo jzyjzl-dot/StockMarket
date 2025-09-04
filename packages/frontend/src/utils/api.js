@@ -267,16 +267,19 @@ export const stockAccountAPI = {
   // 更新股票账户
   async updateStockAccount(accountId, accountData) {
     try {
-      const response = await fetch(`http://localhost:3004/stockAccounts/${accountId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...accountData,
-          lastUpdated: new Date().toISOString()
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:3004/stockAccounts/${accountId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...accountData,
+            lastUpdated: new Date().toISOString(),
+          }),
+        }
+      );
 
       if (response.ok) {
         const updatedAccount = await response.json();
@@ -329,9 +332,12 @@ export const stockAccountAPI = {
   // 删除股票账户
   async deleteStockAccount(accountId) {
     try {
-      const response = await fetch(`http://localhost:3004/stockAccounts/${accountId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `http://localhost:3004/stockAccounts/${accountId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (response.ok) {
         console.log('Stock account deleted successfully');

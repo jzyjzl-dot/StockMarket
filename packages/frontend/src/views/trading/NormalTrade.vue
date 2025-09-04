@@ -5,20 +5,48 @@
       <div class="trading-terminal-card">
         <div class="card-header">
           <span class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 12H7V22H17V12H22L12 2Z" fill="currentColor"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M12 2L2 12H7V22H17V12H22L12 2Z" fill="currentColor" />
             </svg>
             QUANTUM Terminal
           </span>
           <div class="header-icons">
             <button class="icon-btn" aria-label="Info" @click="showInfo">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V11H13V17ZM13 9H11V7H13V9Z" fill="currentColor"/>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V11H13V17ZM13 9H11V7H13V9Z"
+                  fill="currentColor"
+                />
               </svg>
             </button>
-            <button class="icon-btn" aria-label="Settings" @click="showSettings">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19.43 12.98C19.47 12.65 19.5 12.33 19.5 12C19.5 11.67 19.47 11.34 19.43 11.02L21.54 9.32C21.73 9.17 21.79 8.92 21.66 8.71L19.7 5.34C19.57 5.12 19.31 5.05 19.1 5.14L16.6 6.13C16.03 5.76 15.4 5.47 14.71 5.27L14.38 2.76C14.33 2.5 14.12 2.32 13.86 2.32H10.14C9.88 2.32 9.67 2.5 9.62 2.76L9.29 5.27C8.6 5.47 7.97 5.76 7.4 6.13L4.9 5.14C4.69 5.05 4.43 5.12 4.3 5.34L2.34 8.71C2.21 8.92 2.27 9.17 2.46 9.32L4.57 11.02C4.53 11.34 4.5 11.67 4.5 12C4.5 12.33 4.53 12.65 4.57 12.98L2.46 14.68C2.27 14.83 2.21 15.08 2.34 15.29L4.3 18.66C4.43 18.88 4.69 18.95 4.9 18.86L7.4 17.87C7.97 18.24 8.6 18.53 9.29 18.73L9.62 21.24C9.67 21.5 9.88 21.68 10.14 21.68H13.86C14.12 21.68 14.33 21.5 14.38 21.24L14.71 18.73C15.4 18.53 16.03 18.24 16.6 17.87L19.1 18.86C19.31 18.95 19.57 18.88 19.7 18.66L21.66 15.29C21.79 15.08 21.73 14.83 21.54 14.68L19.43 12.98ZM12 15.5C10.11 15.5 8.5 13.89 8.5 12C8.5 10.11 10.11 8.5 12 8.5C13.89 8.5 15.5 10.11 15.5 12C15.5 13.89 13.89 15.5 12 15.5Z" fill="currentColor"/>
+            <button
+              class="icon-btn"
+              aria-label="Settings"
+              @click="showSettings"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M19.43 12.98C19.47 12.65 19.5 12.33 19.5 12C19.5 11.67 19.47 11.34 19.43 11.02L21.54 9.32C21.73 9.17 21.79 8.92 21.66 8.71L19.7 5.34C19.57 5.12 19.31 5.05 19.1 5.14L16.6 6.13C16.03 5.76 15.4 5.47 14.71 5.27L14.38 2.76C14.33 2.5 14.12 2.32 13.86 2.32H10.14C9.88 2.32 9.67 2.5 9.62 2.76L9.29 5.27C8.6 5.47 7.97 5.76 7.4 6.13L4.9 5.14C4.69 5.05 4.43 5.12 4.3 5.34L2.34 8.71C2.21 8.92 2.27 9.17 2.46 9.32L4.57 11.02C4.53 11.34 4.5 11.67 4.5 12C4.5 12.33 4.53 12.65 4.57 12.98L2.46 14.68C2.27 14.83 2.21 15.08 2.34 15.29L4.3 18.66C4.43 18.88 4.69 18.95 4.9 18.86L7.4 17.87C7.97 18.24 8.6 18.53 9.29 18.73L9.62 21.24C9.67 21.5 9.88 21.68 10.14 21.68H13.86C14.12 21.68 14.33 21.5 14.38 21.24L14.71 18.73C15.4 18.53 16.03 18.24 16.6 17.87L19.1 18.86C19.31 18.95 19.57 18.88 19.7 18.66L21.66 15.29C21.79 15.08 21.73 14.83 21.54 14.68L19.43 12.98ZM12 15.5C10.11 15.5 8.5 13.89 8.5 12C8.5 10.11 10.11 8.5 12 8.5C13.89 8.5 15.5 10.11 15.5 12C15.5 13.89 13.89 15.5 12 15.5Z"
+                  fill="currentColor"
+                />
               </svg>
             </button>
           </div>
@@ -27,12 +55,22 @@
         <div class="card-content">
           <div class="form-group">
             <label for="symbol">股票代码</label>
-            <input type="text" id="symbol" v-model="orderForm.symbol" placeholder="例如: 000001" class="input-field">
+            <input
+              type="text"
+              id="symbol"
+              v-model="orderForm.symbol"
+              placeholder="例如: 000001"
+              class="input-field"
+            />
           </div>
 
           <div class="form-group">
             <label for="orderType">订单类型</label>
-            <select id="orderType" v-model="orderForm.orderType" class="select-field">
+            <select
+              id="orderType"
+              v-model="orderForm.orderType"
+              class="select-field"
+            >
               <option value="Market">市价单</option>
               <option value="Limit">限价单</option>
               <option value="Stop">止损单</option>
@@ -42,29 +80,62 @@
           <div class="form-group">
             <label for="quantity">数量</label>
             <div class="input-with-controls">
-              <button @click="changeQuantity(-1)" class="quantity-btn">-</button>
-              <input type="number" id="quantity" v-model.number="orderForm.quantity" class="input-field quantity-input">
+              <button @click="changeQuantity(-1)" class="quantity-btn">
+                -
+              </button>
+              <input
+                type="number"
+                id="quantity"
+                v-model.number="orderForm.quantity"
+                class="input-field quantity-input"
+              />
               <button @click="changeQuantity(1)" class="quantity-btn">+</button>
             </div>
           </div>
 
-          <div class="form-group" v-if="orderForm.orderType === 'Limit' || orderForm.orderType === 'Stop'">
+          <div
+            class="form-group"
+            v-if="
+              orderForm.orderType === 'Limit' || orderForm.orderType === 'Stop'
+            "
+          >
             <label for="limitPrice">限价</label>
-            <input type="number" id="limitPrice" v-model.number="orderForm.limitPrice" class="input-field" step="0.01">
+            <input
+              type="number"
+              id="limitPrice"
+              v-model.number="orderForm.limitPrice"
+              class="input-field"
+              step="0.01"
+            />
           </div>
 
           <div class="account-summary">
             <h3>账户摘要</h3>
-            <p>可用资金: <span>{{ availableFunds.toFixed(2) }} 元</span></p>
-            <p>预估成本: <span :class="{ 'red-text': estimatedCost > availableFunds }">{{ estimatedCost.toFixed(2) }} 元</span></p>
+            <p>
+              可用资金: <span>{{ availableFunds.toFixed(2) }} 元</span>
+            </p>
+            <p>
+              预估成本:
+              <span :class="{ 'red-text': estimatedCost > availableFunds }"
+                >{{ estimatedCost.toFixed(2) }} 元</span
+              >
+            </p>
           </div>
 
           <div class="actions">
-            <button class="btn buy-btn" @click="placeOrder('BUY')" :disabled="buyLoading">
+            <button
+              class="btn buy-btn"
+              @click="placeOrder('BUY')"
+              :disabled="buyLoading"
+            >
               <span v-if="buyLoading">执行中...</span>
               <span v-else>买入</span>
             </button>
-            <button class="btn sell-btn" @click="placeOrder('SELL')" :disabled="sellLoading">
+            <button
+              class="btn sell-btn"
+              @click="placeOrder('SELL')"
+              :disabled="sellLoading"
+            >
               <span v-if="sellLoading">执行中...</span>
               <span v-else>卖出</span>
             </button>
@@ -85,7 +156,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in levelIIData.asks" :key="'ask-' + index">
+              <tr
+                v-for="(item, index) in levelIIData.asks"
+                :key="'ask-' + index"
+              >
                 <td class="ask-price">{{ item.price.toFixed(2) }}</td>
                 <td>{{ item.size }}</td>
                 <td>{{ item.exchange }}</td>
@@ -107,7 +181,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in levelIIData.bids" :key="'bid-' + index">
+              <tr
+                v-for="(item, index) in levelIIData.bids"
+                :key="'bid-' + index"
+              >
                 <td class="bid-price">{{ item.price.toFixed(2) }}</td>
                 <td>{{ item.size }}</td>
                 <td>{{ item.exchange }}</td>
@@ -137,7 +214,9 @@
               <tr v-for="(record, index) in tradeRecords" :key="index">
                 <td>{{ record.time }}</td>
                 <td>
-                  <span :class="record.type === '买入' ? 'buy-tag' : 'sell-tag'">
+                  <span
+                    :class="record.type === '买入' ? 'buy-tag' : 'sell-tag'"
+                  >
                     {{ record.type }}
                   </span>
                 </td>
@@ -146,7 +225,11 @@
                 <td>{{ record.quantity }}</td>
                 <td>{{ record.amount.toFixed(2) }}</td>
                 <td>
-                  <span :class="record.status === '成功' ? 'success-tag' : 'warning-tag'">
+                  <span
+                    :class="
+                      record.status === '成功' ? 'success-tag' : 'warning-tag'
+                    "
+                  >
                     {{ record.status }}
                   </span>
                 </td>
@@ -160,8 +243,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, watch, onMounted } from 'vue';
+import { ElMessage } from 'element-plus';
 
 // 订单表单数据
 const orderForm = ref({
@@ -169,27 +252,27 @@ const orderForm = ref({
   orderType: 'Market',
   quantity: 100,
   limitPrice: null,
-})
+});
 
 // 模拟账户资金
-const availableFunds = ref(150000.00)
+const availableFunds = ref(150000.0);
 
 // 模拟实时价格
-const currentPrice = ref(15.50)
+const currentPrice = ref(15.5);
 
 // 模拟 Level II 数据
 const levelIIData = ref({
   bids: [
     { price: 15.45, size: 1000, exchange: '上交所' },
-    { price: 15.40, size: 2000, exchange: '深交所' },
+    { price: 15.4, size: 2000, exchange: '深交所' },
     { price: 15.35, size: 1500, exchange: '北交所' },
   ],
   asks: [
     { price: 15.55, size: 800, exchange: '上交所' },
-    { price: 15.60, size: 1200, exchange: '深交所' },
+    { price: 15.6, size: 1200, exchange: '深交所' },
     { price: 15.65, size: 900, exchange: '北交所' },
   ],
-})
+});
 
 // 交易记录
 const tradeRecords = ref([
@@ -197,78 +280,84 @@ const tradeRecords = ref([
     time: '2024-01-15 09:30:00',
     type: '买入',
     stockCode: '000001',
-    price: 15.50,
+    price: 15.5,
     quantity: 100,
-    amount: 1550.00,
-    status: '成功'
+    amount: 1550.0,
+    status: '成功',
   },
   {
     time: '2024-01-15 09:35:00',
     type: '卖出',
     stockCode: '000002',
-    price: 25.80,
+    price: 25.8,
     quantity: 50,
-    amount: 1290.00,
-    status: '成功'
-  }
-])
+    amount: 1290.0,
+    status: '成功',
+  },
+]);
 
 // 加载状态
-const buyLoading = ref(false)
-const sellLoading = ref(false)
+const buyLoading = ref(false);
+const sellLoading = ref(false);
 
 // 计算预估成本
 const estimatedCost = computed(() => {
-  const price = orderForm.value.orderType === 'Limit' ? orderForm.value.limitPrice : currentPrice.value
+  const price =
+    orderForm.value.orderType === 'Limit'
+      ? orderForm.value.limitPrice
+      : currentPrice.value;
   if (!price || !orderForm.value.quantity || orderForm.value.quantity <= 0) {
-    return 0
+    return 0;
   }
-  return price * orderForm.value.quantity
-})
+  return price * orderForm.value.quantity;
+});
 
 // 计算价差
 const spread = computed(() => {
   if (levelIIData.value.asks.length > 0 && levelIIData.value.bids.length > 0) {
-    return levelIIData.value.asks[0].price - levelIIData.value.bids[0].price
+    return levelIIData.value.asks[0].price - levelIIData.value.bids[0].price;
   }
-  return 0
-})
+  return 0;
+});
 
 // 数量增减
 const changeQuantity = (delta) => {
   if (orderForm.value.quantity + delta >= 1) {
-    orderForm.value.quantity += delta
+    orderForm.value.quantity += delta;
   } else if (orderForm.value.quantity + delta < 1) {
-    orderForm.value.quantity = 1
+    orderForm.value.quantity = 1;
   }
-}
+};
 
 // 放置订单（BUY/SELL）
 const placeOrder = async (type) => {
   if (!orderForm.value.symbol || !orderForm.value.quantity) {
-    ElMessage.warning('请填写完整的交易信息')
-    return
+    ElMessage.warning('请填写完整的交易信息');
+    return;
   }
 
   if (orderForm.value.orderType !== 'Market' && !orderForm.value.limitPrice) {
-    ElMessage.warning('请设置限价')
-    return
+    ElMessage.warning('请设置限价');
+    return;
   }
 
-  const isBuy = type === 'BUY'
-  const loadingRef = isBuy ? buyLoading : sellLoading
-  loadingRef.value = true
+  const isBuy = type === 'BUY';
+  const loadingRef = isBuy ? buyLoading : sellLoading;
+  loadingRef.value = true;
 
   try {
     // 模拟API调用延迟
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    const price = orderForm.value.orderType === 'Limit' ? orderForm.value.limitPrice : currentPrice.value
-    const amount = price * orderForm.value.quantity
+    const price =
+      orderForm.value.orderType === 'Limit'
+        ? orderForm.value.limitPrice
+        : currentPrice.value;
+    const amount = price * orderForm.value.quantity;
 
     if (isBuy && amount > availableFunds.value) {
-      ElMessage.error('资金不足，无法完成购买！')
-      return
+      ElMessage.error('资金不足，无法完成购买！');
+      return;
     }
 
     // 创建交易记录
@@ -279,68 +368,70 @@ const placeOrder = async (type) => {
       price: price,
       quantity: orderForm.value.quantity,
       amount: amount,
-      status: '成功'
-    }
+      status: '成功',
+    };
 
-    tradeRecords.value.unshift(newRecord)
+    tradeRecords.value.unshift(newRecord);
 
     if (isBuy) {
-      availableFunds.value -= amount
-      ElMessage.success(`买入订单已提交！预估花费: ¥${amount.toFixed(2)}`)
+      availableFunds.value -= amount;
+      ElMessage.success(`买入订单已提交！预估花费: ¥${amount.toFixed(2)}`);
     } else {
-      availableFunds.value += amount
-      ElMessage.success(`卖出订单已提交！获得金额: ¥${amount.toFixed(2)}`)
+      availableFunds.value += amount;
+      ElMessage.success(`卖出订单已提交！获得金额: ¥${amount.toFixed(2)}`);
     }
 
     // 清空限价（如果是限价单）
     if (orderForm.value.orderType !== 'Market') {
-      orderForm.value.limitPrice = null
+      orderForm.value.limitPrice = null;
     }
-
   } catch (error) {
-    ElMessage.error(`${isBuy ? '买入' : '卖出'}订单执行失败`)
+    ElMessage.error(`${isBuy ? '买入' : '卖出'}订单执行失败`);
   } finally {
-    loadingRef.value = false
+    loadingRef.value = false;
   }
-}
+};
 
 // 显示信息
 const showInfo = () => {
-  ElMessage.info('QUANTUM Terminal - 专业股票交易平台')
-}
+  ElMessage.info('QUANTUM Terminal - 专业股票交易平台');
+};
 
 // 显示设置
 const showSettings = () => {
-  ElMessage.info('设置功能即将上线')
-}
+  ElMessage.info('设置功能即将上线');
+};
 
 // 监听订单类型变化，如果不是限价或止损单，则清空限价
-watch(() => orderForm.value.orderType, (newType) => {
-  if (newType === 'Market') {
-    orderForm.value.limitPrice = null
+watch(
+  () => orderForm.value.orderType,
+  (newType) => {
+    if (newType === 'Market') {
+      orderForm.value.limitPrice = null;
+    }
   }
-})
+);
 
 // 模拟实时价格更新
 onMounted(() => {
-  console.log('QUANTUM Terminal 交易界面加载完成')
+  console.log('QUANTUM Terminal 交易界面加载完成');
 
   // 模拟价格实时更新
   const priceInterval = setInterval(() => {
-    currentPrice.value += (Math.random() - 0.5) * 0.1
+    currentPrice.value += (Math.random() - 0.5) * 0.1;
 
     // 更新Level II数据
-    levelIIData.value.bids.forEach(bid => {
-      bid.price += (Math.random() - 0.5) * 0.05
-    })
-    levelIIData.value.asks.forEach(ask => {
-      ask.price += (Math.random() - 0.5) * 0.05
-    })
-  }, 3000)
+    levelIIData.value.bids.forEach((bid) => {
+      bid.price += (Math.random() - 0.5) * 0.05;
+    });
+    levelIIData.value.asks.forEach((ask) => {
+      ask.price += (Math.random() - 0.5) * 0.05;
+    });
+  }, 3000);
 
   // 清理定时器
-  return () => clearInterval(priceInterval)
-})
+  return () => clearInterval(priceInterval);
+});
 </script>
 
 <style scoped>
@@ -402,7 +493,9 @@ onMounted(() => {
   margin-left: 10px;
   padding: 5px;
   border-radius: 5px;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .header-icons .icon-btn:hover {
@@ -544,7 +637,9 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .btn:disabled {
@@ -553,7 +648,7 @@ onMounted(() => {
 }
 
 .buy-btn {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
 }
 
@@ -563,7 +658,7 @@ onMounted(() => {
 }
 
 .sell-btn {
-  background-color: #F44336;
+  background-color: #f44336;
   color: white;
 }
 
@@ -616,12 +711,12 @@ onMounted(() => {
 }
 
 .bid-price {
-  color: #4CAF50;
+  color: #4caf50;
   font-weight: 600;
 }
 
 .ask-price {
-  color: #F44336;
+  color: #f44336;
   font-weight: 600;
 }
 
@@ -695,7 +790,7 @@ onMounted(() => {
 
 .buy-tag {
   background-color: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
+  color: #4caf50;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -704,7 +799,7 @@ onMounted(() => {
 
 .sell-tag {
   background-color: rgba(244, 67, 54, 0.2);
-  color: #F44336;
+  color: #f44336;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -713,7 +808,7 @@ onMounted(() => {
 
 .success-tag {
   background-color: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
+  color: #4caf50;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;

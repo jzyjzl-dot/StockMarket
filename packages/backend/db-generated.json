@@ -3822,9 +3822,9 @@
       "balance": 100000,
       "availableFunds": 95000,
       "status": "active",
-      "group": "1",
+      "group": "2",
       "createdDate": "2025-01-01T00:00:00.000Z",
-      "lastUpdated": "2025-09-03T07:00:00.000Z"
+      "lastUpdated": "2025-09-04T05:42:38.448Z"
     },
     {
       "id": "2",

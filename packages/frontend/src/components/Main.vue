@@ -141,7 +141,7 @@ const unlock = () => {
           <el-menu-item index="/trade"> 交易 </el-menu-item>
           <el-menu-item index="/risk"> 风控设置 </el-menu-item>
           <el-menu-item index="/users"> 用户管理 </el-menu-item>
-          
+
           <!-- 交易子菜单 -->
           <el-sub-menu index="trading">
             <template #title>
@@ -149,23 +149,41 @@ const unlock = () => {
               <span>交易</span>
             </template>
             <el-menu-item index="/trading/normal">普通交易</el-menu-item>
-            <el-menu-item index="/trading/algo-multi">算法多账号交易</el-menu-item>
-            <el-menu-item index="/trading/t0-multi">T0多账户号交易</el-menu-item>
+            <el-menu-item index="/trading/algo-multi"
+              >算法多账号交易</el-menu-item
+            >
+            <el-menu-item index="/trading/t0-multi"
+              >T0多账户号交易</el-menu-item
+            >
           </el-sub-menu>
-          
+
           <!-- 管理子菜单 -->
           <el-sub-menu index="management">
             <template #title>
               <el-icon><Management /></el-icon>
               <span>管理</span>
             </template>
-            <el-menu-item index="/management/account-edit">账号编辑</el-menu-item>
-            <el-menu-item index="/management/account-group-edit">账号组编辑</el-menu-item>
-            <el-menu-item index="/management/risk-management">风控管理</el-menu-item>
-            <el-menu-item index="/management/role-management">角色管理</el-menu-item>
-            <el-menu-item index="/management/process-management">流程管理</el-menu-item>
-            <el-menu-item index="/management/approval-function">审批功能</el-menu-item>
-            <el-menu-item index="/management/device-info">设备信息采集</el-menu-item>
+            <el-menu-item index="/management/account-edit"
+              >账号编辑</el-menu-item
+            >
+            <el-menu-item index="/management/account-group-edit"
+              >账号组编辑</el-menu-item
+            >
+            <el-menu-item index="/management/risk-management"
+              >风控管理</el-menu-item
+            >
+            <el-menu-item index="/management/role-management"
+              >角色管理</el-menu-item
+            >
+            <el-menu-item index="/management/process-management"
+              >流程管理</el-menu-item
+            >
+            <el-menu-item index="/management/approval-function"
+              >审批功能</el-menu-item
+            >
+            <el-menu-item index="/management/device-info"
+              >设备信息采集</el-menu-item
+            >
           </el-sub-menu>
         </el-menu>
       </aside>

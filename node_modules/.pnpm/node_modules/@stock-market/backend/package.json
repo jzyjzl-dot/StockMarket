@@ -2,9 +2,9 @@
   "name": "@stock-market/backend",
   "version": "1.0.0",
   "scripts": {
-    "dev": "npx json-server --watch db.json --port 3004 --host 0.0.0.0",
-    "start": "npx json-server --watch db.json --port 3004 --host 0.0.0.0",
-    "json-server": "npx json-server --watch db.json --port 3004 --host 0.0.0.0",
+    "dev": "node start-server.js",
+    "start": "node start-server.js",
+    "server": "node start-server.js",
     "clean": "rm -rf *.log"
   },
   "dependencies": {

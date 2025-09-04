@@ -10,7 +10,7 @@
 
       <div class="content">
         <!-- 搜索栏 -->
-        <div class="search-bar" style="margin-bottom: 20px;">
+        <div class="search-bar" style="margin-bottom: 20px">
           <el-row :gutter="20">
             <el-col :span="4">
               <el-input
@@ -35,7 +35,10 @@
                 <el-option label="现金账户" value="现金账户"></el-option>
                 <el-option label="保证金账户" value="保证金账户"></el-option>
                 <el-option label="IRA账户" value="IRA账户"></el-option>
-                <el-option label="Roth IRA账户" value="Roth IRA账户"></el-option>
+                <el-option
+                  label="Roth IRA账户"
+                  value="Roth IRA账户"
+                ></el-option>
               </el-select>
             </el-col>
             <el-col :span="3">
@@ -80,13 +83,21 @@
               </el-select>
             </el-col>
             <el-col :span="2">
-              <el-button type="primary" @click="resetSearch" style="width: 100%">
+              <el-button
+                type="primary"
+                @click="resetSearch"
+                style="width: 100%"
+              >
                 <el-icon><RefreshRight /></el-icon>
                 重置
               </el-button>
             </el-col>
             <el-col :span="2">
-              <el-button type="success" @click="showAddDialog = true" style="width: 100%">
+              <el-button
+                type="success"
+                @click="showAddDialog = true"
+                style="width: 100%"
+              >
                 <el-icon><Plus /></el-icon>
                 添加
               </el-button>
@@ -94,14 +105,23 @@
           </el-row>
         </div>
 
-        <el-table 
-          :data="paginatedAccounts" 
-          style="width: 100%" 
+        <el-table
+          :data="paginatedAccounts"
+          style="width: 100%"
           max-height="500px"
           stripe
         >
-          <el-table-column prop="id" label="ID" width="80" fixed="left"></el-table-column>
-          <el-table-column prop="accountName" label="账户名称" min-width="150"></el-table-column>
+          <el-table-column
+            prop="id"
+            label="ID"
+            width="80"
+            fixed="left"
+          ></el-table-column>
+          <el-table-column
+            prop="accountName"
+            label="账户名称"
+            min-width="150"
+          ></el-table-column>
           <el-table-column prop="accountType" label="账户类型" width="120">
             <template #default="scope">
               <el-tag :type="getAccountTypeColor(scope.row.accountType)">
@@ -109,8 +129,16 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="broker" label="经纪商" min-width="120"></el-table-column>
-          <el-table-column prop="accountNumber" label="账户号码" min-width="150"></el-table-column>
+          <el-table-column
+            prop="broker"
+            label="经纪商"
+            min-width="120"
+          ></el-table-column>
+          <el-table-column
+            prop="accountNumber"
+            label="账户号码"
+            min-width="150"
+          ></el-table-column>
           <el-table-column prop="group" label="组别" width="120">
             <template #default="scope">
               <el-tag :type="getGroupColor(scope.row.group)">
@@ -137,14 +165,24 @@
           </el-table-column>
           <el-table-column label="操作" width="200" fixed="right">
             <template #default="scope">
-              <el-button size="small" @click="editAccount(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="deleteAccount(scope.row)">删除</el-button>
+              <el-button size="small" @click="editAccount(scope.row)"
+                >编辑</el-button
+              >
+              <el-button
+                size="small"
+                type="danger"
+                @click="deleteAccount(scope.row)"
+                >删除</el-button
+              >
             </template>
           </el-table-column>
         </el-table>
 
         <!-- 分页组件 -->
-        <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+        <div
+          class="pagination-container"
+          style="margin-top: 20px; text-align: center"
+        >
           <el-pagination
             v-model:current-page="currentPage"
             v-model:page-size="pageSize"
@@ -189,10 +227,20 @@
           </el-select>
         </el-form-item>
         <el-form-item label="账户余额">
-          <el-input-number v-model="editForm.balance" :precision="2" :min="0" style="width: 100%"></el-input-number>
+          <el-input-number
+            v-model="editForm.balance"
+            :precision="2"
+            :min="0"
+            style="width: 100%"
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="可用资金">
-          <el-input-number v-model="editForm.availableFunds" :precision="2" :min="0" style="width: 100%"></el-input-number>
+          <el-input-number
+            v-model="editForm.availableFunds"
+            :precision="2"
+            :min="0"
+            style="width: 100%"
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="editForm.status">
@@ -239,10 +287,20 @@
           </el-select>
         </el-form-item>
         <el-form-item label="账户余额">
-          <el-input-number v-model="addForm.balance" :precision="2" :min="0" style="width: 100%"></el-input-number>
+          <el-input-number
+            v-model="addForm.balance"
+            :precision="2"
+            :min="0"
+            style="width: 100%"
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="可用资金">
-          <el-input-number v-model="addForm.availableFunds" :precision="2" :min="0" style="width: 100%"></el-input-number>
+          <el-input-number
+            v-model="addForm.availableFunds"
+            :precision="2"
+            :min="0"
+            style="width: 100%"
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="addForm.status">
@@ -261,14 +319,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, RefreshRight, Plus } from '@element-plus/icons-vue'
-import { stockAccountAPI } from '../../utils/api.js'
+import { ref, onMounted, computed } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { Search, RefreshRight, Plus } from '@element-plus/icons-vue';
+import { stockAccountAPI } from '../../utils/api.js';
 
-const stockAccounts = ref([])
-const showEditDialog = ref(false)
-const showAddDialog = ref(false)
+const stockAccounts = ref([]);
+const showEditDialog = ref(false);
+const showAddDialog = ref(false);
 
 // 搜索表单
 const searchForm = ref({
@@ -276,12 +334,12 @@ const searchForm = ref({
   accountType: '',
   broker: '',
   group: '',
-  status: ''
-})
+  status: '',
+});
 
 // 分页相关
-const currentPage = ref(1)
-const pageSize = ref(10)
+const currentPage = ref(1);
+const pageSize = ref(10);
 
 const editForm = ref({
   id: '',
@@ -292,8 +350,8 @@ const editForm = ref({
   group: '0',
   balance: 0,
   availableFunds: 0,
-  status: 'active'
-})
+  status: 'active',
+});
 
 const addForm = ref({
   accountName: '',
@@ -303,101 +361,105 @@ const addForm = ref({
   group: '0',
   balance: 0,
   availableFunds: 0,
-  status: 'active'
-})
+  status: 'active',
+});
 
 // 账户类型颜色映射
 const getAccountTypeColor = (accountType) => {
   const typeColors = {
-    '现金账户': 'success',
-    '保证金账户': 'warning',
-    'IRA账户': 'info',
-    'Roth IRA账户': 'primary'
-  }
-  return typeColors[accountType] || 'info'
-}
+    现金账户: 'success',
+    保证金账户: 'warning',
+    IRA账户: 'info',
+    'Roth IRA账户': 'primary',
+  };
+  return typeColors[accountType] || 'info';
+};
 
 // 状态颜色映射
 const getStatusColor = (status) => {
   const statusColors = {
     active: 'success',
     frozen: 'warning',
-    closed: 'danger'
-  }
-  return statusColors[status] || 'info'
-}
+    closed: 'danger',
+  };
+  return statusColors[status] || 'info';
+};
 
 // 状态文本映射
 const getStatusText = (status) => {
   const statusTexts = {
     active: '活跃',
     frozen: '冻结',
-    closed: '关闭'
-  }
-  return statusTexts[status] || status
-}
+    closed: '关闭',
+  };
+  return statusTexts[status] || status;
+};
 
 // 组别颜色映射
 const getGroupColor = (group) => {
   const groupColors = {
-    '1': 'warning',  // 交易账户
-    '2': 'info',     // 退休账户
-    '3': 'success',  // 个人投资
-    '4': 'primary',  // 外汇交易
-    '5': 'danger',   // 机构投资
-    '0': 'secondary' // 未分组
-  }
-  return groupColors[group] || 'info'
-}
+    1: 'warning', // 交易账户
+    2: 'info', // 退休账户
+    3: 'success', // 个人投资
+    4: 'primary', // 外汇交易
+    5: 'danger', // 机构投资
+    0: 'secondary', // 未分组
+  };
+  return groupColors[group] || 'info';
+};
 
 // 过滤后的账户列表
 const filteredAccounts = computed(() => {
-  let filtered = stockAccounts.value
+  let filtered = stockAccounts.value;
 
   if (searchForm.value.accountName) {
-    filtered = filtered.filter(account =>
-      account.accountName.toLowerCase().includes(searchForm.value.accountName.toLowerCase())
-    )
+    filtered = filtered.filter((account) =>
+      account.accountName
+        .toLowerCase()
+        .includes(searchForm.value.accountName.toLowerCase())
+    );
   }
 
   if (searchForm.value.accountType) {
-    filtered = filtered.filter(account =>
-      account.accountType === searchForm.value.accountType
-    )
+    filtered = filtered.filter(
+      (account) => account.accountType === searchForm.value.accountType
+    );
   }
 
   if (searchForm.value.broker) {
-    filtered = filtered.filter(account =>
-      account.broker.toLowerCase().includes(searchForm.value.broker.toLowerCase())
-    )
+    filtered = filtered.filter((account) =>
+      account.broker
+        .toLowerCase()
+        .includes(searchForm.value.broker.toLowerCase())
+    );
   }
 
   if (searchForm.value.group) {
-    filtered = filtered.filter(account =>
-      account.group === searchForm.value.group
-    )
+    filtered = filtered.filter(
+      (account) => account.group === searchForm.value.group
+    );
   }
 
   if (searchForm.value.status) {
-    filtered = filtered.filter(account =>
-      account.status === searchForm.value.status
-    )
+    filtered = filtered.filter(
+      (account) => account.status === searchForm.value.status
+    );
   }
 
-  return filtered
-})
+  return filtered;
+});
 
 // 分页后的账户列表
 const paginatedAccounts = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredAccounts.value.slice(start, end)
-})
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredAccounts.value.slice(start, end);
+});
 
 // 处理搜索
 const handleSearch = () => {
-  currentPage.value = 1 // 搜索时重置到第一页
-}
+  currentPage.value = 1; // 搜索时重置到第一页
+};
 
 // 重置搜索
 const resetSearch = () => {
@@ -406,82 +468,86 @@ const resetSearch = () => {
     accountType: '',
     broker: '',
     group: '',
-    status: ''
-  }
-  currentPage.value = 1 // 重置搜索时回到第一页
-}
+    status: '',
+  };
+  currentPage.value = 1; // 重置搜索时回到第一页
+};
 
 // 处理每页大小变化
 const handleSizeChange = (newSize) => {
-  pageSize.value = newSize
-  currentPage.value = 1
-}
+  pageSize.value = newSize;
+  currentPage.value = 1;
+};
 
 // 处理页码变化
 const handleCurrentChange = (newPage) => {
-  currentPage.value = newPage
-}
+  currentPage.value = newPage;
+};
 
 // 获取股票账户列表
 const fetchStockAccounts = async () => {
   try {
-    const accountList = await stockAccountAPI.getStockAccounts()
-    stockAccounts.value = accountList
+    const accountList = await stockAccountAPI.getStockAccounts();
+    stockAccounts.value = accountList;
   } catch (error) {
-    console.error('获取股票账户列表失败:', error)
-    ElMessage.error('获取股票账户列表失败')
+    console.error('获取股票账户列表失败:', error);
+    ElMessage.error('获取股票账户列表失败');
   }
-}
+};
 
 // 编辑账户
 const editAccount = (account) => {
-  editForm.value = { ...account }
-  showEditDialog.value = true
-}
+  editForm.value = { ...account };
+  showEditDialog.value = true;
+};
 
 // 保存账户
 const saveAccount = async () => {
   try {
     await stockAccountAPI.updateStockAccount(editForm.value.id, {
       ...editForm.value,
-      lastUpdated: new Date().toISOString()
-    })
-    ElMessage.success('账户更新成功')
-    showEditDialog.value = false
-    await fetchStockAccounts()
-    currentPage.value = 1 // 操作后重置到第一页
+      lastUpdated: new Date().toISOString(),
+    });
+    ElMessage.success('账户更新成功');
+    showEditDialog.value = false;
+    await fetchStockAccounts();
+    currentPage.value = 1; // 操作后重置到第一页
   } catch (error) {
-    console.error('更新账户失败:', error)
-    ElMessage.error('更新账户失败')
+    console.error('更新账户失败:', error);
+    ElMessage.error('更新账户失败');
   }
-}
+};
 
 // 删除账户
 const deleteAccount = async (account) => {
   try {
-    await ElMessageBox.confirm(`确定要删除账户 ${account.accountName} 吗？`, '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
-    await stockAccountAPI.deleteStockAccount(account.id)
-    ElMessage.success('账户删除成功')
-    await fetchStockAccounts()
-    currentPage.value = 1 // 操作后重置到第一页
+    await ElMessageBox.confirm(
+      `确定要删除账户 ${account.accountName} 吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    await stockAccountAPI.deleteStockAccount(account.id);
+    ElMessage.success('账户删除成功');
+    await fetchStockAccounts();
+    currentPage.value = 1; // 操作后重置到第一页
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除账户失败:', error)
-      ElMessage.error('删除账户失败')
+      console.error('删除账户失败:', error);
+      ElMessage.error('删除账户失败');
     }
   }
-}
+};
 
 // 添加账户
 const addAccount = async () => {
   try {
-    await stockAccountAPI.createStockAccount(addForm.value)
-    ElMessage.success('账户添加成功')
-    showAddDialog.value = false
+    await stockAccountAPI.createStockAccount(addForm.value);
+    ElMessage.success('账户添加成功');
+    showAddDialog.value = false;
     addForm.value = {
       accountName: '',
       accountType: '',
@@ -490,19 +556,19 @@ const addAccount = async () => {
       group: '未分组',
       balance: 0,
       availableFunds: 0,
-      status: 'active'
-    }
-    await fetchStockAccounts()
-    currentPage.value = 1 // 操作后重置到第一页
+      status: 'active',
+    };
+    await fetchStockAccounts();
+    currentPage.value = 1; // 操作后重置到第一页
   } catch (error) {
-    console.error('添加账户失败:', error)
-    ElMessage.error('添加账户失败')
+    console.error('添加账户失败:', error);
+    ElMessage.error('添加账户失败');
   }
-}
+};
 
 onMounted(() => {
-  fetchStockAccounts()
-})
+  fetchStockAccounts();
+});
 </script>
 
 <style scoped>
