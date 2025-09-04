@@ -247,4 +247,113 @@ export const productAPI = {
   },
 };
 
+// 股票账户管理API
+export const stockAccountAPI = {
+  // 获取所有股票账户
+  async getStockAccounts() {
+    try {
+      const response = await fetch('http://localhost:3004/stockAccounts');
+      if (response.ok) {
+        const accounts = await response.json();
+        console.log('Stock accounts loaded from server:', accounts);
+        return accounts;
+      }
+    } catch (error) {
+      console.warn('Server not available for stock accounts:', error.message);
+    }
+    return [];
+  },
+
+  // 更新股票账户
+  async updateStockAccount(accountId, accountData) {
+    try {
+      const response = await fetch(
+        `http://localhost:3004/stockAccounts/${accountId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...accountData,
+            lastUpdated: new Date().toISOString(),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const updatedAccount = await response.json();
+        console.log('Stock account updated:', updatedAccount);
+        return updatedAccount;
+      } else {
+        console.error('Update failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+      }
+    } catch (error) {
+      console.warn('Failed to update stock account:', error.message);
+      console.error('Full error:', error);
+    }
+    return null;
+  },
+
+  // 创建股票账户
+  async createStockAccount(accountData) {
+    try {
+      const response = await fetch('http://localhost:3004/stockAccounts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...accountData,
+          id: Date.now().toString(),
+          createdDate: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        const newAccount = await response.json();
+        console.log('Stock account created:', newAccount);
+        return newAccount;
+      } else {
+        console.error('Create failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+      }
+    } catch (error) {
+      console.warn('Failed to create stock account:', error.message);
+      console.error('Full error:', error);
+    }
+    return null;
+  },
+
+  // 删除股票账户
+  async deleteStockAccount(accountId) {
+    try {
+      const response = await fetch(
+        `http://localhost:3004/stockAccounts/${accountId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (response.ok) {
+        console.log('Stock account deleted successfully');
+        return true;
+      } else {
+        console.error('Delete failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        return false;
+      }
+    } catch (error) {
+      console.warn('Failed to delete stock account:', error.message);
+      console.error('Full error:', error);
+      return false;
+    }
+  },
+};
+
 export default api;

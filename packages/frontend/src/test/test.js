@@ -1,34 +1,12 @@
-var Trie = function () {
-  this.children = {};
-};
-
-Trie.prototype.insert = function (word) {
-  let node = this.children;
-  for (const ch of word) {
-    if (!node[ch]) {
-      node[ch] = {};
-    }
-    node = node[ch];
+function MyInstanceOf(left, right){
+  if(typeof left !== 'object' || left === null) return false
+  let proto = Object.getPrototypeOf(left)
+  let prototype = right.prototype
+  while( proto !== null){
+    if(proto === prototype) return true
+    proto = Object.getPrototypeOf(proto)
   }
-  node.isEnd = true;
-};
+  return false
+}
 
-Trie.prototype.searchPrefix = function (prefix) {
-  let node = this.children;
-  for (const ch of prefix) {
-    if (!node[ch]) {
-      return false;
-    }
-    node = node[ch];
-  }
-  return node;
-};
-
-Trie.prototype.search = function (word) {
-  const node = this.searchPrefix(word);
-  return node !== undefined && node.isEnd !== undefined;
-};
-
-Trie.prototype.startsWith = function (prefix) {
-  return this.searchPrefix(prefix);
-};
+console.log(MyInstanceOf({},Object))

@@ -18,11 +18,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue';
 
 onMounted(() => {
-  console.log('审批功能页面加载完成')
-})
+  console.log('审批功能页面加载完成');
+});
 </script>
 
 <style scoped>
