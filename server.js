@@ -14,7 +14,7 @@ server.use(jsonServer.bodyParser);
 server.use(router);
 
 // 启动服务器
-const port = 3001;
+const port = 3004;
 server.listen(port, () => {
   console.log(`JSON Server is running on http://localhost:${port}`);
   console.log('Available routes:');
