@@ -116,7 +116,7 @@
           <el-table-column
             prop="id"
             label="ID"
-            width="80"
+            width="40"
             fixed="left"
           ></el-table-column>
           <el-table-column
@@ -141,7 +141,7 @@
             label="账户号码"
             min-width="150"
           ></el-table-column>
-          <el-table-column prop="group" label="组别" width="120">
+          <el-table-column prop="group" label="组别" width="60">
             <template #default="scope">
               <el-tag :type="getGroupColor(scope.row.group)">
                 {{ scope.row.group }}
