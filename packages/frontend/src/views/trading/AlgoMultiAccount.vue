@@ -1,315 +1,275 @@
 <template>
-  <div class="trading-page">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <h2>算法多账号交易</h2>
-          <p>使用算法策略在多个账号间执行交易</p>
-        </div>
-      </template>
-
-      <div class="content">
-        <el-row :gutter="20">
-          <el-col :span="8">
-            <el-card class="strategy-card" shadow="hover">
-              <template #header>
-                <div class="strategy-header">
-                  <el-icon><TrendCharts /></el-icon>
-                  <span>均线策略</span>
-                </div>
-              </template>
-              <div class="strategy-content">
-                <p>基于移动平均线的趋势跟踪策略</p>
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click="startStrategy('ma')"
-                  >启动策略</el-button
-                >
-              </div>
-            </el-card>
-          </el-col>
-
-          <el-col :span="8">
-            <el-card class="strategy-card" shadow="hover">
-              <template #header>
-                <div class="strategy-header">
-                  <el-icon><DataAnalysis /></el-icon>
-                  <span>量化策略</span>
-                </div>
-              </template>
-              <div class="strategy-content">
-                <p>基于量化模型的统计套利策略</p>
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click="startStrategy('quant')"
-                  >启动策略</el-button
-                >
-              </div>
-            </el-card>
-          </el-col>
-
-          <el-col :span="8">
-            <el-card class="strategy-card" shadow="hover">
-              <template #header>
-                <div class="strategy-header">
-                  <el-icon><Timer /></el-icon>
-                  <span>高频策略</span>
-                </div>
-              </template>
-              <div class="strategy-content">
-                <p>基于市场微观结构的快速交易策略</p>
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click="startStrategy('hft')"
-                  >启动策略</el-button
-                >
-              </div>
-            </el-card>
-          </el-col>
-        </el-row>
-
-        <!-- 账号配置 -->
-        <el-card class="account-config" style="margin-top: 20px">
-          <template #header>
-            <div class="config-header">
-              <el-icon><User /></el-icon>
-              <span>多账号配置</span>
+  <div class="nt-page">
+    <div class="nt-top">
+      <!-- 行情 -->
+      <section class="pane pane-market">
+        <header class="pane-header"><div class="title">行情</div></header>
+        <div class="pane-body scroll-y">
+          <div class="market-head">
+            <div class="stock">
+              <div class="name">{{ currentStock.name }}</div>
+              <div class="code">{{ currentStock.code }}</div>
             </div>
-          </template>
-          <el-form :model="accountConfig" label-width="120px">
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="主账号">
-                  <el-select
-                    v-model="accountConfig.primaryAccount"
-                    placeholder="选择主账号"
-                  >
-                    <el-option label="交易账号1" value="account1"></el-option>
-                    <el-option label="交易账号2" value="account2"></el-option>
-                    <el-option label="交易账号3" value="account3"></el-option>
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="从账号">
-                  <el-select
-                    v-model="accountConfig.secondaryAccounts"
-                    multiple
-                    placeholder="选择从账号"
-                  >
-                    <el-option label="交易账号1" value="account1"></el-option>
-                    <el-option label="交易账号2" value="account2"></el-option>
-                    <el-option label="交易账号3" value="account3"></el-option>
-                    <el-option label="交易账号4" value="account4"></el-option>
-                    <el-option label="交易账号5" value="account5"></el-option>
-                  </el-select>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-form-item label="资金分配比例">
-              <el-slider
-                v-model="accountConfig.allocationRatio"
-                :min="10"
-                :max="50"
-                :step="5"
-                show-input
-              ></el-slider>
+            <div class="price-box">
+              <div class="price">{{ currentStock.price.toFixed(2) }}</div>
+              <div class="delta" :class="{ up: currentStock.change >= 0, down: currentStock.change < 0 }">
+                <span>{{ currentStock.change >= 0 ? '+' : '' }}{{ currentStock.change.toFixed(2) }}</span>
+                <span>({{ (currentStock.changePct * 100).toFixed(2) }}%)</span>
+              </div>
+            </div>
+          </div>
+          <div class="market-table">
+            <table>
+              <tbody>
+                <tr v-for="(row, idx) in marketRows" :key="'ask-' + idx">
+                  <td class="side sell">卖{{ 10 - idx }}</td>
+                  <td class="price sell">{{ row.ask.price.toFixed(2) }}</td>
+                  <td class="vol">{{ row.ask.vol }}</td>
+                </tr>
+                <tr class="sep"><td colspan="3"></td></tr>
+                <tr v-for="(row, idx) in marketRows" :key="'bid-' + idx">
+                  <td class="side buy">买{{ idx + 1 }}</td>
+                  <td class="price buy">{{ row.bid.price.toFixed(2) }}</td>
+                  <td class="vol">{{ row.bid.vol }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 下单（多账号） -->
+      <section class="pane pane-order">
+        <header class="pane-header"><div class="title">下单</div></header>
+        <div class="order-form pane-body scroll-y">
+          <el-form :model="orderForm" label-width="84px" size="small">
+            <el-form-item label="委托类别">
+              <el-select v-model="orderForm.entrustType" style="width: 100%">
+                <el-option label="买入" value="BUY" />
+                <el-option label="卖出" value="SELL" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="证券代码">
+              <el-input v-model="orderForm.symbol" placeholder="如 600000" />
+            </el-form-item>
+            <el-form-item label="委托价格">
+              <el-select v-model="orderForm.priceType" style="width: 100%">
+                <el-option label="固定价格" value="fixed" />
+                <el-option label="对手价" value="counter" />
+                <el-option label="排队价" value="queue" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="价格">
+              <el-input-number v-model="orderForm.price" :precision="2" :step="0.01" :min="0" style="width: 100%" />
+            </el-form-item>
+            <el-form-item label="委托数量">
+              <el-input-number v-model="orderForm.qty" :min="0" :step="100" style="width: 100%" />
+            </el-form-item>
+            <el-form-item label="选择账户">
+              <el-checkbox-group v-model="selectedAccounts">
+                <el-checkbox v-for="acc in accounts" :key="acc.id" :label="acc.id">{{ acc.name }}</el-checkbox>
+              </el-checkbox-group>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="saveAccountConfig"
-                >保存配置</el-button
-              >
+              <div class="quick-ops">
+                <el-button size="small" @click="setQty(100)">100</el-button>
+                <el-button size="small" @click="setQty(500)">500</el-button>
+                <el-button size="small" @click="setQty(1000)">1000</el-button>
+                <el-button size="small" @click="setQty(2000)">2000</el-button>
+              </div>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="danger" style="width: 100%" @click="placeOrder">{{ orderForm.entrustType === 'BUY' ? '买入' : '卖出' }}</el-button>
             </el-form-item>
           </el-form>
-        </el-card>
+        </div>
+      </section>
 
-        <!-- 策略运行状态 -->
-        <el-card class="strategy-status" style="margin-top: 20px">
-          <template #header>
-            <div class="status-header">
-              <el-icon><Monitor /></el-icon>
-              <span>策略运行状态</span>
+      <!-- 预览（多账号逐行） -->
+      <section class="pane pane-preview">
+        <header class="pane-header">
+          <div class="title">预览</div>
+          <div class="sub">账户数：{{ previewRows.length }}</div>
+        </header>
+        <div class="pane-body">
+          <div class="scroll-x">
+            <el-table v-resizable-columns :data="previewRows" size="small" style="width: 100%">
+              <el-table-column type="selection" width="44" />
+              <el-table-column prop="account" label="账户" width="120" />
+              <el-table-column prop="symbol" label="证券代码" width="120" />
+              <el-table-column prop="side" label="方向" width="80" />
+              <el-table-column prop="qty" label="委托量" width="100" />
+              <el-table-column prop="price" label="委托价" width="100" />
+              <el-table-column prop="amount" label="委托金额" min-width="140" />
+              <el-table-column prop="available" label="可用资金" min-width="140" />
+              <el-table-column prop="buyable" label="可买数量" width="120" />
+            </el-table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 查询 -->
+    <section class="pane pane-query">
+      <header class="pane-header"><div class="title">查询</div></header>
+      <div class="pane-body">
+        <el-tabs v-model="activeTab" type="card" class="nt-tabs">
+          <el-tab-pane label="资金" name="fund">
+            <div class="scroll-x">
+              <el-table v-resizable-columns :data="fundRows" size="small" style="width: 100%">
+                <el-table-column prop="available" label="可用资金" width="140" />
+                <el-table-column prop="frozen" label="冻结资金" width="140" />
+                <el-table-column prop="marketValue" label="市值" width="140" />
+                <el-table-column prop="totalAssets" label="总资产" width="160" />
+              </el-table>
             </div>
-          </template>
-          <el-table :data="runningStrategies" style="width: 100%" size="small">
-            <el-table-column
-              prop="strategyName"
-              label="策略名称"
-              width="150"
-            ></el-table-column>
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="scope">
-                <el-tag :type="getStatusType(scope.row.status)">
-                  {{ scope.row.status }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="accounts"
-              label="运行账号数"
-              width="120"
-            ></el-table-column>
-            <el-table-column
-              prop="pnl"
-              label="当日盈亏"
-              width="120"
-            ></el-table-column>
-            <el-table-column
-              prop="startTime"
-              label="启动时间"
-            ></el-table-column>
-            <el-table-column label="操作" width="150">
-              <template #default="scope">
-                <el-button size="small" @click="stopStrategy(scope.row)"
-                  >停止</el-button
-                >
-                <el-button
-                  size="small"
-                  type="info"
-                  @click="viewDetails(scope.row)"
-                  >详情</el-button
-                >
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+          </el-tab-pane>
+          <el-tab-pane label="持仓" name="pos">
+            <div class="scroll-x">
+              <el-table v-resizable-columns :data="positionRows" size="small" style="width: 100%">
+                <el-table-column prop="symbol" label="证券代码" width="120" />
+                <el-table-column prop="name" label="证券名称" width="140" />
+                <el-table-column prop="quantity" label="持仓数量" width="100" />
+                <el-table-column prop="cost" label="持仓成本" width="100" />
+                <el-table-column prop="marketPrice" label="现价" width="100" />
+                <el-table-column prop="marketValue" label="市值" min-width="140" />
+              </el-table>
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="委托" name="order">
+            <div class="scroll-x">
+              <el-table v-resizable-columns :data="orderRows" size="small" style="width: 100%">
+                <el-table-column prop="account" label="账户" width="100" />
+                <el-table-column prop="time" label="委托时间" width="160" />
+                <el-table-column prop="stockCode" label="证券代码" width="120" />
+                <el-table-column prop="type" label="方向" width="80" />
+                <el-table-column prop="strategy" label="算法" width="120" />
+                <el-table-column prop="price" label="委托价" width="100" />
+                <el-table-column prop="quantity" label="委托量" width="100" />
+                <el-table-column prop="dealt" label="成交量" width="100" />
+                <el-table-column prop="amount" label="委托金额" min-width="140" />
+                <el-table-column prop="market" label="市场" width="100" />
+                <el-table-column prop="status" label="状态" width="100" />
+              </el-table>
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="成交" name="deal">
+            <div class="scroll-x">
+              <el-table v-resizable-columns :data="dealRows" size="small" style="width: 100%">
+                <el-table-column prop="time" label="时间" width="160" />
+                <el-table-column prop="stockCode" label="证券代码" width="120" />
+                <el-table-column prop="type" label="方向" width="80" />
+                <el-table-column prop="price" label="成交价" width="100" />
+                <el-table-column prop="quantity" label="成交量" width="100" />
+                <el-table-column prop="amount" label="成交金额" min-width="140" />
+                <el-table-column prop="status" label="状态" width="100" />
+              </el-table>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
-    </el-card>
+      <footer class="nt-pagination">
+        <div class="left">共 {{ orderRows.length }} 条</div>
+        <el-pagination background layout="prev, pager, next" :total="orderRows.length" :page-size="20" />
+        <div class="right">当前每页显示: 20</div>
+      </footer>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import {
-  TrendCharts,
-  DataAnalysis,
-  Timer,
-  User,
-  Monitor,
-} from '@element-plus/icons-vue';
+import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 
-const accountConfig = ref({
-  primaryAccount: '',
-  secondaryAccounts: [],
-  allocationRatio: 30,
-});
+// 行情
+const currentStock = ref({ name: '浦发银行', code: '600000', price: 7.49, change: 0.01, changePct: 0.0013 });
+const marketRows = ref(Array.from({ length: 10 }).map((_, i) => ({ ask: { price: 7.60 - i * 0.01, vol: 2000 + i * 100 }, bid: { price: 7.46 - i * 0.01, vol: 1800 + i * 100 } })));
 
-const runningStrategies = ref([
-  {
-    id: 1,
-    strategyName: '均线策略',
-    status: '运行中',
-    accounts: 3,
-    pnl: '+2,450.00',
-    startTime: '2024-01-15 09:00:00',
-  },
+// 多账号
+const accounts = ref([
+  { id: 'A01', name: '账户1', available: 884760.0 },
+  { id: 'A02', name: '账户2', available: 707258.0 },
+  { id: 'A03', name: '账户3', available: 120300.0 },
 ]);
+const selectedAccounts = ref(accounts.value.map((a) => a.id));
 
-const getStatusType = (status) => {
-  const types = {
-    运行中: 'success',
-    已停止: 'info',
-    异常: 'danger',
-  };
-  return types[status] || 'info';
+// 下单
+const orderForm = ref({ entrustType: 'BUY', symbol: '600000', priceType: 'fixed', price: 7.49, qty: 100 });
+const setQty = (n) => (orderForm.value.qty = n);
+const placeOrder = () => {
+  if (!orderForm.value.symbol || !orderForm.value.qty || selectedAccounts.value.length === 0) {
+    ElMessage.warning('请完善下单信息与选择账户');
+    return;
+  }
+  ElMessage.success('多账号指令已提交');
 };
 
-const startStrategy = (strategyType) => {
-  const strategyNames = {
-    ma: '均线策略',
-    quant: '量化策略',
-    hft: '高频策略',
-  };
-
-  ElMessage.success(`${strategyNames[strategyType]}已启动`);
-  console.log(`启动策略: ${strategyNames[strategyType]}`);
-};
-
-const stopStrategy = (strategy) => {
-  ElMessage.warning(`${strategy.strategyName}已停止`);
-  console.log(`停止策略: ${strategy.strategyName}`);
-};
-
-const viewDetails = (strategy) => {
-  ElMessage.info(`查看${strategy.strategyName}详情`);
-  console.log(`查看策略详情: ${strategy.strategyName}`);
-};
-
-const saveAccountConfig = () => {
-  ElMessage.success('账号配置已保存');
-  console.log('保存账号配置:', accountConfig.value);
-};
-
-onMounted(() => {
-  console.log('算法多账号交易页面加载完成');
+// 预览
+const previewRows = computed(() => {
+  const price = Number(orderForm.value.price) || 0;
+  const qty = Number(orderForm.value.qty) || 0;
+  return selectedAccounts.value.map((id) => {
+    const acc = accounts.value.find((a) => a.id === id);
+    const amount = price * qty;
+    return {
+      account: acc?.name || id,
+      symbol: orderForm.value.symbol,
+      side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
+      qty,
+      price: price ? price.toFixed(2) : '-',
+      amount: amount ? amount.toFixed(2) : '-',
+      available: (acc?.available ?? 0).toFixed(2),
+      buyable: Math.floor(((acc?.available ?? 0) / (price || 1)) / 100) * 100,
+    };
+  });
 });
+
+// 查询
+const activeTab = ref('order');
+const fundRows = computed(() => accounts.value.map((a) => ({ available: a.available.toFixed(2), frozen: (0).toFixed(2), marketValue: (0).toFixed(2), totalAssets: a.available.toFixed(2) })));
+const positionRows = ref([]);
+const orderRows = ref([
+  { account: '账户1', time: '2023-08-03 11:17:35', stockCode: '600000', type: '买入', strategy: 'TWAP', price: 7.49, quantity: 1000, dealt: 0, amount: 7490.0, market: '上交所', status: '已报' },
+]);
+const dealRows = ref([]);
 </script>
 
 <style scoped>
-.trading-page {
-  padding: 20px;
-}
+/* 与 NormalTrade 一致的布局与风格 */
+.nt-page { padding: 10px; color: inherit; background: transparent; height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
+.nt-top { display: grid; grid-template-columns: 260px 320px 1fr; gap: 16px; flex: 1 1 60%; min-height: 0; }
+.pane { background: #fff; border: 1px solid #ebeef5; border-radius: var(--radius, 8px); min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.pane-header { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; color: #303133; background: #f5f7fa; border-bottom: 1px solid #ebeef5; }
+.pane-header .title { font-weight: 600; }
+.pane-header .sub { font-size: 12px; color: #606266; }
+.pane .pane-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.scroll-y { overflow-y: auto; }
+.scroll-x { overflow-x: auto; width: 100%; }
+.scroll-x :deep(.el-table) { min-width: 900px; }
+.pane-query { margin-top: 16px; background: #fff; border: 1px solid #ebeef5; border-radius: var(--radius, 8px); flex: 1 1 40%; display: flex; flex-direction: column; min-height: 0; }
+.nt-tabs { padding: 0 6px; }
+.nt-pagination { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px 8px; color: #606266; border-top: 1px solid #ebeef5; }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+/* 行情样式 */
+.market-head { display: flex; align-items: flex-end; justify-content: space-between; padding: 10px; }
+.market-head .name { font-size: 14px; color: #606266; }
+.market-head .code { font-size: 12px; color: #909399; }
+.market-head .price { font-size: 22px; font-weight: 700; color: #303133; }
+.market-head .delta { font-size: 12px; }
+.market-head .delta.up { color: #2ecb70; }
+.market-head .delta.down { color: #ff6b6b; }
+.market-table { padding: 0 10px 10px; }
+.market-table table { width: 100%; border-collapse: collapse; }
+.market-table td { padding: 6px 4px; font-size: 12px; }
+.market-table .side { width: 42px; color: #8a9098; }
+.market-table .price { width: 70px; font-weight: 600; }
+.market-table .price.buy { color: #2ecb70; }
+.market-table .price.sell { color: #ff6b6b; }
+.market-table .sep td { height: 6px; border-top: 1px dashed #ebeef5; }
+.market-table .vol { text-align: right; color: #606266; }
 
-.card-header h2 {
-  margin: 0;
-  color: #333;
-}
-
-.card-header p {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
-}
-
-.strategy-card {
-  height: 100%;
-}
-
-.strategy-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.strategy-header .el-icon {
-  color: #409eff;
-}
-
-.strategy-content {
-  text-align: center;
-  padding: 10px 0;
-}
-
-.strategy-content p {
-  margin: 10px 0;
-  color: #666;
-  font-size: 14px;
-}
-
-.config-header,
-.status-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.config-header .el-icon,
-.status-header .el-icon {
-  color: #409eff;
-}
-
-.account-config,
-.strategy-status {
-  margin-top: 20px;
-}
+/* 下单 */
+.order-form { padding: 10px; }
+.quick-ops { display: flex; gap: 6px; }
 </style>
+
