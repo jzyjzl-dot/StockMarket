@@ -115,3 +115,8 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 node_modules
+
+# Ignore local test folders
+packages/frontend/src/test/
+packages/frontend/test/
+test/
