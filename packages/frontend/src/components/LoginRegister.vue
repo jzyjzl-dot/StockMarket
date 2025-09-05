@@ -1,8 +1,9 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
 import { useUserStore } from '../stores/userStore';
 import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import { User, Lock } from '@element-plus/icons-vue';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -22,8 +23,6 @@ watch(
   }
 );
 
-const isLogin = ref(true);
-
 const formData = ref({
   username: '',
   account: '',
@@ -42,39 +41,21 @@ onMounted(() => {
   }
 });
 
-const toggleMode = () => {
-  isLogin.value = !isLogin.value;
-  // 清除表单
-  formData.value = {
-    username: '',
-    account: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  };
-};
-
 const handleSubmit = async () => {
   try {
-    if (isLogin.value) {
-      await userStore.login(formData.value.account, formData.value.password);
-      ElMessage.success('登录成功');
-      router.push('/main');
-    } else {
-      if (formData.value.password === formData.value.confirmPassword) {
-        await userStore.register(
-          formData.value.username,
-          formData.value.email,
-          formData.value.password
-        );
-        alert('注册成功');
-        router.push('/main');
-      } else {
-        alert('密码不匹配');
-      }
-    }
+    await userStore.login(formData.value.account, formData.value.password);
+    ElMessage({
+      message: '登录成功',
+      type: 'success',
+      plain: true,
+    });
+    router.push('/main');
   } catch (error) {
-    alert(error.message);
+    ElMessage({
+      message: error.message,
+      type: 'error',
+      plain: true,
+    });
   }
 };
 </script>
@@ -84,46 +65,36 @@ const handleSubmit = async () => {
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
-          <span>{{ isLogin ? '登录' : '注册' }}</span>
+          <span>弈宸多券商交易系统</span>
         </div>
       </template>
-      <el-form :model="formData" label-width="80px">
-        <el-form-item v-if="!isLogin" label="用户名">
-          <el-input v-model="formData.username" placeholder="请输入用户名" />
-        </el-form-item>
-        <el-form-item v-if="isLogin" label="账号">
-          <el-input v-model="formData.account" placeholder="请输入账号" />
-        </el-form-item>
-        <el-form-item v-if="!isLogin" label="邮箱">
+      <el-form
+        :model="formData"
+        size="large"
+        class="center-form"
+        style="margin: 20px"
+      >
+        <el-form-item>
           <el-input
-            v-model="formData.email"
-            type="email"
-            placeholder="请输入邮箱"
+            v-model="formData.account"
+            placeholder="请输入账号"
+            :prefix-icon="User"
           />
         </el-form-item>
-        <el-form-item label="密码">
+        <el-form-item>
           <el-input
             v-model="formData.password"
             type="password"
             placeholder="请输入密码"
             show-password
-          />
-        </el-form-item>
-        <el-form-item v-if="!isLogin" label="确认密码">
-          <el-input
-            v-model="formData.confirmPassword"
-            type="password"
-            placeholder="请确认密码"
-            show-password
+            :prefix-icon="Lock"
+            @keyup.enter="handleSubmit"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSubmit">{{
-            isLogin ? '登录' : '注册'
-          }}</el-button>
-          <el-button @click="toggleMode">{{
-            isLogin ? '切换到注册' : '切换到登录'
-          }}</el-button>
+          <el-button type="primary" style="width: 250px" @click="handleSubmit">
+            登录
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -142,4 +113,9 @@ const handleSubmit = async () => {
 .card-header {
   text-align: center;
 }
+
+.center-form :deep(.el-form-item__content) {
+  justify-content: center;
+}
 </style>
+
