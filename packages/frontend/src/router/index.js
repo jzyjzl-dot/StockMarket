@@ -5,7 +5,7 @@ const routes = [
   {
     path: '/',
     name: 'Login',
-    component: () => import('../components/LoginRegister.vue'),
+    component: () => import('../components/LoginRegister_new.vue'),
   },
   {
     path: '/user-selection',
@@ -15,7 +15,7 @@ const routes = [
   {
     path: '/login',
     name: 'LoginAlt',
-    component: () => import('../components/LoginRegister.vue'),
+    component: () => import('../components/LoginRegister_new.vue'),
   },
   {
     path: '/main',
