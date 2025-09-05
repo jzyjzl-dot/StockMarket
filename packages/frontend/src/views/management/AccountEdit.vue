@@ -105,12 +105,14 @@
           </el-row>
         </div>
 
-        <el-table
-          :data="paginatedAccounts"
-          style="width: 100%"
-          max-height="500px"
-          stripe
-        >
+        <div class="table-wrapper">
+          <el-table
+            v-resizable-columns
+            :data="paginatedAccounts"
+            style="width: 100%"
+            max-height="500px"
+            stripe
+          >
           <el-table-column
             prop="id"
             label="ID"
@@ -176,7 +178,8 @@
               >
             </template>
           </el-table-column>
-        </el-table>
+          </el-table>
+        </div>
 
         <!-- 分页组件 -->
         <div
@@ -595,6 +598,16 @@ onMounted(() => {
 
 .content {
   margin-top: 20px;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  position: relative; /* 约束表格内部 fixed 列层级与裁剪 */
+}
+
+.table-wrapper .el-table {
+  min-width: 100%;
 }
 
 .search-bar {

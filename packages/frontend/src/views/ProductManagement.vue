@@ -26,7 +26,12 @@
         </div>
       </template>
 
-      <el-table v-loading="loading" :data="products" style="width: 100%">
+      <el-table
+        v-resizable-columns
+        v-loading="loading"
+        :data="products"
+        style="width: 100%"
+      >
         <el-table-column label="ID" width="80" align="center">
           <template #default="scope">
             {{ scope.$index + 1 }}

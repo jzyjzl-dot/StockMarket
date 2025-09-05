@@ -1,6 +1,6 @@
 <template>
   <div class="stock-preview">
-    <el-table :data="stocks" style="width: 100%">
+    <el-table v-resizable-columns :data="stocks" style="width: 100%">
       <el-table-column
         prop="name"
         label="股票名称"

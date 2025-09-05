@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue';
+import { ElMessage } from 'element-plus';
 import { useUserStore } from '../stores/userStore';
 import { useRouter } from 'vue-router';
 
@@ -57,7 +58,7 @@ const handleSubmit = async () => {
   try {
     if (isLogin.value) {
       await userStore.login(formData.value.account, formData.value.password);
-      alert('登录成功');
+      ElMessage.success('登录成功');
       router.push('/main');
     } else {
       if (formData.value.password === formData.value.confirmPassword) {

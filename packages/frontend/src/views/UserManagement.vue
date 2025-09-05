@@ -3,6 +3,7 @@
     <h2>用户管理</h2>
 
     <el-table
+      v-resizable-columns
       v-loading="loading"
       :data="users"
       style="width: 100%; max-width: 1200px"

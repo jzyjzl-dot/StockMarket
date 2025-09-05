@@ -1,7 +1,7 @@
 <script setup>
 import { useUserStore } from '../stores/userStore';
 import { ref, onMounted, watch } from 'vue';
-import { ArrowDown, Management, Money } from '@element-plus/icons-vue';
+import { ArrowDown, Management, Money, Fold, Expand } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 
 const userStore = useUserStore();
@@ -10,6 +10,7 @@ const router = useRouter();
 const dialogVisible = ref(false);
 const isLocked = ref(false);
 const unlockPassword = ref('');
+const isSidebarCollapsed = ref(false);
 
 onMounted(() => {
   const locked = localStorage.getItem('isLocked');
@@ -96,6 +97,10 @@ const unlock = () => {
     alert('密码错误');
   }
 };
+
+const toggleSidebar = () => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value;
+};
 </script>
 
 <template>
@@ -129,11 +134,24 @@ const unlock = () => {
 
     <div class="content">
       <!-- 左侧栏 -->
-      <aside class="sidebar">
+      <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
+        <div class="sidebar-header">
+          <el-button
+            size="small"
+            text
+            @click="toggleSidebar"
+            :title="isSidebarCollapsed ? '展开侧栏' : '收起侧栏'"
+          >
+            <el-icon>
+              <component :is="isSidebarCollapsed ? Expand : Fold" />
+            </el-icon>
+          </el-button>
+        </div>
         <el-menu
           :default-active="$route.path"
           class="el-menu-vertical-demo"
           :router="true"
+          :collapse="isSidebarCollapsed"
         >
           <el-menu-item index="/"> 首页 </el-menu-item>
           <el-menu-item index="/products"> 产品管理 </el-menu-item>
@@ -187,6 +205,17 @@ const unlock = () => {
           </el-sub-menu>
         </el-menu>
       </aside>
+
+      <!-- 收起后显示一个悬浮展开按钮，不占用布局宽度 -->
+      <div
+        v-if="isSidebarCollapsed"
+        class="sidebar-floating-toggle"
+        :title="'展开侧栏'"
+      >
+        <el-button circle size="small" @click="toggleSidebar">
+          <el-icon><Expand /></el-icon>
+        </el-button>
+      </div>
 
       <!-- 主内容区 -->
       <main class="main-content">
@@ -249,15 +278,16 @@ const unlock = () => {
 .main-layout {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
+  overflow-x: hidden; /* 避免页面级横向滚动 */
 }
 
 .top-bar {
   background-color: #333;
   color: white;
-  padding: 10px 20px;
+  padding: 0 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -281,7 +311,11 @@ const unlock = () => {
 .content {
   display: flex;
   flex: 1;
-  height: calc(100vh - 60px); /* 减去顶部栏的高度 */
+  /* 固定内容区高度，确保侧边栏内部滚动而非撑高页面 */
+  height: calc(100vh - var(--topbar-height));
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 .sidebar {
@@ -314,5 +348,50 @@ const unlock = () => {
 .main-content {
   flex: 1;
   padding: 20px;
+  overflow: auto; /* 允许内部滚动，避免裁剪内容 */
+  position: relative;
+  z-index: 1;
 }
+
+.sidebar {
+  width: 200px;
+  background-color: #f4f4f4;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative; /* 建立堆叠上下文 */
+  z-index: 10; /* 保持在主内容之上 */
+  transition: width 0.2s ease;
+}
+
+.sidebar-header {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  border: 0;
+}
+
+.sidebar.collapsed > * {
+  display: none; /* 收起时隐藏侧栏内部内容 */
+}
+
+.sidebar-floating-toggle {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 20;
+}
+
+/* 确保侧栏收起时主内容占满空间 */
+.sidebar { width: var(--sidebar-width); flex: 0 0 var(--sidebar-width); }
+.sidebar.collapsed { flex-basis: 0; }
+.main-content { min-width: 0; }
 </style>

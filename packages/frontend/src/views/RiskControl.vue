@@ -181,7 +181,7 @@
             </div>
           </template>
 
-          <el-table :data="blacklist" style="width: 100%" size="small">
+          <el-table v-resizable-columns :data="blacklist" style="width: 100%" size="small">
             <el-table-column prop="type" label="类型" width="100">
               <template #default="scope">
                 <el-tag
@@ -223,7 +223,7 @@
             </div>
           </template>
 
-          <el-table :data="riskLevels" style="width: 100%" size="small">
+          <el-table v-resizable-columns :data="riskLevels" style="width: 100%" size="small">
             <el-table-column prop="level" label="风险等级" width="120">
               <template #default="scope">
                 <el-tag :type="getRiskLevelTagType(scope.row.level)">

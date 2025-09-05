@@ -58,6 +58,7 @@
         </div>
 
         <el-table
+          v-resizable-columns
           :data="paginatedGroups"
           style="width: 100%"
           max-height="500px"
@@ -184,6 +185,7 @@
         </el-button>
       </div>
       <el-table
+        v-resizable-columns
         :data="groupAccounts"
         style="width: 100%"
         max-height="400px"
@@ -253,6 +255,7 @@
         </el-input>
       </div>
       <el-table
+        v-resizable-columns
         :data="filteredAvailableAccounts"
         style="width: 100%"
         max-height="300px"

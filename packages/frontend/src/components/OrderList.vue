@@ -22,6 +22,7 @@
     <!-- 表格容器 -->
     <div class="table-container">
       <el-table
+        v-resizable-columns
         v-if="paginatedOrders.length > 0"
         :data="paginatedOrders"
         style="width: 100%"

@@ -1,0 +1,65 @@
+:root {
+  --sidebar-width: 200px;
+  --topbar-height: 48px;
+  --content-padding: 20px;
+}
+
+html, body, #app {
+  height: 100%;
+}
+
+/* Keep a consistent desktop-like layout; allow horizontal scroll on small screens */
+/* Remove forced min-width to avoid default horizontal scrolling */
+
+.top-bar {
+  height: var(--topbar-height);
+}
+
+.content {
+  /* Let flexbox define remaining height; avoid brittle height calc */
+  height: auto !important;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+}
+
+.main-content {
+  padding: var(--content-padding) !important;
+}
+
+/* Tweak variables for narrower viewports while preserving similar structure */
+@media (max-width: 1366px) {
+  :root {
+    --sidebar-width: 180px;
+    --content-padding: 16px;
+  }
+}
+
+@media (max-width: 1200px) {
+  :root {
+    --sidebar-width: 160px;
+    --content-padding: 14px;
+  }
+}
+
+/* Global styles for column resizer handle */
+.el-table .el-table__header-wrapper thead th {
+  position: relative;
+}
+
+.col-resizer-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 2;
+}
+
+/* Slight visual affordance on hover without being intrusive */
+.col-resizer-handle:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
