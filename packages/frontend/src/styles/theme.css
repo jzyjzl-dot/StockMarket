@@ -1,0 +1,85 @@
+:root {
+  --radius: 8px;
+  --gap-xs: 6px;
+  --gap-sm: 12px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+  --text-color: #2c3e50;
+}
+
+html, body {
+  color: var(--text-color);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+h1, h2, h3, h4, h5 {
+  margin: 0;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 18px;
+}
+
+/* Page header: title + optional right actions */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap-md);
+}
+
+.page-header h2,
+.page-header > span,
+.page-header-title {
+  font-size: 18px;
+  color: var(--text-color);
+}
+
+.page-description {
+  margin-top: 2px;
+  color: #666;
+  font-size: 13px;
+}
+
+/* Normalize card header blocks used across pages */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+/* Common action button row */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap-sm);
+}
+
+/* Card tuning for consistency */
+.el-card {
+  border-radius: var(--radius);
+}
+
+.el-card__header {
+  padding: 12px 16px;
+}
+
+.el-card__body {
+  padding: 16px;
+}
+
+/* Table compactness balance */
+.el-table th .cell,
+.el-table td .cell {
+  /* Keep Element Plus defaults but ensure consistent text wrap behavior */
+  white-space: nowrap;
+}
+
+/* Section spacing helper: .section + .section increasing vertical rhythm */
+.section + .section {
+  margin-top: var(--gap-lg);
+}

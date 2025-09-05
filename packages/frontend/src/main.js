@@ -5,6 +5,7 @@ import 'element-plus/dist/index.css';
 import router from './router';
 import './style.css';
 import './styles/responsive.css';
+import './styles/theme.css';
 import resizableColumns from './directives/resizableColumns.js';
 import App from './App.vue';
 
