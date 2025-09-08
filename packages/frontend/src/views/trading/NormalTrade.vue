@@ -44,38 +44,63 @@
       <!-- 下单界面 -->
       <section class="pane pane-order">
         <header class="pane-header">
-          <div class="title">下单</div>
+          <div class="title">普通交易</div>
         </header>
         <div class="order-form pane-body scroll-y">
           <el-form :model="orderForm" label-width="84px" size="small">
-            <el-form-item label="委托类别">
-              <el-select v-model="orderForm.entrustType" style="width: 100%">
-                <el-option label="买入" value="BUY" />
-                <el-option label="卖出" value="SELL" />
+            <el-form-item label="委托账户">
+              <el-select v-model="orderForm.account" style="width: 100%">
+                <el-option label="全部账户" value="ALL" />
+                <el-option label="模拟账户" value="ACC1" />
               </el-select>
             </el-form-item>
-            <el-form-item label="证券代码">
-              <el-input v-model="orderForm.symbol" placeholder="如 600000" />
+            <el-form-item label="交易方向">
+              <el-radio-group v-model="orderForm.entrustType" size="small">
+                <el-radio-button label="BUY">买入</el-radio-button>
+                <el-radio-button label="SELL">卖出</el-radio-button>
+              </el-radio-group>
             </el-form-item>
-            <el-form-item label="委托价格">
+            <el-form-item label="证券代码">
+              <el-input v-model="orderForm.symbol" placeholder="如 600000">
+                <template #append>{{ currentStock.name }}</template>
+              </el-input>
+            </el-form-item>
+            <el-form-item label="价格类型">
               <el-select v-model="orderForm.priceType" style="width: 100%">
-                <el-option label="固定价格" value="fixed" />
+                <el-option label="限价" value="fixed" />
                 <el-option label="对手价" value="counter" />
                 <el-option label="排队价" value="queue" />
               </el-select>
             </el-form-item>
-            <el-form-item label="价格">
-              <el-input-number v-model="orderForm.price" :precision="2" :step="0.01" :min="0" style="width: 100%" />
+            <el-form-item label="委托价格">
+              <el-input-number v-model="orderForm.price" :precision="2" :step="0.01" :min="0" style="width: 100%" controls-position="right" />
+            </el-form-item>
+            <el-form-item label="委托策略">
+              <el-select v-model="orderForm.strategy" style="width: 100%">
+                <el-option label="固定数量" value="fixedQty" />
+                <el-option label="固定金额" value="fixedAmt" />
+                <el-option label="百分比" value="percentage" />
+              </el-select>
             </el-form-item>
             <el-form-item label="委托数量">
-              <el-input-number v-model="orderForm.qty" :min="0" :step="100" style="width: 100%" />
-            </el-form-item>
-            <el-form-item label="快捷数量">
-              <div class="quick-ops">
-                <el-button size="small" @click="setQty(100)">100</el-button>
-                <el-button size="small" @click="setQty(500)">500</el-button>
-                <el-button size="small" @click="setQty(1000)">1000</el-button>
+              <div style="display:flex; gap:8px; align-items:center; width:100%">
+                <el-input-number v-model="orderForm.qty" :min="0" :step="100" style="flex:1" />
+                <span>股</span>
               </div>
+            </el-form-item>
+            <el-form-item label="快捷比例">
+              <div class="quick-ops">
+                <el-button size="small" @click="setPercent(10)">10%</el-button>
+                <el-button size="small" @click="setPercent(20)">20%</el-button>
+                <el-button size="small" @click="setPercent(50)">50%</el-button>
+                <el-button size="small" @click="setPercent(100)">100%</el-button>
+              </div>
+            </el-form-item>
+            <el-form-item label="分配方式">
+              <el-select v-model="orderForm.distribution" style="width: 100%">
+                <el-option label="每账户固定数量" value="eachFixedQty" />
+                <el-option label="按账户可用资金比例" value="byProportion" />
+              </el-select>
             </el-form-item>
             <el-form-item label="账户可用">
               <div class="mono">{{ funds.available.toLocaleString() }}</div>
@@ -204,8 +229,23 @@ const marketRows = ref(
 
 // 资金、下单与预览
 const funds = ref({ available: 900000.0 });
-const orderForm = ref({ entrustType: 'BUY', symbol: '600000', priceType: 'fixed', price: 7.48, qty: 100 });
+const orderForm = ref({
+  account: 'ALL',
+  entrustType: 'BUY',
+  symbol: '600000',
+  priceType: 'fixed',
+  price: 7.48,
+  strategy: 'fixedQty',
+  qty: 100,
+  distribution: 'eachFixedQty',
+});
 const setQty = (n) => (orderForm.value.qty = n);
+const setPercent = (p) => {
+  const price = Number(orderForm.value.price) || 0;
+  const buyable = Math.floor(funds.value.available / (price || 1) / 100) * 100;
+  const target = Math.floor((buyable * (p / 100)) / 100) * 100;
+  orderForm.value.qty = target > 0 ? target : 0;
+};
 
 const previewRows = computed(() => {
   const qty = Number(orderForm.value.qty) || 0;

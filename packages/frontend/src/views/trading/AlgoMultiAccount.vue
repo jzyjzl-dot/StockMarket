@@ -48,6 +48,119 @@
       <section class="pane pane-order">
         <header class="pane-header"><div class="title">下单</div></header>
         <div class="order-form pane-body scroll-y">
+          <!-- 新版：算法交易 + 参数设置（两列） -->
+          <div class="algo-order-grid">
+            <div class="algo-col">
+              <h3 class="sub-title">算法交易</h3>
+              <el-form :model="orderForm" label-width="96px" size="small">
+                <el-form-item label="委托账户">
+                  <el-select v-model="orderForm.account" style="width: 100%">
+                    <el-option label="全部账户" value="ALL" />
+                    <el-option v-for="acc in accounts" :key="acc.id" :label="acc.name" :value="acc.id" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="证券代码">
+                  <el-input v-model="orderForm.symbol" placeholder="如 600000">
+                    <template #append>{{ currentStock.name }}</template>
+                  </el-input>
+                </el-form-item>
+                <el-form-item label="算法类型">
+                  <el-select v-model="orderForm.algoType" style="width: 100%">
+                    <el-option label="TWAP" value="TWAP" />
+                    <el-option label="VWAP" value="VWAP" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="算法实例">
+                  <el-input v-model="orderForm.algoInstance" placeholder="如 kf_twap_plus" />
+                </el-form-item>
+                <el-form-item label="委托时间">
+                  <div class="time-row">
+                    <el-time-select v-model="orderForm.startTime" :start="'09:30'" :end="'14:57'" :step="'00:01'" placeholder="开始" />
+                    <el-time-select v-model="orderForm.endTime" :start="'09:30'" :end="'15:00'" :step="'00:01'" placeholder="结束" />
+                  </div>
+                </el-form-item>
+                <el-form-item label="交易方向">
+                  <el-select v-model="orderForm.entrustType" style="width: 100%">
+                    <el-option label="普通买入" value="BUY" />
+                    <el-option label="普通卖出" value="SELL" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="价格类型">
+                  <el-select v-model="orderForm.priceType" style="width: 100%">
+                    <el-option label="限价" value="fixed" />
+                    <el-option label="对手价" value="counter" />
+                    <el-option label="排队价" value="queue" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="委托价格">
+                  <el-input-number v-model="orderForm.price" :precision="2" :step="0.01" :min="0" controls-position="right" style="width: 100%" />
+                </el-form-item>
+                <el-form-item label="委托策略">
+                  <el-select v-model="orderForm.strategy" style="width: 100%">
+                    <el-option label="固定数量" value="fixedQty" />
+                    <el-option label="固定金额" value="fixedAmt" />
+                    <el-option label="百分比" value="percentage" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="任务数量">
+                  <div class="qty-row">
+                    <el-input-number v-model="orderForm.qty" :min="0" :step="100" style="flex:1" />
+                    <span>股</span>
+                  </div>
+                </el-form-item>
+                <el-form-item label="分配方式">
+                  <el-select v-model="orderForm.distribution" style="width: 100%">
+                    <el-option label="每账户固定数量" value="eachFixedQty" />
+                    <el-option label="按账户可用资金比例" value="byProportion" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="danger" style="width: 100%" @click="placeOrder">{{ orderForm.entrustType === 'BUY' ? '买入' : '卖出' }}</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
+
+            <div class="algo-col">
+              <h3 class="sub-title">算法参数设置</h3>
+              <el-form :model="algoParams" label-width="96px" size="small">
+                <el-form-item label="盒子编号">
+                  <el-input v-model="algoParams.boxNo" placeholder="请输入" />
+                </el-form-item>
+                <el-form-item label="外部编号">
+                  <el-input v-model="algoParams.externalNo" placeholder="请输入" />
+                </el-form-item>
+                <el-form-item label="母单限价">
+                  <el-input-number v-model="algoParams.parentLimitPrice" :min="0" :step="0.01" controls-position="right" style="width:100%" />
+                </el-form-item>
+                <el-form-item label="涨幅限制(%)">
+                  <el-input-number v-model="algoParams.riseLimitPct" :min="0" :step="0.1" style="width:100%" />
+                </el-form-item>
+                <el-form-item label="跌幅限制(%)">
+                  <el-input-number v-model="algoParams.fallLimitPct" :min="0" :step="0.1" style="width:100%" />
+                </el-form-item>
+                <el-form-item label="滑点基点">
+                  <el-input-number v-model="algoParams.slippageBps" :min="0" :step="1" style="width:100%" />
+                </el-form-item>
+                <el-form-item label="涨跌停设置">
+                  <el-select v-model="algoParams.limitRule" style="width: 100%">
+                    <el-option label="涨停不卖跌停不买" value="strict" />
+                    <el-option label="不限制" value="none" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="盘口限制(元)">
+                  <el-input-number v-model="algoParams.orderbookLimit" :min="0" :step="0.01" style="width:100%" />
+                </el-form-item>
+                <el-form-item>
+                  <el-checkbox v-model="algoParams.execAfterExpire">过期后执行</el-checkbox>
+                </el-form-item>
+                <el-form-item>
+                  <el-checkbox v-model="algoParams.executeImmediately">立即交易</el-checkbox>
+                </el-form-item>
+              </el-form>
+            </div>
+          </div>
+
+          <!-- 旧版表单（隐藏） -->
           <el-form :model="orderForm" label-width="84px" size="small">
             <el-form-item label="委托类别">
               <el-select v-model="orderForm.entrustType" style="width: 100%">
@@ -200,7 +313,20 @@ const accounts = ref([
 const selectedAccounts = ref(accounts.value.map((a) => a.id));
 
 // 下单
-const orderForm = ref({ entrustType: 'BUY', symbol: '600000', priceType: 'fixed', price: 7.49, qty: 100 });
+const orderForm = ref({
+  account: 'ALL',
+  symbol: '600000',
+  algoType: 'TWAP',
+  algoInstance: 'kf_twap_plus',
+  startTime: '09:30',
+  endTime: '14:57',
+  entrustType: 'BUY',
+  priceType: 'fixed',
+  price: 7.49,
+  strategy: 'fixedQty',
+  qty: 1000,
+  distribution: 'eachFixedQty',
+});
 const setQty = (n) => (orderForm.value.qty = n);
 const placeOrder = () => {
   if (!orderForm.value.symbol || !orderForm.value.qty || selectedAccounts.value.length === 0) {
@@ -209,6 +335,19 @@ const placeOrder = () => {
   }
   ElMessage.success('多账号指令已提交');
 };
+// 算法参数设置
+const algoParams = ref({
+  boxNo: '',
+  externalNo: '',
+  parentLimitPrice: null,
+  riseLimitPct: null,
+  fallLimitPct: null,
+  slippageBps: null,
+  limitRule: 'strict',
+  orderbookLimit: null,
+  execAfterExpire: false,
+  executeImmediately: true,
+});
 
 // 预览
 const previewRows = computed(() => {
@@ -292,5 +431,18 @@ const dealRows = ref([]);
   overflow-x: auto;
   scrollbar-gutter: stable;
 }
+
+/* 本页：压缩预览宽度，扩大下单区域 */
+.nt-page .nt-top { grid-template-columns: 260px 640px 400px; }
+
+/* 两列下单栅格 */
+.algo-order-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; }
+.algo-col { min-width: 0; }
+.sub-title { margin: 6px 0 8px; font-weight: 600; }
+.time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.qty-row { display: flex; gap: 8px; align-items: center; }
+
+/* 隐藏旧版简单表单 */
+.order-form > el-form { display: none; }
 </style>
 
