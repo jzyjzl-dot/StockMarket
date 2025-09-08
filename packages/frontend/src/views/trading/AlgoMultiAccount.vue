@@ -45,7 +45,7 @@
       </section>
 
       <!-- 算法交易 -->
-      <section class="pane pane-order">
+      <section class="pane pane-algo-trade">
         <header class="pane-header"><div class="title">算法交易</div></header>
         <div class="pane-body scroll-y">
           <el-form :model="orderForm" label-width="96px" size="small">
@@ -56,7 +56,7 @@
               </el-select>
             </el-form-item>
             <el-form-item label="证券代码">
-              <el-input v-model="orderForm.symbol" placeholder="如 600000">
+              <el-input v-model="orderForm.symbol" placeholder="如600000">
                 <template #append>{{ currentStock.name }}</template>
               </el-input>
             </el-form-item>
@@ -67,7 +67,7 @@
               </el-select>
             </el-form-item>
             <el-form-item label="算法实例">
-              <el-input v-model="orderForm.algoInstance" placeholder="如 kf_twap_plus" />
+              <el-input v-model="orderForm.algoInstance" placeholder="如kf_twap_plus" />
             </el-form-item>
             <el-form-item label="委托时间">
               <div class="time-row">
@@ -118,7 +118,7 @@
       </section>
 
       <!-- 算法参数设置 -->
-      <section class="pane pane-params">
+      <section class="pane pane-algo-params">
         <header class="pane-header"><div class="title">算法参数设置</div></header>
         <div class="pane-body scroll-y">
           <el-form :model="algoParams" label-width="96px" size="small">
@@ -159,7 +159,7 @@
         </div>
       </section>
 
-      <!-- 预览 -->
+      <!-- 预览（多账号逐行�?-->
       <section class="pane pane-preview">
         <header class="pane-header">
           <div class="title">预览</div>
@@ -257,12 +257,9 @@ import { ElMessage } from 'element-plus';
 
 // 行情
 const currentStock = ref({ name: '浦发银行', code: '600000', price: 7.49, change: 0.01, changePct: 0.0013 });
-const marketRows = ref(Array.from({ length: 10 }).map((_, i) => ({
-  ask: { price: 7.60 - i * 0.01, vol: 2000 + i * 100 },
-  bid: { price: 7.46 - i * 0.01, vol: 1800 + i * 100 },
-})));
+const marketRows = ref(Array.from({ length: 10 }).map((_, i) => ({ ask: { price: 7.60 - i * 0.01, vol: 2000 + i * 100 }, bid: { price: 7.46 - i * 0.01, vol: 1800 + i * 100 } })));
 
-// 多账户
+// 多账�?
 const accounts = ref([
   { id: 'A01', name: '账户1', available: 884760.0 },
   { id: 'A02', name: '账户2', available: 707258.0 },
@@ -285,6 +282,7 @@ const orderForm = ref({
   qty: 1000,
   distribution: 'eachFixedQty',
 });
+const setQty = (n) => (orderForm.value.qty = n);
 const placeOrder = () => {
   if (!orderForm.value.symbol || !orderForm.value.qty || selectedAccounts.value.length === 0) {
     ElMessage.warning('请完善下单信息与选择账户');
@@ -292,6 +290,19 @@ const placeOrder = () => {
   }
   ElMessage.success('多账号指令已提交');
 };
+// 算法参数设置
+const algoParams = ref({
+  boxNo: '',
+  externalNo: '',
+  parentLimitPrice: null,
+  riseLimitPct: null,
+  fallLimitPct: null,
+  slippageBps: null,
+  limitRule: 'strict',
+  orderbookLimit: null,
+  execAfterExpire: false,
+  executeImmediately: true,
+});
 
 // 预览
 const previewRows = computed(() => {
@@ -326,12 +337,7 @@ const totalAvailable = computed(() =>
 
 // 查询
 const activeTab = ref('order');
-const fundRows = computed(() => accounts.value.map((a) => ({
-  available: a.available.toFixed(2),
-  frozen: (0).toFixed(2),
-  marketValue: (0).toFixed(2),
-  totalAssets: a.available.toFixed(2),
-})));
+const fundRows = computed(() => accounts.value.map((a) => ({ available: a.available.toFixed(2), frozen: (0).toFixed(2), marketValue: (0).toFixed(2), totalAssets: a.available.toFixed(2) })));
 const positionRows = ref([]);
 const orderRows = ref([
   { account: '账户1', time: '2023-08-03 11:17:35', stockCode: '600000', type: '买入', strategy: 'TWAP', price: 7.49, quantity: 1000, dealt: 0, amount: 7490.0, market: '上交所', status: '已报' },
@@ -340,6 +346,7 @@ const dealRows = ref([]);
 </script>
 
 <style scoped>
+/* �?NormalTrade 一致的布局与风�?*/
 .scroll-x :deep(.el-table) { min-width: 900px; }
 
 /* 行情样式 */
@@ -360,9 +367,74 @@ const dealRows = ref([]);
 .market-table .sep td { height: 6px; border-top: 1px dashed #ebeef5; }
 .market-table .vol { text-align: right; color: #606266; }
 
-/* 四列：行情 / 算法交易 / 参数设置 / 预览 */
-.nt-page .nt-top { display: grid; grid-template-columns: 260px 320px 320px 1fr; gap: 16px; }
+/* 所有顶部面板保持统一高度 */
+.pane-market .pane-body,
+.pane-algo-trade .pane-body,
+.pane-algo-params .pane-body,
+.pane-preview .pane-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px; /* 给栅格留一些外边距 */
+}
+.quick-ops { display: flex; gap: 6px; }
 
+/* 横向溢出时使用滚动条 */
+.scroll-x :deep(.el-table) { min-width: 900px; }
+
+/* 修复查询面板标签切换时的抖动问题 */
+.pane-query .el-tabs__content {
+  /* 固定标签页内容区域的最小高度，防止不同标签页高度不一致导致抖�?*/
+  min-height: 300px;
+}
+
+/* 稳定滚动条布局 */
+.scroll-x {
+  /* 始终为滚动条预留空间，避免滚动条出现/消失时的布局变化 */
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+
+/* 本页：四列布局 - 行情、算法交易、算法参数设置、预览 */
+.nt-page .nt-top { grid-template-columns: 260px 320px 320px 1fr; }
+
+/* 预览表格占满剩余宽度 */
+.pane-preview .scroll-x {
+  width: 100%;
+}
+
+.pane-preview .scroll-x .el-table {
+  /* 确保表格能够利用所有可用宽�?*/
+  width: 100% !important;
+  min-width: 800px; /* 设置最小宽度确保表格不会过度压�?*/
+}
+
+/* 让某些列能够自适应宽度 */
+.pane-preview .el-table .el-table__body-wrapper {
+  overflow-x: auto;
+}
+
+/* 行情合计样式 */
+.preview-summary {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background-color: #f5f7fa;
+  border-top: 1px solid #e4e7ed;
+  font-size: 12px;
+  color: #606266;
+  margin-top: auto; /* 推到底部 */
+}
+
+.preview-summary .mono {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: 600;
+}
+
+
+.sub-title { margin: 6px 0 8px; font-weight: 600; }
 .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .qty-row { display: flex; gap: 8px; align-items: center; }
 </style>
+
+
