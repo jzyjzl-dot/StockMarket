@@ -63,10 +63,11 @@ html, body {
   min-height: 0;
 }
 
-.pane-market, .pane-order, .pane-preview { height: 460px; }
+.pane-market, .pane-order, .pane-preview, .pane-params { height: 460px; }
 .nt-page .pane-market,
 .nt-page .pane-order,
-.nt-page .pane-preview { height: 460px; }
+.nt-page .pane-preview,
+.nt-page .pane-params { height: 460px; }
 
 .pane-header {
   height: 44px;
