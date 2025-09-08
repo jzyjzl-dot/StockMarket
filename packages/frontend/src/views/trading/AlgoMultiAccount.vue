@@ -12,8 +12,17 @@
             </div>
             <div class="price-box">
               <div class="price">{{ currentStock.price.toFixed(2) }}</div>
-              <div class="delta" :class="{ up: currentStock.change >= 0, down: currentStock.change < 0 }">
-                <span>{{ currentStock.change >= 0 ? '+' : '' }}{{ currentStock.change.toFixed(2) }}</span>
+              <div
+                class="delta"
+                :class="{
+                  up: currentStock.change >= 0,
+                  down: currentStock.change < 0,
+                }"
+              >
+                <span
+                  >{{ currentStock.change >= 0 ? '+' : ''
+                  }}{{ currentStock.change.toFixed(2) }}</span
+                >
                 <span>({{ (currentStock.changePct * 100).toFixed(2) }}%)</span>
               </div>
             </div>
@@ -26,7 +35,9 @@
                   <td class="price sell">{{ row.ask.price.toFixed(2) }}</td>
                   <td class="vol">{{ row.ask.vol }}</td>
                 </tr>
-                <tr class="sep"><td colspan="3"></td></tr>
+                <tr class="sep">
+                  <td colspan="3"></td>
+                </tr>
                 <tr v-for="(row, idx) in marketRows" :key="'bid-' + idx">
                   <td class="side buy">买{{ idx + 1 }}</td>
                   <td class="price buy">{{ row.bid.price.toFixed(2) }}</td>
@@ -52,7 +63,12 @@
             <el-form-item label="委托账户">
               <el-select v-model="orderForm.account" style="width: 100%">
                 <el-option label="全部账户" value="ALL" />
-                <el-option v-for="acc in accounts" :key="acc.id" :label="acc.name" :value="acc.id" />
+                <el-option
+                  v-for="acc in accounts"
+                  :key="acc.id"
+                  :label="acc.name"
+                  :value="acc.id"
+                />
               </el-select>
             </el-form-item>
             <el-form-item label="证券代码">
@@ -67,12 +83,27 @@
               </el-select>
             </el-form-item>
             <el-form-item label="算法实例">
-              <el-input v-model="orderForm.algoInstance" placeholder="如kf_twap_plus" />
+              <el-input
+                v-model="orderForm.algoInstance"
+                placeholder="如kf_twap_plus"
+              />
             </el-form-item>
             <el-form-item label="委托时间">
               <div class="time-row">
-                <el-time-select v-model="orderForm.startTime" :start="'09:30'" :end="'14:57'" :step="'00:01'" placeholder="开始" />
-                <el-time-select v-model="orderForm.endTime" :start="'09:30'" :end="'15:00'" :step="'00:01'" placeholder="结束" />
+                <el-time-select
+                  v-model="orderForm.startTime"
+                  :start="'09:30'"
+                  :end="'14:57'"
+                  :step="'00:01'"
+                  placeholder="开始"
+                />
+                <el-time-select
+                  v-model="orderForm.endTime"
+                  :start="'09:30'"
+                  :end="'15:00'"
+                  :step="'00:01'"
+                  placeholder="结束"
+                />
               </div>
             </el-form-item>
             <el-form-item label="交易方向">
@@ -89,7 +120,14 @@
               </el-select>
             </el-form-item>
             <el-form-item label="委托价格">
-              <el-input-number v-model="orderForm.price" :precision="2" :step="0.01" :min="0" controls-position="right" style="width: 100%" />
+              <el-input-number
+                v-model="orderForm.price"
+                :precision="2"
+                :step="0.01"
+                :min="0"
+                controls-position="right"
+                style="width: 100%"
+              />
             </el-form-item>
             <el-form-item label="委托策略">
               <el-select v-model="orderForm.strategy" style="width: 100%">
@@ -100,7 +138,12 @@
             </el-form-item>
             <el-form-item label="任务数量">
               <div class="qty-row">
-                <el-input-number v-model="orderForm.qty" :min="0" :step="100" style="flex:1" />
+                <el-input-number
+                  v-model="orderForm.qty"
+                  :min="0"
+                  :step="100"
+                  style="flex: 1"
+                />
                 <span>股</span>
               </div>
             </el-form-item>
@@ -111,7 +154,14 @@
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-button type="danger" style="width: 100%" @click="placeOrder">{{ orderForm.entrustType === 'BUY' ? '买入' : '卖出' }}</el-button>
+              <el-button
+                type="danger"
+                style="width: 100%"
+                @click="placeOrder"
+                >{{
+                  orderForm.entrustType === 'BUY' ? '买入' : '卖出'
+                }}</el-button
+              >
             </el-form-item>
           </el-form>
         </div>
@@ -119,7 +169,9 @@
 
       <!-- 算法参数设置 -->
       <section class="pane pane-algo-params">
-        <header class="pane-header"><div class="title">算法参数设置</div></header>
+        <header class="pane-header">
+          <div class="title">算法参数设置</div>
+        </header>
         <div class="pane-body scroll-y">
           <el-form :model="algoParams" label-width="96px" size="small">
             <el-form-item label="盒子编号">
@@ -129,16 +181,37 @@
               <el-input v-model="algoParams.externalNo" placeholder="请输入" />
             </el-form-item>
             <el-form-item label="母单限价">
-              <el-input-number v-model="algoParams.parentLimitPrice" :min="0" :step="0.01" controls-position="right" style="width:100%" />
+              <el-input-number
+                v-model="algoParams.parentLimitPrice"
+                :min="0"
+                :step="0.01"
+                controls-position="right"
+                style="width: 100%"
+              />
             </el-form-item>
             <el-form-item label="涨幅限制(%)">
-              <el-input-number v-model="algoParams.riseLimitPct" :min="0" :step="0.1" style="width:100%" />
+              <el-input-number
+                v-model="algoParams.riseLimitPct"
+                :min="0"
+                :step="0.1"
+                style="width: 100%"
+              />
             </el-form-item>
             <el-form-item label="跌幅限制(%)">
-              <el-input-number v-model="algoParams.fallLimitPct" :min="0" :step="0.1" style="width:100%" />
+              <el-input-number
+                v-model="algoParams.fallLimitPct"
+                :min="0"
+                :step="0.1"
+                style="width: 100%"
+              />
             </el-form-item>
             <el-form-item label="滑点基点">
-              <el-input-number v-model="algoParams.slippageBps" :min="0" :step="1" style="width:100%" />
+              <el-input-number
+                v-model="algoParams.slippageBps"
+                :min="0"
+                :step="1"
+                style="width: 100%"
+              />
             </el-form-item>
             <el-form-item label="涨跌停设置">
               <el-select v-model="algoParams.limitRule" style="width: 100%">
@@ -147,13 +220,22 @@
               </el-select>
             </el-form-item>
             <el-form-item label="盘口限制(元)">
-              <el-input-number v-model="algoParams.orderbookLimit" :min="0" :step="0.01" style="width:100%" />
+              <el-input-number
+                v-model="algoParams.orderbookLimit"
+                :min="0"
+                :step="0.01"
+                style="width: 100%"
+              />
             </el-form-item>
             <el-form-item>
-              <el-checkbox v-model="algoParams.execAfterExpire">过期后执行</el-checkbox>
+              <el-checkbox v-model="algoParams.execAfterExpire"
+                >过期后执行</el-checkbox
+              >
             </el-form-item>
             <el-form-item>
-              <el-checkbox v-model="algoParams.executeImmediately">立即交易</el-checkbox>
+              <el-checkbox v-model="algoParams.executeImmediately"
+                >立即交易</el-checkbox
+              >
             </el-form-item>
           </el-form>
         </div>
@@ -163,11 +245,20 @@
       <section class="pane pane-preview">
         <header class="pane-header">
           <div class="title">预览</div>
-          <div class="sub">账户数：{{ selectedAccounts.length }}  委托笔数：{{ previewRows.length }}</div>
+          <div class="sub">
+            账户数：{{ selectedAccounts.length }} 委托笔数：{{
+              previewRows.length
+            }}
+          </div>
         </header>
         <div class="pane-body">
           <div class="scroll-x">
-            <el-table v-resizable-columns :data="previewRows" size="small" style="width: 100%">
+            <el-table
+              v-resizable-columns
+              :data="previewRows"
+              size="small"
+              style="width: 100%"
+            >
               <el-table-column type="selection" width="44" />
               <el-table-column prop="account" label="账户" width="120" />
               <el-table-column prop="symbol" label="证券代码" width="120" />
@@ -175,8 +266,16 @@
               <el-table-column prop="qty" label="委托量" width="100" />
               <el-table-column prop="price" label="委托价" width="100" />
               <el-table-column prop="amount" label="委托金额" min-width="140" />
-              <el-table-column prop="available" label="可用资金" min-width="140" />
-              <el-table-column prop="buyable" label="可买数量" min-width="100" />
+              <el-table-column
+                prop="available"
+                label="可用资金"
+                min-width="140"
+              />
+              <el-table-column
+                prop="buyable"
+                label="可买数量"
+                min-width="100"
+              />
             </el-table>
           </div>
         </div>
@@ -190,38 +289,76 @@
         <el-tabs v-model="activeTab" type="card" class="nt-tabs">
           <el-tab-pane label="资金" name="fund">
             <div class="scroll-x">
-              <el-table v-resizable-columns :data="fundRows" size="small" style="width: 100%" height="260">
-                <el-table-column prop="available" label="可用资金" width="140" />
+              <el-table
+                v-resizable-columns
+                :data="fundRows"
+                size="small"
+                style="width: 100%"
+                height="260"
+              >
+                <el-table-column
+                  prop="available"
+                  label="可用资金"
+                  width="140"
+                />
                 <el-table-column prop="frozen" label="冻结资金" width="140" />
                 <el-table-column prop="marketValue" label="市值" width="140" />
-                <el-table-column prop="totalAssets" label="总资产" width="160" />
+                <el-table-column
+                  prop="totalAssets"
+                  label="总资产"
+                  width="160"
+                />
               </el-table>
             </div>
           </el-tab-pane>
           <el-tab-pane label="持仓" name="pos">
             <div class="scroll-x">
-              <el-table v-resizable-columns :data="positionRows" size="small" style="width: 100%" height="260">
+              <el-table
+                v-resizable-columns
+                :data="positionRows"
+                size="small"
+                style="width: 100%"
+                height="260"
+              >
                 <el-table-column prop="symbol" label="证券代码" width="120" />
                 <el-table-column prop="name" label="证券名称" width="140" />
                 <el-table-column prop="quantity" label="持仓数量" width="100" />
                 <el-table-column prop="cost" label="持仓成本" width="100" />
                 <el-table-column prop="marketPrice" label="现价" width="100" />
-                <el-table-column prop="marketValue" label="市值" min-width="140" />
+                <el-table-column
+                  prop="marketValue"
+                  label="市值"
+                  min-width="140"
+                />
               </el-table>
             </div>
           </el-tab-pane>
           <el-tab-pane label="委托" name="order">
             <div class="scroll-x">
-              <el-table v-resizable-columns :data="orderRows" size="small" style="width: 100%" height="260">
+              <el-table
+                v-resizable-columns
+                :data="orderRows"
+                size="small"
+                style="width: 100%"
+                height="260"
+              >
                 <el-table-column prop="account" label="账户" width="100" />
                 <el-table-column prop="time" label="委托时间" width="160" />
-                <el-table-column prop="stockCode" label="证券代码" width="120" />
+                <el-table-column
+                  prop="stockCode"
+                  label="证券代码"
+                  width="120"
+                />
                 <el-table-column prop="type" label="方向" width="80" />
                 <el-table-column prop="strategy" label="算法" width="120" />
                 <el-table-column prop="price" label="委托价" width="100" />
                 <el-table-column prop="quantity" label="委托量" width="100" />
                 <el-table-column prop="dealt" label="成交量" width="100" />
-                <el-table-column prop="amount" label="委托金额" min-width="140" />
+                <el-table-column
+                  prop="amount"
+                  label="委托金额"
+                  min-width="140"
+                />
                 <el-table-column prop="market" label="市场" width="100" />
                 <el-table-column prop="status" label="状态" width="100" />
               </el-table>
@@ -229,13 +366,27 @@
           </el-tab-pane>
           <el-tab-pane label="成交" name="deal">
             <div class="scroll-x">
-              <el-table v-resizable-columns :data="dealRows" size="small" style="width: 100%" height="260">
+              <el-table
+                v-resizable-columns
+                :data="dealRows"
+                size="small"
+                style="width: 100%"
+                height="260"
+              >
                 <el-table-column prop="time" label="时间" width="160" />
-                <el-table-column prop="stockCode" label="证券代码" width="120" />
+                <el-table-column
+                  prop="stockCode"
+                  label="证券代码"
+                  width="120"
+                />
                 <el-table-column prop="type" label="方向" width="80" />
                 <el-table-column prop="price" label="成交价" width="100" />
                 <el-table-column prop="quantity" label="成交量" width="100" />
-                <el-table-column prop="amount" label="成交金额" min-width="140" />
+                <el-table-column
+                  prop="amount"
+                  label="成交金额"
+                  min-width="140"
+                />
                 <el-table-column prop="status" label="状态" width="100" />
               </el-table>
             </div>
@@ -244,7 +395,12 @@
       </div>
       <footer class="nt-pagination">
         <div class="left">共 {{ orderRows.length }} 条</div>
-        <el-pagination background layout="prev, pager, next" :total="orderRows.length" :page-size="20" />
+        <el-pagination
+          background
+          layout="prev, pager, next"
+          :total="orderRows.length"
+          :page-size="20"
+        />
         <div class="right">当前每页显示: 20</div>
       </footer>
     </section>
@@ -256,8 +412,19 @@ import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 
 // 行情
-const currentStock = ref({ name: '浦发银行', code: '600000', price: 7.49, change: 0.01, changePct: 0.0013 });
-const marketRows = ref(Array.from({ length: 10 }).map((_, i) => ({ ask: { price: 7.60 - i * 0.01, vol: 2000 + i * 100 }, bid: { price: 7.46 - i * 0.01, vol: 1800 + i * 100 } })));
+const currentStock = ref({
+  name: '浦发银行',
+  code: '600000',
+  price: 7.49,
+  change: 0.01,
+  changePct: 0.0013,
+});
+const marketRows = ref(
+  Array.from({ length: 10 }).map((_, i) => ({
+    ask: { price: 7.6 - i * 0.01, vol: 2000 + i * 100 },
+    bid: { price: 7.46 - i * 0.01, vol: 1800 + i * 100 },
+  }))
+);
 
 // 多账�?
 const accounts = ref([
@@ -282,9 +449,12 @@ const orderForm = ref({
   qty: 1000,
   distribution: 'eachFixedQty',
 });
-const setQty = (n) => (orderForm.value.qty = n);
 const placeOrder = () => {
-  if (!orderForm.value.symbol || !orderForm.value.qty || selectedAccounts.value.length === 0) {
+  if (
+    !orderForm.value.symbol ||
+    !orderForm.value.qty ||
+    selectedAccounts.value.length === 0
+  ) {
     ElMessage.warning('请完善下单信息与选择账户');
     return;
   }
@@ -319,13 +489,16 @@ const previewRows = computed(() => {
       price: price ? price.toFixed(2) : '-',
       amount: amount ? amount.toFixed(2) : '-',
       available: (acc?.available ?? 0).toFixed(2),
-      buyable: Math.floor(((acc?.available ?? 0) / (price || 1)) / 100) * 100,
+      buyable: Math.floor((acc?.available ?? 0) / (price || 1) / 100) * 100,
     };
   });
 });
 
 const totalPrice = computed(() =>
-  previewRows.value.reduce((sum, r) => sum + (r.amount === '-' ? 0 : Number(r.amount)), 0)
+  previewRows.value.reduce(
+    (sum, r) => sum + (r.amount === '-' ? 0 : Number(r.amount)),
+    0
+  )
 );
 
 const totalAvailable = computed(() =>
@@ -337,35 +510,146 @@ const totalAvailable = computed(() =>
 
 // 查询
 const activeTab = ref('order');
-const fundRows = computed(() => accounts.value.map((a) => ({ available: a.available.toFixed(2), frozen: (0).toFixed(2), marketValue: (0).toFixed(2), totalAssets: a.available.toFixed(2) })));
+const fundRows = computed(() =>
+  accounts.value.map((a) => ({
+    available: a.available.toFixed(2),
+    frozen: (0).toFixed(2),
+    marketValue: (0).toFixed(2),
+    totalAssets: a.available.toFixed(2),
+  }))
+);
 const positionRows = ref([]);
 const orderRows = ref([
-  { account: '账户1', time: '2023-08-03 11:17:35', stockCode: '600000', type: '买入', strategy: 'TWAP', price: 7.49, quantity: 1000, dealt: 0, amount: 7490.0, market: '上交所', status: '已报' },
+  {
+    account: '账户1',
+    time: '2023-08-03 11:17:35',
+    stockCode: '600000',
+    type: '买入',
+    strategy: 'TWAP',
+    price: 7.49,
+    quantity: 1000,
+    dealt: 0,
+    amount: 7490.0,
+    market: '上交所',
+    status: '已报',
+  },
 ]);
 const dealRows = ref([]);
 </script>
 
 <style scoped>
-/* �?NormalTrade 一致的布局与风�?*/
-.scroll-x :deep(.el-table) { min-width: 900px; }
+/* 页面骨架与布局：统一为组件内样式（不依赖全局） */
+.nt-page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+}
+.nt-top {
+  display: grid;
+  grid-template-columns: 260px 320px 320px 1fr; /* 行情 / 算法交易 / 参数 / 预览 */
+  gap: 12px;
+  align-items: stretch;
+  min-height: 220px;
+}
+
+/* 卡片面板 */
+.pane {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.pane-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pane-header .title {
+  font-weight: 600;
+  color: #303133;
+}
+.pane-body {
+  flex: 1;
+  min-height: 0;
+}
+.scroll-y {
+  overflow-y: auto;
+}
+
+/* 表格横向溢出支持 */
+.scroll-x :deep(.el-table) {
+  min-width: 900px;
+}
 
 /* 行情样式 */
-.market-head { display: flex; align-items: flex-end; justify-content: space-between; padding: 10px; }
-.market-head .name { font-size: 14px; color: #606266; }
-.market-head .code { font-size: 12px; color: #909399; }
-.market-head .price { font-size: 22px; font-weight: 700; color: #303133; }
-.market-head .delta { font-size: 12px; }
-.market-head .delta.up { color: #2ecb70; }
-.market-head .delta.down { color: #ff6b6b; }
-.market-table { padding: 0 10px 10px; }
-.market-table table { width: 100%; border-collapse: collapse; }
-.market-table td { padding: 6px 4px; font-size: 12px; }
-.market-table .side { width: 42px; color: #8a9098; }
-.market-table .price { width: 70px; font-weight: 600; }
-.market-table .price.buy { color: #2ecb70; }
-.market-table .price.sell { color: #ff6b6b; }
-.market-table .sep td { height: 6px; border-top: 1px dashed #ebeef5; }
-.market-table .vol { text-align: right; color: #606266; }
+.market-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 10px;
+}
+.market-head .name {
+  font-size: 14px;
+  color: #606266;
+}
+.market-head .code {
+  font-size: 12px;
+  color: #909399;
+}
+.market-head .price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #303133;
+}
+.market-head .delta {
+  font-size: 12px;
+}
+.market-head .delta.up {
+  color: #2ecb70;
+}
+.market-head .delta.down {
+  color: #ff6b6b;
+}
+.market-table {
+  padding: 0 10px 10px;
+}
+.market-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.market-table td {
+  padding: 6px 4px;
+  font-size: 12px;
+}
+.market-table .side {
+  width: 42px;
+  color: #8a9098;
+}
+.market-table .price {
+  width: 70px;
+  font-weight: 600;
+}
+.market-table .price.buy {
+  color: #2ecb70;
+}
+.market-table .price.sell {
+  color: #ff6b6b;
+}
+.market-table .sep td {
+  height: 6px;
+  border-top: 1px dashed #ebeef5;
+}
+.market-table .vol {
+  text-align: right;
+  color: #606266;
+}
 
 /* 所有顶部面板保持统一高度 */
 .pane-market .pane-body,
@@ -377,10 +661,15 @@ const dealRows = ref([]);
   height: 100%;
   padding: 10px; /* 给栅格留一些外边距 */
 }
-.quick-ops { display: flex; gap: 6px; }
+.quick-ops {
+  display: flex;
+  gap: 6px;
+}
 
 /* 横向溢出时使用滚动条 */
-.scroll-x :deep(.el-table) { min-width: 900px; }
+.scroll-x :deep(.el-table) {
+  min-width: 900px;
+}
 
 /* 修复查询面板标签切换时的抖动问题 */
 .pane-query .el-tabs__content {
@@ -396,7 +685,9 @@ const dealRows = ref([]);
 }
 
 /* 本页：四列布局 - 行情、算法交易、算法参数设置、预览 */
-.nt-page .nt-top { grid-template-columns: 260px 320px 320px 1fr; }
+.nt-page .nt-top {
+  grid-template-columns: 260px 320px 320px 1fr;
+}
 
 /* 预览表格占满剩余宽度 */
 .pane-preview .scroll-x {
@@ -431,10 +722,18 @@ const dealRows = ref([]);
   font-weight: 600;
 }
 
-
-.sub-title { margin: 6px 0 8px; font-weight: 600; }
-.time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.qty-row { display: flex; gap: 8px; align-items: center; }
+.sub-title {
+  margin: 6px 0 8px;
+  font-weight: 600;
+}
+.time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.qty-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 </style>
-
-
