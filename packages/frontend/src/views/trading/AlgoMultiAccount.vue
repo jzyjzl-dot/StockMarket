@@ -36,6 +36,12 @@
             </table>
           </div>
         </div>
+        <div class="preview-summary">
+          <span>合计</span>
+          <span class="mono">{{ totalPrice.toFixed(2) }}</span>
+          <span class="mono">{{ totalAvailable.toFixed(2) }}</span>
+          <span class="mono">0</span>
+        </div>
       </section>
 
       <!-- 下单（多账号） -->
@@ -89,7 +95,7 @@
       <section class="pane pane-preview">
         <header class="pane-header">
           <div class="title">预览</div>
-          <div class="sub">账户数：{{ previewRows.length }}</div>
+          <div class="sub">账户数：{{ selectedAccounts.length }}  委托笔数：{{ previewRows.length }}</div>
         </header>
         <div class="pane-body">
           <div class="scroll-x">
@@ -97,12 +103,12 @@
               <el-table-column type="selection" width="44" />
               <el-table-column prop="account" label="账户" width="120" />
               <el-table-column prop="symbol" label="证券代码" width="120" />
-              <el-table-column prop="side" label="方向" width="80" />
+              <el-table-column prop="side" label="方向" width="90" />
               <el-table-column prop="qty" label="委托量" width="100" />
               <el-table-column prop="price" label="委托价" width="100" />
               <el-table-column prop="amount" label="委托金额" min-width="140" />
               <el-table-column prop="available" label="可用资金" min-width="140" />
-              <el-table-column prop="buyable" label="可买数量" width="120" />
+              <el-table-column prop="buyable" label="可买数量" width="100" />
             </el-table>
           </div>
         </div>
@@ -116,7 +122,7 @@
         <el-tabs v-model="activeTab" type="card" class="nt-tabs">
           <el-tab-pane label="资金" name="fund">
             <div class="scroll-x">
-              <el-table v-resizable-columns :data="fundRows" size="small" style="width: 100%">
+              <el-table v-resizable-columns :data="fundRows" size="small" style="width: 100%" height="260">
                 <el-table-column prop="available" label="可用资金" width="140" />
                 <el-table-column prop="frozen" label="冻结资金" width="140" />
                 <el-table-column prop="marketValue" label="市值" width="140" />
@@ -126,7 +132,7 @@
           </el-tab-pane>
           <el-tab-pane label="持仓" name="pos">
             <div class="scroll-x">
-              <el-table v-resizable-columns :data="positionRows" size="small" style="width: 100%">
+              <el-table v-resizable-columns :data="positionRows" size="small" style="width: 100%" height="260">
                 <el-table-column prop="symbol" label="证券代码" width="120" />
                 <el-table-column prop="name" label="证券名称" width="140" />
                 <el-table-column prop="quantity" label="持仓数量" width="100" />
@@ -138,7 +144,7 @@
           </el-tab-pane>
           <el-tab-pane label="委托" name="order">
             <div class="scroll-x">
-              <el-table v-resizable-columns :data="orderRows" size="small" style="width: 100%">
+              <el-table v-resizable-columns :data="orderRows" size="small" style="width: 100%" height="260">
                 <el-table-column prop="account" label="账户" width="100" />
                 <el-table-column prop="time" label="委托时间" width="160" />
                 <el-table-column prop="stockCode" label="证券代码" width="120" />
@@ -155,7 +161,7 @@
           </el-tab-pane>
           <el-tab-pane label="成交" name="deal">
             <div class="scroll-x">
-              <el-table v-resizable-columns :data="dealRows" size="small" style="width: 100%">
+              <el-table v-resizable-columns :data="dealRows" size="small" style="width: 100%" height="260">
                 <el-table-column prop="time" label="时间" width="160" />
                 <el-table-column prop="stockCode" label="证券代码" width="120" />
                 <el-table-column prop="type" label="方向" width="80" />
@@ -224,6 +230,17 @@ const previewRows = computed(() => {
   });
 });
 
+const totalPrice = computed(() =>
+  previewRows.value.reduce((sum, r) => sum + (r.amount === '-' ? 0 : Number(r.amount)), 0)
+);
+
+const totalAvailable = computed(() =>
+  selectedAccounts.value.reduce((sum, id) => {
+    const acc = accounts.value.find((a) => a.id === id);
+    return sum + (acc?.available ?? 0);
+  }, 0)
+);
+
 // 查询
 const activeTab = ref('order');
 const fundRows = computed(() => accounts.value.map((a) => ({ available: a.available.toFixed(2), frozen: (0).toFixed(2), marketValue: (0).toFixed(2), totalAssets: a.available.toFixed(2) })));
@@ -236,19 +253,7 @@ const dealRows = ref([]);
 
 <style scoped>
 /* 与 NormalTrade 一致的布局与风格 */
-.nt-page { padding: 10px; color: inherit; background: transparent; height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
-.nt-top { display: grid; grid-template-columns: 260px 320px 1fr; gap: 16px; flex: 1 1 60%; min-height: 0; }
-.pane { background: #fff; border: 1px solid #ebeef5; border-radius: var(--radius, 8px); min-width: 0; display: flex; flex-direction: column; min-height: 0; }
-.pane-header { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; color: #303133; background: #f5f7fa; border-bottom: 1px solid #ebeef5; }
-.pane-header .title { font-weight: 600; }
-.pane-header .sub { font-size: 12px; color: #606266; }
-.pane .pane-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
-.scroll-y { overflow-y: auto; }
-.scroll-x { overflow-x: auto; width: 100%; }
 .scroll-x :deep(.el-table) { min-width: 900px; }
-.pane-query { margin-top: 16px; background: #fff; border: 1px solid #ebeef5; border-radius: var(--radius, 8px); flex: 1 1 40%; display: flex; flex-direction: column; min-height: 0; }
-.nt-tabs { padding: 0 6px; }
-.nt-pagination { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px 8px; color: #606266; border-top: 1px solid #ebeef5; }
 
 /* 行情样式 */
 .market-head { display: flex; align-items: flex-end; justify-content: space-between; padding: 10px; }
@@ -271,5 +276,21 @@ const dealRows = ref([]);
 /* 下单 */
 .order-form { padding: 10px; }
 .quick-ops { display: flex; gap: 6px; }
+
+/* 横向溢出时使用滚动条 */
+.scroll-x :deep(.el-table) { min-width: 900px; }
+
+/* 修复查询面板标签切换时的抖动问题 */
+.pane-query .el-tabs__content {
+  /* 固定标签页内容区域的最小高度，防止不同标签页高度不一致导致抖动 */
+  min-height: 300px;
+}
+
+/* 稳定滚动条布局 */
+.scroll-x {
+  /* 始终为滚动条预留空间，避免滚动条出现/消失时的布局变化 */
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
 </style>
 

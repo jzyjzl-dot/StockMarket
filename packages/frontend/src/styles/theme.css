@@ -13,6 +13,146 @@ html, body {
   font-size: 14px;
 }
 
+/* Trading layout: shared baseline + structure */
+.nt-page {
+  font-size: 14px;
+  padding: 10px;
+  color: inherit;
+  background: transparent;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.nt-top {
+  display: grid;
+  grid-template-columns: 260px 320px 1fr;
+  gap: var(--gap-md);
+  flex: 1 1 60%;
+  min-height: 0;
+}
+
+/* Increase specificity to override any scoped duplicates */
+.nt-page .nt-top {
+  display: grid;
+  grid-template-columns: 260px 320px 1fr;
+  gap: var(--gap-md);
+  flex: 1 1 60%;
+  min-height: 0;
+}
+
+.pane {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: var(--radius);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.nt-page .pane {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: var(--radius);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pane-market, .pane-order, .pane-preview { height: 460px; }
+.nt-page .pane-market,
+.nt-page .pane-order,
+.nt-page .pane-preview { height: 460px; }
+
+.pane-header {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  color: #303133;
+  background: #f5f7fa;
+  border-bottom: 1px solid #ebeef5;
+}
+.nt-page .pane-header {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  color: #303133;
+  background: #f5f7fa;
+  border-bottom: 1px solid #ebeef5;
+}
+.pane-header .title { font-weight: 600; }
+.pane-header .sub { font-size: 12px; color: #606266; }
+.nt-page .pane-header .title { font-weight: 600; }
+.nt-page .pane-header .sub { font-size: 12px; color: #606266; }
+
+.pane-query {
+  margin-top: var(--gap-md);
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: var(--radius);
+  flex: 1 1 40%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.nt-page .pane-query {
+  margin-top: var(--gap-md);
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: var(--radius);
+  flex: 1 1 40%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.nt-tabs { padding: 0 6px; }
+.nt-page .nt-tabs { padding: 0 6px; }
+
+.nt-pagination {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 8px;
+  color: #606266;
+  border-top: 1px solid #ebeef5;
+}
+.nt-pagination .left, .nt-pagination .right { font-size: 12px; }
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Preview summary strip used in trading pages */
+.pane-preview { padding-bottom: 6px; }
+.preview-summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px 10px;
+  border-top: 1px solid #2a2f36;
+  color: #aeb4bb;
+}
+.nt-page .nt-pagination {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 8px;
+  color: #606266;
+  border-top: 1px solid #ebeef5;
+}
+.nt-page .nt-pagination .left, .nt-page .nt-pagination .right { font-size: 12px; }
+
 h1, h2, h3, h4, h5 {
   margin: 0;
   font-weight: 600;
@@ -83,3 +223,19 @@ h2 {
 .section + .section {
   margin-top: var(--gap-lg);
 }
+
+/* Unified scroll containers and pane behavior */
+/* Make pane content area the scroll container so parent doesn't grow when scrollbars appear */
+.pane .pane-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;
+  /* Prevent layout shift when scrollbars appear/disappear */
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Provide reusable helpers for overflow */
+.scroll-x { overflow-x: auto; width: 100%; scrollbar-gutter: stable both-edges; }
+.scroll-y { overflow-y: auto; scrollbar-gutter: stable both-edges; }
+
+/* Avoid layout shift when vertical scrollbars toggle in horizontal wrappers */

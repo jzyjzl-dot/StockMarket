@@ -127,7 +127,7 @@
         <el-tabs v-model="activeTab" type="card" class="nt-tabs">
           <el-tab-pane label="资金" name="fund">
             <div class="scroll-x">
-            <el-table v-resizable-columns :data="fundRows" size="small" style="width: 100%">
+            <el-table v-resizable-columns :data="fundRows" size="small" style="width: 100%" height="260">
               <el-table-column prop="available" label="可用资金" width="140" />
               <el-table-column prop="frozen" label="冻结资金" width="140" />
               <el-table-column prop="marketValue" label="市值" width="140" />
@@ -270,19 +270,9 @@ const dealRows = ref([]);
 
 <style scoped>
 /* 页面骨架（与全局风格一致：浅色、卡片式） */
-.nt-page { padding: 10px; color: inherit; background: transparent; height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
 
-.nt-top { display: grid; grid-template-columns: 260px 320px 1fr; gap: 16px; flex: 1 1 60%; min-height: 0; }
 
-.pane { background: #fff; border: 1px solid #ebeef5; border-radius: var(--radius, 8px); min-width: 0; }
-.pane { display: flex; flex-direction: column; min-height: 0; }
-.pane .pane-body { flex: 1 1 auto; min-height: 0; }
-.scroll-y { overflow-y: auto; }
-.pane-market, .pane-order, .pane-preview { height: 460px; }
 
-.pane-header { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; color: #303133; background: #f5f7fa; border-bottom: 1px solid #ebeef5; }
-.pane-header .title { font-weight: 600; }
-.pane-header .sub { font-size: 12px; color: #606266; }
 
 /* 行情面板 */
 .market-head {
@@ -311,29 +301,26 @@ const dealRows = ref([]);
 /* 下单面板 */
 .order-form { padding: 10px; }
 .quick-ops { display: flex; gap: 6px; }
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
 /* 预览面板 */
-.pane-preview { padding-bottom: 6px; }
-.preview-summary {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 6px 10px;
-  border-top: 1px solid #2a2f36;
-  color: #aeb4bb;
-}
 
 /* 查询面板 */
-.pane-query { margin-top: 16px; background: #fff; border: 1px solid #ebeef5; border-radius: var(--radius, 8px); flex: 1 1 40%; display: flex; flex-direction: column; min-height: 0; }
-.nt-tabs { padding: 0 6px; }
-.nt-pagination { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px 8px; color: #606266; border-top: 1px solid #ebeef5; }
-.nt-pagination .left, .nt-pagination .right { font-size: 12px; }
 
 /* 沿用全局表格风格（不覆写 Element Plus 默认浅色样式） */
 
 /* 横向溢出时使用滚动条 */
-.scroll-x { overflow-x: auto; width: 100%; }
 .scroll-x :deep(.el-table) { min-width: 900px; }
+
+/* 修复查询面板标签切换时的抖动问题 */
+.pane-query .el-tabs__content {
+  /* 固定标签页内容区域的最小高度，防止不同标签页高度不一致导致抖动 */
+  min-height: 300px;
+}
+
+/* 稳定滚动条布局 */
+.scroll-x {
+  /* 始终为滚动条预留空间，避免滚动条出现/消失时的布局变化 */
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
 </style>

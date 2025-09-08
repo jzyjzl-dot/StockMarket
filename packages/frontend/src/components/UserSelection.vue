@@ -51,10 +51,11 @@
       </div>
 
       <div class="actions">
-        <el-button type="primary" @click="goToRegister"> 新用户注册 </el-button>
+        <el-button type="primary" @click="goToRegister">新用户注册</el-button>
       </div>
     </el-card>
   </div>
+  
 </template>
 
 <script setup>
@@ -102,15 +103,15 @@ const fetchUsers = async () => {
 
 // 选择用户并跳转到登录页面
 const selectUser = (username) => {
-  // 将选中的用户名存储到sessionStorage中
+  // 将选中的用户名存储到 sessionStorage
   sessionStorage.setItem('selectedUsername', username);
-  // 跳转到登录页面
+  // 跳转到登录页
   router.push('/login');
 };
 
-// 跳转到注册页面
+// 跳转到注册页
 const goToRegister = () => {
-  // 清除任何预选的用户名
+  // 清除任何预选的用户
   sessionStorage.removeItem('selectedUsername');
   // 跳转到登录页面（注册模式）
   router.push('/login');
@@ -214,7 +215,7 @@ onMounted(() => {
   border-top: 1px solid #f0f0f0;
 }
 
-/* 响应式设计 */
+/* 响应式设置 */
 @media (max-width: 768px) {
   .user-selection-container {
     padding: 10px;
@@ -237,3 +238,4 @@ onMounted(() => {
   }
 }
 </style>
+
