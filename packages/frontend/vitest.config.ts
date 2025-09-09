@@ -1,11 +1,11 @@
-/// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
-import { resolve } from 'path';
-// import { environments } from 'eslint-plugin-prettier';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-// https://vitejs.dev/config/
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 export default defineConfig({
   plugins: [vue()],
   resolve: {
@@ -16,15 +16,12 @@ export default defineConfig({
     },
   },
   test: {
-    global: true,
+    globals: true,
     environment: 'jsdom',
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
     },
-  },
-  server: {
-    port: 5175,
-    host: '0.0.0.0',
+    include: ['src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
   },
 });
