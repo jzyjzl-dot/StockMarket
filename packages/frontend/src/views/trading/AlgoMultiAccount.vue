@@ -59,7 +59,7 @@
       <section class="pane pane-algo-trade">
         <header class="pane-header"><div class="title">算法交易</div></header>
         <div class="pane-body scroll-y">
-          <el-form :model="orderForm" label-width="96px" size="small">
+          <el-form :model="orderForm" label-width="60px" size="small">
             <el-form-item label="委托账户">
               <el-select v-model="orderForm.account" style="width: 100%">
                 <el-option label="全部账户" value="ALL" />
@@ -173,7 +173,7 @@
           <div class="title">算法参数设置</div>
         </header>
         <div class="pane-body scroll-y">
-          <el-form :model="algoParams" label-width="96px" size="small">
+          <el-form :model="algoParams" label-width="80px" size="small">
             <el-form-item label="盒子编号">
               <el-input v-model="algoParams.boxNo" placeholder="请输入" />
             </el-form-item>
@@ -673,7 +673,7 @@ const dealRows = ref([]);
 
 /* 修复查询面板标签切换时的抖动问题 */
 .pane-query .el-tabs__content {
-  /* 固定标签页内容区域的最小高度，防止不同标签页高度不一致导致抖�?*/
+  /* 固定标签页内容区域的最小高度，防止不同标签页高度不一致导致抖动 */
   min-height: 300px;
 }
 

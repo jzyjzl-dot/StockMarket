@@ -58,7 +58,7 @@
           <div class="title">普通交易</div>
         </header>
         <div class="order-form pane-body scroll-y">
-          <el-form :model="orderForm" label-width="84px" size="small">
+          <el-form :model="orderForm" label-width="60px" size="small">
             <el-form-item label="委托账户">
               <el-select v-model="orderForm.account" style="width: 100%">
                 <el-option label="全部账户" value="ALL" />
