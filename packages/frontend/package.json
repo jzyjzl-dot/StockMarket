@@ -8,7 +8,10 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.ts",
     "format": "prettier --write .",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -23,6 +26,8 @@
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@vitejs/plugin-vue": "^5.0.0",
+    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/ui": "3.2.4",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
