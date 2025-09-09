@@ -45,8 +45,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Lint (frontend)
-        run: pnpm --filter @stock-market/frontend run lint
+      # Lint temporarily disabled per request
 
       - name: Test (frontend)
         run: pnpm --filter @stock-market/frontend run test
