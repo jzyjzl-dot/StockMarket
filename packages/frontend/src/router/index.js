@@ -29,22 +29,10 @@ const routes = [
         meta: { requiresAuth: true },
       },
       {
-        path: '/products',
-        name: 'ProductManagement',
-        component: () => import('../views/ProductManagement.vue'),
-        meta: { requiresAuth: true, roles: ['manager'] },
-      },
-      {
         path: '/monitoring',
         name: 'TradeMonitoring',
         component: () => import('../views/TradeMonitoring.vue'),
         meta: { requiresAuth: true, roles: ['trader', 'manager'] },
-      },
-      {
-        path: '/risk',
-        name: 'RiskControl',
-        component: () => import('../views/RiskControl.vue'),
-        meta: { requiresAuth: true, roles: ['manager'] },
       },
       {
         path: '/users',
@@ -56,12 +44,6 @@ const routes = [
         path: '/reports',
         name: 'ReportQuery',
         component: () => import('../views/ReportQuery.vue'),
-        meta: { requiresAuth: true, roles: ['trader', 'manager'] },
-      },
-      {
-        path: '/trade',
-        name: 'Trade',
-        component: () => import('../views/Trade.vue'),
         meta: { requiresAuth: true, roles: ['trader', 'manager'] },
       },
       {

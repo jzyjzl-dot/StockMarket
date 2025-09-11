@@ -161,14 +161,11 @@ const toggleSidebar = () => {
           :collapse="isSidebarCollapsed"
         >
           <el-menu-item index="/"> 首页 </el-menu-item>
-          <el-menu-item index="/products"> 产品管理 </el-menu-item>
           <el-menu-item index="/monitoring"> 交易监控 </el-menu-item>
-          <el-menu-item index="/trade"> 交易 </el-menu-item>
           <el-menu-item index="/reports">
             <el-icon><Document /></el-icon>
             报表查询
           </el-menu-item>
-          <el-menu-item index="/risk"> 风控设置 </el-menu-item>
           <el-menu-item index="/users"> 用户管理 </el-menu-item>
 
           <!-- 交易子菜单 -->
