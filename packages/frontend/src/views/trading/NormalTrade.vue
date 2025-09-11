@@ -164,6 +164,7 @@
               :data="previewRows"
               size="small"
               style="width: 100%"
+              @selection-change="onSelectionChange"
             >
               <el-table-column type="selection" width="44" />
               <el-table-column prop="account" label="账户" width="120" />
@@ -187,6 +188,13 @@
           <span class="mono">{{ totalPrice.toFixed(2) }}</span>
           <span class="mono">{{ funds.available.toFixed(2) }}</span>
           <span class="mono">0</span>
+          <el-button
+            type="primary"
+            size="small"
+            :disabled="selectedRows.length === 0"
+            @click="confirmSelected"
+            >确认</el-button
+          >
         </div>
       </section>
     </div>
@@ -323,8 +331,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import axios from 'axios';
 
 // 行情基础数据
 const currentStock = ref({
@@ -360,38 +369,172 @@ const setPercent = (p) => {
   orderForm.value.qty = target > 0 ? target : 0;
 };
 
-const previewRows = computed(() => {
+const previewRows = ref([]);
+const selectedRows = ref([]);
+const onSelectionChange = (rows) => {
+  selectedRows.value = rows || [];
+};
+
+const buildPreviewRow = () => {
   const qty = Number(orderForm.value.qty) || 0;
   const price = Number(orderForm.value.price) || 0;
   const amount = qty * price;
-  return [
-    {
-      account: '模拟账户',
-      symbol: orderForm.value.symbol,
-      side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
-      qty,
-      price: price ? price.toFixed(2) : '-',
-      amount: amount ? amount.toFixed(2) : '-',
-      available: funds.value.available.toFixed(2),
-      position: 0,
-      buyable: Math.floor(funds.value.available / (price || 1) / 100) * 100,
-    },
-  ];
-});
+  return {
+    account: '模拟账户',
+    symbol: orderForm.value.symbol,
+    side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
+    qty,
+    price: price ? price.toFixed(2) : '-',
+    amount: amount ? amount.toFixed(2) : '-',
+    available: funds.value.available.toFixed(2),
+    position: 0,
+    buyable: Math.floor(funds.value.available / (price || 1) / 100) * 100,
+  };
+};
 
 const totalPrice = computed(() => {
-  const r = previewRows.value[0];
-  return r && r.amount !== '-' ? Number(r.amount) : 0;
+  return previewRows.value.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
 });
 
-const placeOrder = () => {
+const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
+
+const mapToPreviewRow = (item) => {
+  const priceNum = Number(item.price) || 0;
+  const qtyNum = Number(item.qty) || 0;
+  const amountNum =
+    item.amount != null ? Number(item.amount) : priceNum * qtyNum;
+  return {
+    id: item.id,
+    account: item.account || '模拟账户',
+    symbol: item.symbol,
+    side: item.side === 'SELL' ? '卖出' : '买入',
+    qty: qtyNum,
+    price: priceNum ? priceNum.toFixed(2) : '-',
+    amount: amountNum ? amountNum.toFixed(2) : '-',
+    available: funds.value.available.toFixed(2),
+    position: 0,
+    buyable: Math.floor(funds.value.available / (priceNum || 1) / 100) * 100,
+  };
+};
+
+const refreshPreview = async () => {
+  try {
+    const { data } = await axios.get(`${jsBase}/normalBuys`);
+    if (Array.isArray(data)) {
+      previewRows.value = data.map(mapToPreviewRow);
+    }
+  } catch (e) {
+    // 不阻塞页面，仅在控制台提示
+    console.warn('加载 normalBuys 失败: ', e?.message || e);
+  }
+};
+
+onMounted(() => {
+  refreshPreview();
+  refreshOrders();
+});
+
+const placeOrder = async () => {
   if (!orderForm.value.symbol || !orderForm.value.qty) {
     ElMessage.warning('请填写完整的下单信息');
     return;
   }
-  ElMessage.success(
-    `${orderForm.value.entrustType === 'BUY' ? '买入' : '卖出'}指令已提交`
-  );
+
+  // 将当前下单数据导入预览
+  const row = buildPreviewRow();
+  previewRows.value.push(row);
+
+  // 仅使用 json-server：写入 /normalBuys（由 json-server 写入 db 文件）
+  if (orderForm.value.entrustType === 'BUY') {
+    try {
+      const { data: created } = await axios.post(`${jsBase}/normalBuys`, {
+        timestamp: new Date().toISOString(),
+        account: orderForm.value.account,
+        side: 'BUY',
+        symbol: orderForm.value.symbol,
+        price: Number(orderForm.value.price) || 0,
+        qty: Number(orderForm.value.qty) || 0,
+        amount: Number(row.amount) || 0,
+        priceType: orderForm.value.priceType,
+        strategy: orderForm.value.strategy,
+        distribution: orderForm.value.distribution,
+      });
+      if (created && created.id) {
+        row.id = created.id;
+      }
+      ElMessage.success('买入已导入预览并保存');
+      refreshPreview();
+    } catch (e) {
+      console.error('保存买入失败: ', e);
+      ElMessage.error('保存买入数据失败，请检查 json-server');
+    }
+  } else {
+    ElMessage.success('卖出已导入预览');
+  }
+};
+
+const refreshOrders = async () => {
+  try {
+    const { data } = await axios.get(`${jsBase}/normalOrders`);
+    if (Array.isArray(data)) {
+      orderRows.value = data.map((o) => ({
+        account: o.account || '模拟账户',
+        time: o.time || o.timestamp || new Date().toISOString(),
+        stockCode: o.symbol || o.stockCode,
+        type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
+        price: Number(o.price) || 0,
+        quantity: Number(o.quantity ?? o.qty ?? 0) || 0,
+        dealt: Number(o.dealt ?? 0) || 0,
+        amount: Number(o.amount) || 0,
+        market: o.market || '上交所',
+        orderType: o.orderType || (o.priceType === 'fixed' ? '限价' : '限价'),
+        status: o.status || '已报',
+      }));
+    }
+  } catch (e) {
+    console.warn('加载 normalOrders 失败: ', e?.message || e);
+  }
+};
+
+const confirmSelected = async () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先选择要确认的预览行');
+    return;
+  }
+  try {
+    const toConfirm = [...selectedRows.value];
+    await Promise.all(
+      toConfirm.map((r) =>
+        axios.post(`${jsBase}/normalOrders`, {
+          time: new Date().toISOString(),
+          account: r.account || '模拟账户',
+          symbol: r.symbol,
+          type: r.side, // '买入'/'卖出'
+          side: r.side === '卖出' ? 'SELL' : 'BUY',
+          price: Number(r.price) || 0,
+          quantity: Number(r.qty) || 0,
+          amount: Number(r.amount) || 0,
+          market: '上交所',
+          orderType: '限价',
+          status: '已报',
+          source: 'normal-trade-confirm',
+        })
+      )
+    );
+    // 从 normalBuys 删除对应项
+    const ids = toConfirm.map((r) => r.id).filter(Boolean);
+    if (ids.length) {
+      await Promise.all(
+        ids.map((id) => axios.delete(`${jsBase}/normalBuys/${id}`))
+      );
+    }
+    ElMessage.success('已确认、移出预览并保存到委托');
+    await refreshOrders();
+    await refreshPreview();
+  } catch (e) {
+    console.error('确认失败: ', e);
+    ElMessage.error('确认失败，请检查 json-server');
+  }
 };
 
 // 查询数据（示例）
@@ -405,21 +548,7 @@ const fundRows = computed(() => [
   },
 ]);
 const positionRows = ref([]);
-const orderRows = ref([
-  {
-    account: '模拟账户',
-    time: '2023-08-02 16:46:59',
-    stockCode: '600000',
-    type: '买入',
-    price: 7.48,
-    quantity: 100,
-    dealt: 0,
-    amount: 748.0,
-    market: '上交所',
-    orderType: '限价',
-    status: '已报',
-  },
-]);
+const orderRows = ref([]);
 const dealRows = ref([]);
 </script>
 
@@ -430,7 +559,7 @@ const dealRows = ref([]);
 .nt-page {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px; /* 缩小顶部三栏与查询区之间的间距 */
   height: 100%;
   min-height: 0;
 }
