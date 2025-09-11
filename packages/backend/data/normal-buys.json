@@ -1,17 +1,3 @@
 {
-  "normalBuys": [
-    {
-      "id": "4232",
-      "timestamp": "2025-09-11T05:55:04.930Z",
-      "account": "ALL",
-      "side": "BUY",
-      "symbol": "600000",
-      "price": 7.48,
-      "qty": 100,
-      "amount": 748,
-      "priceType": "queue",
-      "strategy": "fixedQty",
-      "distribution": "eachFixedQty"
-    }
-  ]
+  "normalBuys": []
 }

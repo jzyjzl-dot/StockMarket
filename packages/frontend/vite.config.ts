@@ -1,10 +1,18 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import qiankun from 'vite-plugin-qiankun';
 import { fileURLToPath, URL } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    // 将本应用注册为 qiankun 子应用，名称需与主应用注册保持一致
+    qiankun('frontend', {
+      // 开发模式下启用，便于本地独立运行调试
+      useDevMode: true,
+    }),
+  ],
   base: process.env.VITE_BASE || '/',
   resolve: {
     alias: {

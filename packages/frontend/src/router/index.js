@@ -110,8 +110,11 @@ const routes = [
   },
 ];
 
+// 作为 qiankun 子应用时需要指定 base，保持路由前缀稳定
+const base = window.__POWERED_BY_QIANKUN__ ? '/frontend' : '/';
+
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(base),
   routes,
 });
 
