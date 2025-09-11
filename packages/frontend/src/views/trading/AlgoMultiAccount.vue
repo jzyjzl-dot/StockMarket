@@ -288,13 +288,13 @@
       <div class="pane-body">
         <el-tabs v-model="activeTab" type="card" class="nt-tabs">
           <el-tab-pane label="资金" name="fund">
-            <div class="scroll-x">
+            <div class="table-container">
               <el-table
                 v-resizable-columns
                 :data="fundRows"
                 size="small"
                 style="width: 100%"
-                height="260"
+                max-height="200"
               >
                 <el-table-column
                   prop="available"
@@ -312,13 +312,13 @@
             </div>
           </el-tab-pane>
           <el-tab-pane label="持仓" name="pos">
-            <div class="scroll-x">
+            <div class="table-container">
               <el-table
                 v-resizable-columns
                 :data="positionRows"
                 size="small"
                 style="width: 100%"
-                height="260"
+                max-height="200"
               >
                 <el-table-column prop="symbol" label="证券代码" width="120" />
                 <el-table-column prop="name" label="证券名称" width="140" />
@@ -334,13 +334,13 @@
             </div>
           </el-tab-pane>
           <el-tab-pane label="委托" name="order">
-            <div class="scroll-x">
+            <div class="table-container">
               <el-table
                 v-resizable-columns
                 :data="orderRows"
                 size="small"
                 style="width: 100%"
-                height="260"
+                max-height="200"
               >
                 <el-table-column prop="account" label="账户" width="100" />
                 <el-table-column prop="time" label="委托时间" width="160" />
@@ -365,13 +365,13 @@
             </div>
           </el-tab-pane>
           <el-tab-pane label="成交" name="deal">
-            <div class="scroll-x">
+            <div class="table-container">
               <el-table
                 v-resizable-columns
                 :data="dealRows"
                 size="small"
                 style="width: 100%"
-                height="260"
+                max-height="200"
               >
                 <el-table-column prop="time" label="时间" width="160" />
                 <el-table-column
@@ -393,16 +393,6 @@
           </el-tab-pane>
         </el-tabs>
       </div>
-      <footer class="nt-pagination">
-        <div class="left">共 {{ orderRows.length }} 条</div>
-        <el-pagination
-          background
-          layout="prev, pager, next"
-          :total="orderRows.length"
-          :page-size="20"
-        />
-        <div class="right">当前每页显示: 20</div>
-      </footer>
     </section>
   </div>
 </template>
@@ -742,5 +732,15 @@ const dealRows = ref([]);
 /* 统一清除顶部 Tabs Header 的外边距（仅作用于本页） */
 .pane-query :deep(.el-tabs__header.is-top) {
   margin: 0 !important;
+}
+
+/* 表格容器样式 */
+.table-container {
+  height: 200px;
+  overflow-y: auto;
+}
+
+.table-container :deep(.el-table__body-wrapper) {
+  max-height: none !important;
 }
 </style>
