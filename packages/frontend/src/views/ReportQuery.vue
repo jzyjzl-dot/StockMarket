@@ -44,11 +44,11 @@
             </el-form>
 
             <el-table :data="fundsData" style="width: 100%" stripe>
-              <el-table-column prop="account" label="账户" width="120" />
-              <el-table-column prop="balance" label="余额" width="120" />
-              <el-table-column prop="available" label="可用资金" width="120" />
-              <el-table-column prop="frozen" label="冻结资金" width="120" />
-              <el-table-column prop="date" label="日期" width="120" />
+              <el-table-column prop="account" label="账户" />
+              <el-table-column prop="balance" label="余额" />
+              <el-table-column prop="available" label="可用资金" />
+              <el-table-column prop="frozen" label="冻结资金" />
+              <el-table-column prop="date" label="日期" />
             </el-table>
           </div>
         </el-tab-pane>
@@ -98,17 +98,13 @@
             </el-form>
 
             <el-table :data="positionsData" style="width: 100%" stripe>
-              <el-table-column prop="stockCode" label="股票代码" width="100" />
-              <el-table-column prop="stockName" label="股票名称" width="120" />
-              <el-table-column prop="account" label="账户" width="100" />
-              <el-table-column prop="quantity" label="持仓数量" width="100" />
-              <el-table-column prop="avgPrice" label="平均成本" width="100" />
-              <el-table-column
-                prop="currentPrice"
-                label="当前价格"
-                width="100"
-              />
-              <el-table-column prop="profit" label="盈亏" width="100">
+              <el-table-column prop="stockCode" label="股票代码" />
+              <el-table-column prop="stockName" label="股票名称" />
+              <el-table-column prop="account" label="账户" />
+              <el-table-column prop="quantity" label="持仓数量" />
+              <el-table-column prop="avgPrice" label="平均成本" />
+              <el-table-column prop="currentPrice" label="当前价格" />
+              <el-table-column prop="profit" label="盈亏">
                 <template #default="scope">
                   <span
                     :class="{
@@ -177,10 +173,10 @@
             </el-form>
 
             <el-table :data="ordersData" style="width: 100%" stripe>
-              <el-table-column prop="orderId" label="委托编号" width="120" />
-              <el-table-column prop="stockCode" label="股票代码" width="100" />
-              <el-table-column prop="stockName" label="股票名称" width="120" />
-              <el-table-column prop="orderType" label="委托类型" width="80">
+              <el-table-column prop="orderId" label="委托编号" />
+              <el-table-column prop="stockCode" label="股票代码" />
+              <el-table-column prop="stockName" label="股票名称" />
+              <el-table-column prop="orderType" label="委托类型">
                 <template #default="scope">
                   <el-tag
                     :type="
@@ -191,9 +187,9 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="quantity" label="委托数量" width="100" />
-              <el-table-column prop="price" label="委托价格" width="100" />
-              <el-table-column prop="status" label="状态" width="100">
+              <el-table-column prop="quantity" label="委托数量" />
+              <el-table-column prop="price" label="委托价格" />
+              <el-table-column prop="status" label="状态">
                 <template #default="scope">
                   <el-tag
                     :type="
@@ -208,7 +204,7 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="time" label="委托时间" width="150" />
+              <el-table-column prop="time" label="委托时间" />
             </el-table>
           </div>
         </el-tab-pane>
@@ -266,10 +262,10 @@
             </el-form>
 
             <el-table :data="dealsData" style="width: 100%" stripe>
-              <el-table-column prop="dealId" label="成交编号" width="120" />
-              <el-table-column prop="stockCode" label="股票代码" width="100" />
-              <el-table-column prop="stockName" label="股票名称" width="120" />
-              <el-table-column prop="dealType" label="成交类型" width="80">
+              <el-table-column prop="dealId" label="成交编号" />
+              <el-table-column prop="stockCode" label="股票代码" />
+              <el-table-column prop="stockName" label="股票名称" />
+              <el-table-column prop="dealType" label="成交类型">
                 <template #default="scope">
                   <el-tag
                     :type="scope.row.dealType === '买入' ? 'success' : 'danger'"
@@ -278,10 +274,10 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="quantity" label="成交数量" width="100" />
-              <el-table-column prop="price" label="成交价格" width="100" />
-              <el-table-column prop="amount" label="成交金额" width="100" />
-              <el-table-column prop="time" label="成交时间" width="150" />
+              <el-table-column prop="quantity" label="成交数量" />
+              <el-table-column prop="price" label="成交价格" />
+              <el-table-column prop="amount" label="成交金额" />
+              <el-table-column prop="time" label="成交时间" />
             </el-table>
           </div>
         </el-tab-pane>
