@@ -53,6 +53,12 @@ const routes = [
         meta: { requiresAuth: true, roles: ['manager'] },
       },
       {
+        path: '/reports',
+        name: 'ReportQuery',
+        component: () => import('../views/ReportQuery.vue'),
+        meta: { requiresAuth: true, roles: ['trader', 'manager'] },
+      },
+      {
         path: '/trade',
         name: 'Trade',
         component: () => import('../views/Trade.vue'),

@@ -1,7 +1,14 @@
 <script setup>
 import { useUserStore } from '../stores/userStore';
 import { ref, onMounted, watch } from 'vue';
-import { ArrowDown, Management, Money, Fold, Expand } from '@element-plus/icons-vue';
+import {
+  ArrowDown,
+  Management,
+  Money,
+  Fold,
+  Expand,
+  Document,
+} from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 
 const userStore = useUserStore();
@@ -139,8 +146,8 @@ const toggleSidebar = () => {
           <el-button
             size="small"
             text
-            @click="toggleSidebar"
             :title="isSidebarCollapsed ? '展开侧栏' : '收起侧栏'"
+            @click="toggleSidebar"
           >
             <el-icon>
               <component :is="isSidebarCollapsed ? Expand : Fold" />
@@ -157,6 +164,10 @@ const toggleSidebar = () => {
           <el-menu-item index="/products"> 产品管理 </el-menu-item>
           <el-menu-item index="/monitoring"> 交易监控 </el-menu-item>
           <el-menu-item index="/trade"> 交易 </el-menu-item>
+          <el-menu-item index="/reports">
+            <el-icon><Document /></el-icon>
+            报表查询
+          </el-menu-item>
           <el-menu-item index="/risk"> 风控设置 </el-menu-item>
           <el-menu-item index="/users"> 用户管理 </el-menu-item>
 
@@ -391,7 +402,14 @@ const toggleSidebar = () => {
 }
 
 /* 确保侧栏收起时主内容占满空间 */
-.sidebar { width: var(--sidebar-width); flex: 0 0 var(--sidebar-width); }
-.sidebar.collapsed { flex-basis: 0; }
-.main-content { min-width: 0; }
+.sidebar {
+  width: var(--sidebar-width);
+  flex: 0 0 var(--sidebar-width);
+}
+.sidebar.collapsed {
+  flex-basis: 0;
+}
+.main-content {
+  min-width: 0;
+}
 </style>
