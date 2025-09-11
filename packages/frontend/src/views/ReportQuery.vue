@@ -289,6 +289,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import axios from 'axios';
 
 // 响应式数据
 const activeTab = ref('funds');
@@ -411,37 +412,69 @@ const resetPositions = () => {
   positionsData.value = [];
 };
 
-// 委托查询
+// JSON Server base
+const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
+
+// 委托查询：读取 backend/data/normal-orders.json（经 json-server 暴露的 /normalOrders）
 const queryOrders = async () => {
   try {
-    console.log('查询委托:', ordersForm);
+    const { data } = await axios.get(`${jsBase}/normalOrders`);
+    let rows = Array.isArray(data)
+      ? data.map((o) => ({
+          orderId: o.id,
+          stockCode: o.symbol || o.stockCode,
+          stockName: o.name || '-',
+          orderType: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
+          quantity: o.quantity ?? o.qty ?? 0,
+          price: o.price ?? 0,
+          status: o.status || '-',
+          time: o.time || o.timestamp || '-',
+        }))
+      : [];
+
+    // 过滤条件
+    const statusMap = {
+      pending: '已报',
+      partial: '部分成交',
+      filled: '全部成交',
+      cancelled: '已撤销',
+    };
+    const sideMap = { buy: 'BUY', sell: 'SELL' };
+
+    if (ordersForm.stockCode) {
+      rows = rows.filter((r) =>
+        String(r.stockCode || '').includes(ordersForm.stockCode.trim())
+      );
+    }
+    if (ordersForm.orderType) {
+      const side = sideMap[ordersForm.orderType];
+      rows = rows.filter((r) =>
+        side === 'SELL' ? r.orderType === '卖出' : r.orderType === '买入'
+      );
+    }
+    if (ordersForm.status) {
+      const zh = statusMap[ordersForm.status];
+      if (zh) rows = rows.filter((r) => r.status === zh);
+    }
+    if (
+      Array.isArray(ordersForm.dateRange) &&
+      ordersForm.dateRange.length === 2
+    ) {
+      const [start, end] = ordersForm.dateRange;
+      const s = new Date(start);
+      const e = new Date(end);
+      rows = rows.filter((r) => {
+        const t = new Date(r.time);
+        return !isNaN(t) && t >= s && t <= e;
+      });
+    }
+
+    ordersData.value = rows;
     ElMessage.success('委托查询成功');
-    // 模拟数据
-    ordersData.value = [
-      {
-        orderId: 'ORD001',
-        stockCode: '000001',
-        stockName: '平安银行',
-        orderType: '买入',
-        quantity: '1,000',
-        price: '10.50',
-        status: '未成交',
-        time: '2024-01-15 09:30:00',
-      },
-      {
-        orderId: 'ORD002',
-        stockCode: '000002',
-        stockName: '万科A',
-        orderType: '卖出',
-        quantity: '500',
-        price: '15.20',
-        status: '全部成交',
-        time: '2024-01-15 10:15:00',
-      },
-    ];
   } catch (error) {
     console.error('委托查询失败:', error);
-    ElMessage.error('委托查询失败');
+    ElMessage.error('委托查询失败，请检查后端 json-server');
+    ordersData.value = [];
   }
 };
 

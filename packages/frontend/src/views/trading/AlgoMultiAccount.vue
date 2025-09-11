@@ -288,13 +288,13 @@
       <div class="pane-body">
         <el-tabs v-model="activeTab" type="card" class="nt-tabs">
           <el-tab-pane label="资金" name="fund">
-            <div class="table-container">
+            <div class="scroll-x">
               <el-table
                 v-resizable-columns
                 :data="fundRows"
                 size="small"
                 style="width: 100%"
-                max-height="200"
+                height="30%"
               >
                 <el-table-column
                   prop="available"
@@ -312,13 +312,13 @@
             </div>
           </el-tab-pane>
           <el-tab-pane label="持仓" name="pos">
-            <div class="table-container">
+            <div class="scroll-x">
               <el-table
                 v-resizable-columns
                 :data="positionRows"
                 size="small"
                 style="width: 100%"
-                max-height="200"
+                height="30%"
               >
                 <el-table-column prop="symbol" label="证券代码" width="120" />
                 <el-table-column prop="name" label="证券名称" width="140" />
@@ -334,44 +334,24 @@
             </div>
           </el-tab-pane>
           <el-tab-pane label="委托" name="order">
-            <div class="table-container">
-              <el-table
-                v-resizable-columns
+            <div class="scroll-x">
+              <el-table-v2
+                :columns="orderColumns"
                 :data="orderRows"
-                size="small"
-                style="width: 100%"
-                max-height="200"
-              >
-                <el-table-column prop="account" label="账户" width="100" />
-                <el-table-column prop="time" label="委托时间" width="160" />
-                <el-table-column
-                  prop="stockCode"
-                  label="证券代码"
-                  width="120"
-                />
-                <el-table-column prop="type" label="方向" width="80" />
-                <el-table-column prop="strategy" label="算法" width="120" />
-                <el-table-column prop="price" label="委托价" width="100" />
-                <el-table-column prop="quantity" label="委托量" width="100" />
-                <el-table-column prop="dealt" label="成交量" width="100" />
-                <el-table-column
-                  prop="amount"
-                  label="委托金额"
-                  min-width="140"
-                />
-                <el-table-column prop="market" label="市场" width="100" />
-                <el-table-column prop="status" label="状态" width="100" />
-              </el-table>
+                :height="orderTableHeight"
+                :row-key="orderRowKey"
+                class="nt-order-virtual-table"
+              />
             </div>
           </el-tab-pane>
           <el-tab-pane label="成交" name="deal">
-            <div class="table-container">
+            <div class="scroll-x">
               <el-table
                 v-resizable-columns
                 :data="dealRows"
                 size="small"
                 style="width: 100%"
-                max-height="200"
+                height="30%"
               >
                 <el-table-column prop="time" label="时间" width="160" />
                 <el-table-column
@@ -521,10 +501,28 @@ const orderRows = ref([
     dealt: 0,
     amount: 7490.0,
     market: '上交所',
+    orderType: '限价',
     status: '已报',
   },
 ]);
 const dealRows = ref([]);
+
+// 虚拟滚动（委托）列定义与高度
+const orderColumns = [
+  { key: 'account', dataKey: 'account', title: '账户', width: 120 },
+  { key: 'time', dataKey: 'time', title: '委托时间', width: 180 },
+  { key: 'stockCode', dataKey: 'stockCode', title: '证券代码', width: 120 },
+  { key: 'type', dataKey: 'type', title: '方向', width: 90 },
+  { key: 'price', dataKey: 'price', title: '委托价', width: 100 },
+  { key: 'quantity', dataKey: 'quantity', title: '委托量', width: 100 },
+  { key: 'dealt', dataKey: 'dealt', title: '成交量', width: 100 },
+  { key: 'amount', dataKey: 'amount', title: '委托金额', width: 140 },
+  { key: 'market', dataKey: 'market', title: '交易市场', width: 120 },
+  { key: 'orderType', dataKey: 'orderType', title: '价格类型', width: 120 },
+  { key: 'status', dataKey: 'status', title: '状态', width: 100 },
+];
+const orderTableHeight = 360;
+const orderRowKey = (row) => `${row.time}-${row.account}-${row.stockCode}`;
 </script>
 
 <style scoped>
@@ -576,7 +574,8 @@ const dealRows = ref([]);
 }
 
 /* 表格横向溢出支持 */
-.scroll-x :deep(.el-table) {
+.scroll-x :deep(.el-table),
+.scroll-x :deep(.el-table-v2) {
   min-width: 900px;
 }
 
@@ -659,7 +658,8 @@ const dealRows = ref([]);
 }
 
 /* 横向溢出时使用滚动条 */
-.scroll-x :deep(.el-table) {
+.scroll-x :deep(.el-table),
+.scroll-x :deep(.el-table-v2) {
   min-width: 900px;
 }
 
