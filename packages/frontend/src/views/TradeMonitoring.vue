@@ -14,22 +14,22 @@
             <!-- 二级按钮 -->
             <div class="sub-tabs">
               <el-button
-                :type="activeSubTab === 'task' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === 'task' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('task')"
               >
                 任务监控
               </el-button>
               <el-button
-                :type="activeSubTab === 'basket' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === 'basket' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('basket')"
               >
                 篮子监控
               </el-button>
               <el-button
-                :type="activeSubTab === '废单' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === '废单' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('废单')"
               >
                 废单监控
@@ -58,11 +58,16 @@
               </el-form-item>
             </el-form>
 
-            <el-table :data="monitoringData" style="width: 100%" stripe border>
+            <el-table
+              :data="getCurrentData()"
+              style="width: 100%"
+              stripe
+              border
+            >
               <el-table-column
                 prop="stockName"
                 label="股票名称"
-                width="120"
+                min-width="120"
                 align="center"
               />
 
@@ -71,19 +76,19 @@
                 <el-table-column
                   prop="buyTaskProgress"
                   label="任务进度"
-                  width="80"
+                  min-width="80"
                   align="center"
                 />
                 <el-table-column
                   prop="buyCompletedAmount"
                   label="已成(元)"
-                  width="100"
+                  min-width="100"
                   align="center"
                 />
                 <el-table-column
                   prop="buyCompletedProgress"
                   label="任务进度"
-                  width="80"
+                  min-width="80"
                   align="center"
                 />
               </el-table-column>
@@ -93,19 +98,19 @@
                 <el-table-column
                   prop="sellTaskProgress"
                   label="任务进度"
-                  width="80"
+                  min-width="80"
                   align="center"
                 />
                 <el-table-column
                   prop="sellCompletedAmount"
                   label="已成(元)"
-                  width="100"
+                  min-width="100"
                   align="center"
                 />
                 <el-table-column
                   prop="sellCompletedProgress"
                   label="任务进度"
-                  width="80"
+                  min-width="80"
                   align="center"
                 />
               </el-table-column>
@@ -115,19 +120,19 @@
                 <el-table-column
                   prop="totalTaskProgress"
                   label="任务进度"
-                  width="80"
+                  min-width="80"
                   align="center"
                 />
                 <el-table-column
                   prop="totalCompletedAmount"
                   label="已成(元)"
-                  width="100"
+                  min-width="100"
                   align="center"
                 />
                 <el-table-column
                   prop="totalCompletedProgress"
                   label="任务进度"
-                  width="80"
+                  min-width="80"
                   align="center"
                 />
               </el-table-column>
@@ -135,7 +140,7 @@
               <el-table-column
                 prop="longShortRatio"
                 label="多空盈比"
-                width="100"
+                min-width="100"
                 align="center"
               />
             </el-table>
@@ -148,22 +153,22 @@
             <!-- 二级按钮 -->
             <div class="sub-tabs">
               <el-button
-                :type="activeSubTab === 'task' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === 'task' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('task')"
               >
                 任务监控
               </el-button>
               <el-button
-                :type="activeSubTab === 'basket' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === 'basket' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('basket')"
               >
                 篮子监控
               </el-button>
               <el-button
-                :type="activeSubTab === '废单' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === '废单' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('废单')"
               >
                 废单监控
@@ -192,35 +197,31 @@
               </el-form-item>
             </el-form>
 
-            <el-table :data="t0Data" style="width: 100%" stripe border>
+            <el-table
+              :data="getCurrentData()"
+              style="width: 100%"
+              stripe
+              border
+            >
               <el-table-column
                 prop="stockName"
                 label="股票名称"
-                width="120"
                 align="center"
               />
               <el-table-column
                 prop="t0Progress"
                 label="T0进度"
-                width="100"
                 align="center"
               />
               <el-table-column
                 prop="t0Amount"
                 label="T0成交金额"
-                width="120"
                 align="center"
               />
-              <el-table-column
-                prop="t0Profit"
-                label="T0收益"
-                width="100"
-                align="center"
-              />
+              <el-table-column prop="t0Profit" label="T0收益" align="center" />
               <el-table-column
                 prop="t0ProfitRatio"
                 label="T0收益率"
-                width="100"
                 align="center"
               />
             </el-table>
@@ -233,22 +234,22 @@
             <!-- 二级按钮 -->
             <div class="sub-tabs">
               <el-button
-                :type="activeSubTab === 'task' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === 'task' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('task')"
               >
                 任务监控
               </el-button>
               <el-button
-                :type="activeSubTab === 'basket' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === 'basket' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('basket')"
               >
                 篮子监控
               </el-button>
               <el-button
-                :type="activeSubTab === '废单' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === '废单' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('废单')"
               >
                 废单监控
@@ -277,47 +278,37 @@
               </el-form-item>
             </el-form>
 
-            <el-table :data="positionData" style="width: 100%" stripe border>
+            <el-table
+              :data="getCurrentData()"
+              style="width: 100%"
+              stripe
+              border
+            >
               <el-table-column
                 prop="stockName"
                 label="股票名称"
-                width="120"
                 align="center"
               />
               <el-table-column
                 prop="totalPosition"
                 label="总持仓"
-                width="100"
                 align="center"
               />
               <el-table-column
                 prop="availablePosition"
                 label="可用持仓"
-                width="100"
                 align="center"
               />
               <el-table-column
                 prop="frozenPosition"
                 label="冻结持仓"
-                width="100"
                 align="center"
               />
-              <el-table-column
-                prop="avgCost"
-                label="平均成本"
-                width="100"
-                align="center"
-              />
-              <el-table-column
-                prop="marketValue"
-                label="市值"
-                width="100"
-                align="center"
-              />
+              <el-table-column prop="avgCost" label="平均成本" align="center" />
+              <el-table-column prop="marketValue" label="市值" align="center" />
               <el-table-column
                 prop="unrealizedPnl"
                 label="浮动盈亏"
-                width="120"
                 align="center"
               >
                 <template #default="scope">
@@ -343,22 +334,22 @@
             <!-- 二级按钮 -->
             <div class="sub-tabs">
               <el-button
-                :type="activeSubTab === 'task' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === 'task' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('task')"
               >
                 任务监控
               </el-button>
               <el-button
-                :type="activeSubTab === 'basket' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === 'basket' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('basket')"
               >
                 篮子监控
               </el-button>
               <el-button
-                :type="activeSubTab === '废单' ? 'primary' : ''"
-                size="small"
+                :class="{ 'active-sub-tab': activeSubTab === '废单' }"
+                class="sub-tab-button"
                 @click="handleSubTabClick('废单')"
               >
                 废单监控
@@ -387,43 +378,38 @@
               </el-form-item>
             </el-form>
 
-            <el-table :data="fundData" style="width: 100%" stripe border>
+            <el-table
+              :data="getCurrentData()"
+              style="width: 100%"
+              stripe
+              border
+            >
               <el-table-column
                 prop="accountName"
                 label="账户名称"
-                width="120"
                 align="center"
               />
               <el-table-column
                 prop="totalAssets"
                 label="总资产"
-                width="120"
                 align="center"
               />
               <el-table-column
                 prop="availableFunds"
                 label="可用资金"
-                width="120"
                 align="center"
               />
               <el-table-column
                 prop="frozenFunds"
                 label="冻结资金"
-                width="120"
                 align="center"
               />
               <el-table-column
                 prop="marketValue"
                 label="持仓市值"
-                width="120"
                 align="center"
               />
-              <el-table-column
-                prop="todayPnl"
-                label="今日盈亏"
-                width="120"
-                align="center"
-              >
+              <el-table-column prop="todayPnl" label="今日盈亏" align="center">
                 <template #default="scope">
                   <span
                     :class="{
@@ -463,117 +449,220 @@ const queryForm = reactive({
   accountGroup: '',
 });
 
-// 监控数据
-const monitoringData = ref([
-  {
-    stockName: 'HTR_G001(首选)',
-    // 买入部分
-    buyTaskProgress: '0%',
-    buyCompletedAmount: '0.00',
-    buyCompletedProgress: '0%',
-    // 卖出部分
-    sellTaskProgress: '0%',
-    sellCompletedAmount: '0.00',
-    sellCompletedProgress: '0%',
-    // 买入+卖出部分
-    totalTaskProgress: '0%',
-    totalCompletedAmount: '0.00',
-    totalCompletedProgress: '0%',
-    // 多空盈比
-    longShortRatio: '0.00',
-  },
-  {
-    stockName: '000001 平安银行',
-    // 买入部分
-    buyTaskProgress: '50%',
-    buyCompletedAmount: '25,000.00',
-    buyCompletedProgress: '50%',
-    // 卖出部分
-    sellTaskProgress: '30%',
-    sellCompletedAmount: '15,000.00',
-    sellCompletedProgress: '30%',
-    // 买入+卖出部分
-    totalTaskProgress: '40%',
-    totalCompletedAmount: '40,000.00',
-    totalCompletedProgress: '40%',
-    // 多空盈比
-    longShortRatio: '1.67',
-  },
-  {
-    stockName: '000002 万科A',
-    // 买入部分
-    buyTaskProgress: '75%',
-    buyCompletedAmount: '37,500.00',
-    buyCompletedProgress: '75%',
-    // 卖出部分
-    sellTaskProgress: '60%',
-    sellCompletedAmount: '30,000.00',
-    sellCompletedProgress: '60%',
-    // 买入+卖出部分
-    totalTaskProgress: '67%',
-    totalCompletedAmount: '67,500.00',
-    totalCompletedProgress: '67%',
-    // 多空盈比
-    longShortRatio: '1.25',
-  },
-]);
+// 根据当前选中的标签页和子标签页获取对应数据
+const getCurrentData = () => {
+  const key = `${activeTab.value}_${activeSubTab.value}`;
+  return monitoringDataMap.value[key] || [];
+};
 
-const t0Data = ref([
-  {
-    stockName: '平安银行',
-    t0Progress: '50%',
-    t0Amount: '50,000.00',
-    t0Profit: '+1,200.50',
-    t0ProfitRatio: '2.4%',
-  },
-  {
-    stockName: '招商银行',
-    t0Progress: '75%',
-    t0Amount: '75,000.00',
-    t0Profit: '-500.20',
-    t0ProfitRatio: '-0.67%',
-  },
-]);
-
-const positionData = ref([
-  {
-    stockName: '平安银行',
-    totalPosition: '10,000',
-    availablePosition: '8,000',
-    frozenPosition: '2,000',
-    avgCost: '12.50',
-    marketValue: '125,000.00',
-    unrealizedPnl: '+2,500.00',
-  },
-  {
-    stockName: '招商银行',
-    totalPosition: '5,000',
-    availablePosition: '5,000',
-    frozenPosition: '0',
-    avgCost: '45.20',
-    marketValue: '226,000.00',
-    unrealizedPnl: '-1,200.50',
-  },
-]);
-
-const fundData = ref([
-  {
-    accountName: '主账户001',
-    totalAssets: '1,000,000.00',
-    availableFunds: '500,000.00',
-    frozenFunds: '50,000.00',
-    marketValue: '450,000.00',
-    todayPnl: '+12,580.30',
-  },
-  {
-    accountName: '主账户002',
-    totalAssets: '800,000.00',
-    availableFunds: '300,000.00',
-    frozenFunds: '20,000.00',
-    marketValue: '480,000.00',
-    todayPnl: '-5,230.80',
-  },
-]);
+// 不同标签页和子标签页对应的数据映射
+const monitoringDataMap = ref({
+  // 算法监控 - 任务监控
+  algorithm_task: [
+    {
+      stockName: '算法任务-HTR_G001',
+      buyTaskProgress: '85%',
+      buyCompletedAmount: '85,000.00',
+      buyCompletedProgress: '85%',
+      sellTaskProgress: '75%',
+      sellCompletedAmount: '45,000.00',
+      sellCompletedProgress: '75%',
+      totalTaskProgress: '80%',
+      totalCompletedAmount: '130,000.00',
+      totalCompletedProgress: '80%',
+      longShortRatio: '1.89',
+    },
+    {
+      stockName: '算法任务-000001平安银行',
+      buyTaskProgress: '92%',
+      buyCompletedAmount: '92,000.00',
+      buyCompletedProgress: '92%',
+      sellTaskProgress: '88%',
+      sellCompletedAmount: '52,800.00',
+      sellCompletedProgress: '88%',
+      totalTaskProgress: '90%',
+      totalCompletedAmount: '144,800.00',
+      totalCompletedProgress: '90%',
+      longShortRatio: '1.74',
+    },
+  ],
+  // 算法监控 - 篮子监控
+  algorithm_basket: [
+    {
+      stockName: '算法篮子-科技股篮子',
+      buyTaskProgress: '65%',
+      buyCompletedAmount: '195,000.00',
+      buyCompletedProgress: '65%',
+      sellTaskProgress: '70%',
+      sellCompletedAmount: '140,000.00',
+      sellCompletedProgress: '70%',
+      totalTaskProgress: '67%',
+      totalCompletedAmount: '335,000.00',
+      totalCompletedProgress: '67%',
+      longShortRatio: '1.39',
+    },
+  ],
+  // 算法监控 - 废单监控
+  algorithm_废单: [
+    {
+      stockName: '算法废单-异常订单',
+      buyTaskProgress: '0%',
+      buyCompletedAmount: '0.00',
+      buyCompletedProgress: '0%',
+      sellTaskProgress: '0%',
+      sellCompletedAmount: '0.00',
+      sellCompletedProgress: '0%',
+      totalTaskProgress: '0%',
+      totalCompletedAmount: '0.00',
+      totalCompletedProgress: '0%',
+      longShortRatio: '0.00',
+    },
+  ],
+  // T0监控 - 任务监控
+  t0_task: [
+    {
+      stockName: 'T0任务-招商银行',
+      buyTaskProgress: '78%',
+      buyCompletedAmount: '156,000.00',
+      buyCompletedProgress: '78%',
+      sellTaskProgress: '82%',
+      sellCompletedAmount: '164,000.00',
+      sellCompletedProgress: '82%',
+      totalTaskProgress: '80%',
+      totalCompletedAmount: '320,000.00',
+      totalCompletedProgress: '80%',
+      longShortRatio: '0.95',
+    },
+  ],
+  // T0监控 - 篮子监控
+  t0_basket: [
+    {
+      stockName: 'T0篮子-银行股篮子',
+      buyTaskProgress: '55%',
+      buyCompletedAmount: '275,000.00',
+      buyCompletedProgress: '55%',
+      sellTaskProgress: '60%',
+      sellCompletedAmount: '180,000.00',
+      sellCompletedProgress: '60%',
+      totalTaskProgress: '57%',
+      totalCompletedAmount: '455,000.00',
+      totalCompletedProgress: '57%',
+      longShortRatio: '1.53',
+    },
+  ],
+  // T0监控 - 废单监控
+  t0_废单: [
+    {
+      stockName: 'T0废单-超时订单',
+      buyTaskProgress: '0%',
+      buyCompletedAmount: '0.00',
+      buyCompletedProgress: '0%',
+      sellTaskProgress: '0%',
+      sellCompletedAmount: '0.00',
+      sellCompletedProgress: '0%',
+      totalTaskProgress: '0%',
+      totalCompletedAmount: '0.00',
+      totalCompletedProgress: '0%',
+      longShortRatio: '0.00',
+    },
+  ],
+  // 合仓监控 - 任务监控
+  position_task: [
+    {
+      stockName: '合仓任务-中国平安',
+      buyTaskProgress: '95%',
+      buyCompletedAmount: '285,000.00',
+      buyCompletedProgress: '95%',
+      sellTaskProgress: '88%',
+      sellCompletedAmount: '220,000.00',
+      sellCompletedProgress: '88%',
+      totalTaskProgress: '91%',
+      totalCompletedAmount: '505,000.00',
+      totalCompletedProgress: '91%',
+      longShortRatio: '1.30',
+    },
+  ],
+  // 合仓监控 - 篮子监控
+  position_basket: [
+    {
+      stockName: '合仓篮子-保险股篮子',
+      buyTaskProgress: '72%',
+      buyCompletedAmount: '360,000.00',
+      buyCompletedProgress: '72%',
+      sellTaskProgress: '68%',
+      sellCompletedAmount: '272,000.00',
+      sellCompletedProgress: '68%',
+      totalTaskProgress: '70%',
+      totalCompletedAmount: '632,000.00',
+      totalCompletedProgress: '70%',
+      longShortRatio: '1.32',
+    },
+  ],
+  // 合仓监控 - 废单监控
+  position_废单: [
+    {
+      stockName: '合仓废单-撤销订单',
+      buyTaskProgress: '0%',
+      buyCompletedAmount: '0.00',
+      buyCompletedProgress: '0%',
+      sellTaskProgress: '0%',
+      sellCompletedAmount: '0.00',
+      sellCompletedProgress: '0%',
+      totalTaskProgress: '0%',
+      totalCompletedAmount: '0.00',
+      totalCompletedProgress: '0%',
+      longShortRatio: '0.00',
+    },
+  ],
+  // 资金监控 - 任务监控
+  fund_task: [
+    {
+      stockName: '资金任务-总资金池',
+      buyTaskProgress: '86%',
+      buyCompletedAmount: '2,580,000.00',
+      buyCompletedProgress: '86%',
+      sellTaskProgress: '79%',
+      sellCompletedAmount: '1,975,000.00',
+      sellCompletedProgress: '79%',
+      totalTaskProgress: '82%',
+      totalCompletedAmount: '4,555,000.00',
+      totalCompletedProgress: '82%',
+      longShortRatio: '1.31',
+    },
+  ],
+  // 资金监控 - 篮子监控
+  fund_basket: [
+    {
+      stockName: '资金篮子-全市场篮子',
+      buyTaskProgress: '64%',
+      buyCompletedAmount: '3,200,000.00',
+      buyCompletedProgress: '64%',
+      sellTaskProgress: '72%',
+      sellCompletedAmount: '2,880,000.00',
+      sellCompletedProgress: '72%',
+      totalTaskProgress: '68%',
+      totalCompletedAmount: '6,080,000.00',
+      totalCompletedProgress: '68%',
+      longShortRatio: '1.11',
+    },
+  ],
+  // 资金监控 - 废单监控
+  fund_废单: [
+    {
+      stockName: '资金废单-资金不足',
+      buyTaskProgress: '0%',
+      buyCompletedAmount: '0.00',
+      buyCompletedProgress: '0%',
+      sellTaskProgress: '0%',
+      sellCompletedAmount: '0.00',
+      sellCompletedProgress: '0%',
+      totalTaskProgress: '0%',
+      totalCompletedAmount: '0.00',
+      totalCompletedProgress: '0%',
+      longShortRatio: '0.00',
+    },
+  ],
+});
 
 // 标签页切换
 const handleTabClick = (tab) => {
@@ -627,14 +716,41 @@ onMounted(() => {
 }
 
 .sub-tabs {
-  margin-bottom: 16px;
-  padding: 8px 0;
+  margin-bottom: 8px;
+  padding: 4px 0;
   border-bottom: 1px solid #e4e7ed;
 }
 
-.sub-tabs .el-button {
-  margin-right: 12px;
-  margin-bottom: 8px;
+.sub-tab-button {
+  margin-right: 8px;
+  margin-bottom: 4px;
+  border: none;
+  background: transparent;
+  color: #606266;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.sub-tab-button:hover {
+  color: #409eff;
+  background: rgba(64, 158, 255, 0.1);
+}
+
+.active-sub-tab {
+  color: #409eff !important;
+  border-bottom-color: #409eff !important;
+  background: rgba(64, 158, 255, 0.1) !important;
+}
+
+.el-table {
+  width: 100% !important;
+}
+
+.el-table .el-table__header-wrapper,
+.el-table .el-table__body-wrapper {
+  width: 100% !important;
 }
 
 .card-header {

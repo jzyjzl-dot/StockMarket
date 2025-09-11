@@ -8,6 +8,7 @@ import {
   Fold,
   Expand,
   Document,
+  Monitor,
 } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 
@@ -161,7 +162,10 @@ const toggleSidebar = () => {
           :collapse="isSidebarCollapsed"
         >
           <el-menu-item index="/"> 首页 </el-menu-item>
-          <el-menu-item index="/monitoring"> 交易监控 </el-menu-item>
+          <el-menu-item index="/monitoring">
+            <el-icon><Monitor /></el-icon>
+            交易监控
+          </el-menu-item>
           <el-menu-item index="/reports">
             <el-icon><Document /></el-icon>
             报表查询
