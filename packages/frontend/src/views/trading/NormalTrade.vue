@@ -115,7 +115,6 @@
                   :step="100"
                   style="flex: 1"
                 />
-                <span>股</span>
               </div>
             </el-form-item>
             <el-form-item label="快捷比例">
@@ -140,7 +139,7 @@
             <el-form-item>
               <el-button
                 type="danger"
-                style="width: 100%"
+                style="width: 60%; margin-right: 50%"
                 @click="placeOrder"
                 >{{
                   orderForm.entrustType === 'BUY' ? '买入' : '卖出'
@@ -213,7 +212,7 @@
                 :data="fundRows"
                 size="small"
                 style="width: 100%"
-                height="260"
+                height="30%"
               >
                 <el-table-column
                   prop="available"
@@ -237,7 +236,7 @@
                 :data="positionRows"
                 size="small"
                 style="width: 100%"
-                height="260"
+                height="30%"
               >
                 <el-table-column prop="symbol" label="证券代码" width="120" />
                 <el-table-column prop="name" label="证券名称" width="140" />
@@ -259,7 +258,7 @@
                 :data="orderRows"
                 size="small"
                 style="width: 100%"
-                height="260"
+                height="30%"
               >
                 <el-table-column prop="account" label="账户" width="100" />
                 <el-table-column prop="time" label="委托时间" width="160" />
@@ -294,7 +293,7 @@
                 :data="dealRows"
                 size="small"
                 style="width: 100%"
-                height="260"
+                height="30%"
               >
                 <el-table-column prop="time" label="时间" width="160" />
                 <el-table-column
@@ -560,15 +559,16 @@ const dealRows = ref([]);
   display: flex;
   flex-direction: column;
   gap: 4px; /* 缩小顶部三栏与查询区之间的间距 */
-  height: 100%;
-  min-height: 0;
+  height: 97%;
+  /* min-height: 1000px; */
 }
 .nt-top {
   display: grid;
-  grid-template-columns: 260px 320px 1fr; /* 行情 / 下单 / 预览 */
+  grid-template-columns: 1fr 1.5fr 3fr; /* 行情 / 下单 / 预览 */
   gap: 12px;
   align-items: stretch;
-  min-height: 220px;
+  /* 关键：让顶部区域占据可用高度，并允许内部滚动 */
+  /* height: 100px; */
 }
 
 /* 卡片面板 */
@@ -580,6 +580,7 @@ const dealRows = ref([]);
   display: flex;
   flex-direction: column;
   min-height: 0; /* 允许内部滚动 */
+  height: 100%;
 }
 .pane-header {
   padding: 10px 12px;
@@ -587,6 +588,7 @@ const dealRows = ref([]);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 4%;
 }
 .pane-header .title {
   font-weight: 600;
@@ -595,6 +597,8 @@ const dealRows = ref([]);
 .pane-body {
   flex: 1;
   min-height: 0;
+  /* height: 3%; */
+  margin-left: 0 !important;
 }
 .scroll-y {
   overflow-y: auto;
@@ -711,5 +715,11 @@ const dealRows = ref([]);
 .preview-summary .mono {
   font-family: 'Consolas', 'Monaco', monospace;
   font-weight: 600;
+}
+
+/* 统一清除顶部 Tabs Header 的外边距（仅作用于本页） */
+.pane-query :deep(.el-tabs__header.is-top) {
+  margin: 0 !important;
+  /* height: 35px; */
 }
 </style>

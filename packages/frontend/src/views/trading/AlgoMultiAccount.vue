@@ -542,16 +542,16 @@ const dealRows = ref([]);
 .nt-page {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  height: 100%;
-  min-height: 0;
+  gap: 4px;
+  height: 97%;
+  /* min-height: 0; */
 }
 .nt-top {
   display: grid;
   grid-template-columns: 260px 320px 320px 1fr; /* 行情 / 算法交易 / 参数 / 预览 */
   gap: 12px;
   align-items: stretch;
-  min-height: 220px;
+  /* min-height: 220px; */
 }
 
 /* 卡片面板 */
@@ -563,6 +563,7 @@ const dealRows = ref([]);
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
 }
 .pane-header {
   padding: 10px 12px;
@@ -570,6 +571,7 @@ const dealRows = ref([]);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 4%;
 }
 .pane-header .title {
   font-weight: 600;
@@ -735,5 +737,10 @@ const dealRows = ref([]);
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+/* 统一清除顶部 Tabs Header 的外边距（仅作用于本页） */
+.pane-query :deep(.el-tabs__header.is-top) {
+  margin: 0 !important;
 }
 </style>
