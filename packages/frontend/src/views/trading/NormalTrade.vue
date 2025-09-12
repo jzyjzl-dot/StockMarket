@@ -513,7 +513,8 @@ const buildPreviewRow = () => {
   const price = Number(orderForm.value.price) || 0;
   const amount = qty * price;
   return {
-    account: '模拟账户',
+    // 绑定所选账户组（使用组ID；若为“全部账户”则为 'ALL'）
+    account: orderForm.value.account || 'ALL',
     symbol: orderForm.value.symbol,
     side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
     qty,
@@ -530,6 +531,24 @@ const totalPrice = computed(() => {
 });
 
 const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
+
+// 账户组：从后端加载，展示“账号组名称”
+const accountGroups = ref([]);
+const fetchAccountGroups = async () => {
+  try {
+    const { data } = await axios.get(`${jsBase}/accountGroups`);
+    if (Array.isArray(data)) {
+      accountGroups.value = data.map((g) => ({
+        id: g.id ?? g.groupId ?? String(g.id || ''),
+        groupId: g.groupId ?? g.id,
+        name: g.name ?? `组${g.groupId ?? g.id}`,
+      }));
+    }
+  } catch (e) {
+    console.warn('加载账户组失败: ', e?.message || e);
+    accountGroups.value = [];
+  }
+};
 
 const mapToPreviewRow = (item) => {
   const priceNum = Number(item.price) || 0;
@@ -563,6 +582,7 @@ const refreshPreview = async () => {
 };
 
 onMounted(() => {
+  fetchAccountGroups();
   refreshPreview();
   refreshOrders();
 });

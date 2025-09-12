@@ -29,8 +29,8 @@
                 v-model="searchForm.accountType"
                 placeholder="选择账户类型"
                 clearable
-                @change="handleSearch"
                 style="width: 100%"
+                @change="handleSearch"
               >
                 <el-option label="现金账户" value="现金账户"></el-option>
                 <el-option label="保证金账户" value="保证金账户"></el-option>
@@ -58,8 +58,8 @@
                 v-model="searchForm.group"
                 placeholder="选择组别"
                 clearable
-                @change="handleSearch"
                 style="width: 100%"
+                @change="handleSearch"
               >
                 <el-option label="交易账户 (1)" value="1"></el-option>
                 <el-option label="退休账户 (2)" value="2"></el-option>
@@ -74,8 +74,8 @@
                 v-model="searchForm.status"
                 placeholder="选择状态"
                 clearable
-                @change="handleSearch"
                 style="width: 100%"
+                @change="handleSearch"
               >
                 <el-option label="活跃" value="active"></el-option>
                 <el-option label="冻结" value="frozen"></el-option>
@@ -85,8 +85,8 @@
             <el-col :span="2">
               <el-button
                 type="primary"
-                @click="resetSearch"
                 style="width: 100%"
+                @click="resetSearch"
               >
                 <el-icon><RefreshRight /></el-icon>
                 重置
@@ -95,8 +95,8 @@
             <el-col :span="2">
               <el-button
                 type="success"
-                @click="showAddDialog = true"
                 style="width: 100%"
+                @click="showAddDialog = true"
               >
                 <el-icon><Plus /></el-icon>
                 添加
@@ -110,74 +110,74 @@
             v-resizable-columns
             :data="paginatedAccounts"
             style="width: 100%"
-            max-height="500px"
+            height="57vh"
             stripe
           >
-          <el-table-column
-            prop="id"
-            label="ID"
-            width="40"
-            fixed="left"
-          ></el-table-column>
-          <el-table-column
-            prop="accountName"
-            label="账户名称"
-            min-width="150"
-          ></el-table-column>
-          <el-table-column prop="accountType" label="账户类型" width="120">
-            <template #default="scope">
-              <el-tag :type="getAccountTypeColor(scope.row.accountType)">
-                {{ scope.row.accountType }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="broker"
-            label="经纪商"
-            min-width="120"
-          ></el-table-column>
-          <el-table-column
-            prop="accountNumber"
-            label="账户号码"
-            min-width="150"
-          ></el-table-column>
-          <el-table-column prop="group" label="组别" width="60">
-            <template #default="scope">
-              <el-tag :type="getGroupColor(scope.row.group)">
-                {{ scope.row.group }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="balance" label="账户余额" width="120">
-            <template #default="scope">
-              ${{ scope.row.balance.toLocaleString() }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="availableFunds" label="可用资金" width="120">
-            <template #default="scope">
-              ${{ scope.row.availableFunds.toLocaleString() }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
-            <template #default="scope">
-              <el-tag :type="getStatusColor(scope.row.status)">
-                {{ getStatusText(scope.row.status) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
-            <template #default="scope">
-              <el-button size="small" @click="editAccount(scope.row)"
-                >编辑</el-button
-              >
-              <el-button
-                size="small"
-                type="danger"
-                @click="deleteAccount(scope.row)"
-                >删除</el-button
-              >
-            </template>
-          </el-table-column>
+            <el-table-column
+              prop="id"
+              label="ID"
+              width="40"
+              fixed="left"
+            ></el-table-column>
+            <el-table-column
+              prop="accountName"
+              label="账户名称"
+              min-width="150"
+            ></el-table-column>
+            <el-table-column prop="accountType" label="账户类型" width="120">
+              <template #default="scope">
+                <el-tag :type="getAccountTypeColor(scope.row.accountType)">
+                  {{ scope.row.accountType }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="broker"
+              label="经纪商"
+              min-width="120"
+            ></el-table-column>
+            <el-table-column
+              prop="accountNumber"
+              label="账户号码"
+              min-width="150"
+            ></el-table-column>
+            <el-table-column prop="group" label="组别" width="60">
+              <template #default="scope">
+                <el-tag :type="getGroupColor(scope.row.group)">
+                  {{ scope.row.group }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="balance" label="账户余额" width="120">
+              <template #default="scope">
+                ${{ scope.row.balance.toLocaleString() }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="availableFunds" label="可用资金" width="120">
+              <template #default="scope">
+                ${{ scope.row.availableFunds.toLocaleString() }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="100">
+              <template #default="scope">
+                <el-tag :type="getStatusColor(scope.row.status)">
+                  {{ getStatusText(scope.row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="200" fixed="right">
+              <template #default="scope">
+                <el-button size="small" @click="editAccount(scope.row)"
+                  >编辑</el-button
+                >
+                <el-button
+                  size="small"
+                  type="danger"
+                  @click="deleteAccount(scope.row)"
+                  >删除</el-button
+                >
+              </template>
+            </el-table-column>
           </el-table>
         </div>
 

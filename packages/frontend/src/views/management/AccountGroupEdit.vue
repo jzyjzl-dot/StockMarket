@@ -27,8 +27,8 @@
             <el-col :span="4">
               <el-button
                 type="primary"
-                @click="resetSearch"
                 style="width: 100%"
+                @click="resetSearch"
               >
                 <el-icon><RefreshRight /></el-icon>
                 重置
@@ -37,8 +37,8 @@
             <el-col :span="4">
               <el-button
                 type="success"
-                @click="showAddDialog = true"
                 style="width: 100%"
+                @click="showAddDialog = true"
               >
                 <el-icon><Plus /></el-icon>
                 添加组
@@ -47,8 +47,8 @@
             <el-col :span="4">
               <el-button
                 type="info"
-                @click="showGroupStats"
                 style="width: 100%"
+                @click="showGroupStats"
               >
                 <el-icon><DataAnalysis /></el-icon>
                 统计
@@ -61,7 +61,7 @@
           v-resizable-columns
           :data="paginatedGroups"
           style="width: 100%"
-          max-height="500px"
+          height="57vh"
           stripe
         >
           <el-table-column prop="groupId" label="组ID" width="150">
@@ -86,7 +86,7 @@
               {{ formatDate(scope.row.createdDate) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" min-width="100" fixed="right">
+          <el-table-column label="操作" min-width="10%">
             <template #default="scope">
               <el-button size="small" @click="viewGroupAccounts(scope.row)"
                 >查看账户</el-button
@@ -290,8 +290,8 @@
         <el-button @click="showAddAccountDialog = false">取消</el-button>
         <el-button
           type="primary"
-          @click="addAccountsToGroup"
           :disabled="selectedAccounts.length === 0"
+          @click="addAccountsToGroup"
         >
           添加选中账户 ({{ selectedAccounts.length }})
         </el-button>
