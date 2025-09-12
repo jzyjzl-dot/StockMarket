@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useUserStore } from '../stores/userStore';
 
 const routes = [
@@ -110,15 +111,15 @@ const routes = [
   },
 ];
 
-// 作为 qiankun 子应用时需要指定 base，保持路由前缀稳定
-const base = window.__POWERED_BY_QIANKUN__ ? '/frontend' : '/';
+// Base needs to match host route prefix when running under qiankun
+const base = qiankunWindow.__POWERED_BY_QIANKUN__ ? '/frontend' : '/';
 
 const router = createRouter({
   history: createWebHistory(base),
   routes,
 });
 
-// 路由守卫
+// Guards
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore();
 
@@ -135,4 +136,5 @@ router.beforeEach((to, from, next) => {
 
   next();
 });
+
 export default router;

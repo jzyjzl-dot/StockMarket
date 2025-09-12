@@ -1,0 +1,42 @@
+﻿import { createApp, h, defineComponent } from 'vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
+import { registerMicroApps, start } from 'qiankun';
+import App from './App.vue';
+
+// 瀹夸富璺敱锛氭彁渚涘崰浣嶇粍浠讹紝閬垮厤璀﹀憡
+const Home = defineComponent({ name: 'HomeStub', template: '<div />' });
+const Micro = defineComponent({ name: 'MicroStub', template: '<div />' });
+
+const router = createRouter({
+  history: createWebHistory('/'),
+  routes: [
+    { path: '/', name: 'home', component: Home },
+    { path: '/frontend', name: 'frontend', component: Micro },
+    { path: '/frontend/:pathMatch(.*)*', name: 'frontendCatchAll', component: Micro },
+  ],
+});
+
+// 娉ㄥ唽瀛愬簲鐢?registerMicroApps([
+  {
+    name: 'frontend',
+    entry: 'http://localhost:5175',
+    container: '#micro-container',
+    activeRule: '/frontend',
+    props: {},
+  },
+]);
+
+// 鍚姩瀹夸富
+const app = createApp({
+  render: () => h(App),
+});
+app.use(ElementPlus);
+app.use(router);
+app.mount('#app');
+
+// 鍐嶅惎鍔?qiankun锛岀‘淇濆鍣ㄥ凡灏辩华
+start({ sandbox: { experimentalStyleIsolation: false } });
+
+
