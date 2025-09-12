@@ -334,14 +334,113 @@
             </div>
           </el-tab-pane>
           <el-tab-pane label="委托" name="order">
-            <div class="scroll-x">
-              <el-table-v2
-                :columns="orderColumns"
-                :data="orderRows"
-                :height="orderTableHeight"
-                :row-key="orderRowKey"
-                class="nt-order-virtual-table"
-              />
+            <div class="order-virtual-list">
+              <!-- 固定表头 -->
+              <div class="virtual-table-header">
+                <div class="virtual-table-row header-row">
+                  <div class="virtual-table-cell" style="width: 100px">
+                    账户
+                  </div>
+                  <div class="virtual-table-cell" style="width: 160px">
+                    委托时间
+                  </div>
+                  <div class="virtual-table-cell" style="width: 120px">
+                    证券代码
+                  </div>
+                  <div class="virtual-table-cell" style="width: 80px">方向</div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    委托价
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    委托量
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    成交量
+                  </div>
+                  <div class="virtual-table-cell" style="width: 140px">
+                    委托金额
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    交易市场
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    价格类型
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    状态
+                  </div>
+                </div>
+              </div>
+
+              <!-- 虚拟滚动容器 -->
+              <div
+                ref="virtualScrollContainer"
+                class="virtual-scroll-container"
+                @scroll="handleScroll"
+              >
+                <!-- 虚拟滚动内容 -->
+                <div
+                  class="virtual-scroll-content"
+                  :style="{ height: totalHeight + 'px' }"
+                >
+                  <div
+                    class="virtual-scroll-viewport"
+                    :style="{ transform: `translateY(${startOffset}px)` }"
+                  >
+                    <!-- 可见行 -->
+                    <div class="virtual-table-body">
+                      <div
+                        v-for="(item, index) in visibleItems"
+                        :key="item.id || `${startIndex + index}`"
+                        class="virtual-table-row data-row"
+                        :class="{ 'row-even': (startIndex + index) % 2 === 0 }"
+                      >
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.account }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 160px">
+                          {{ formatTime(item.time) }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 120px">
+                          {{ item.stockCode }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 80px">
+                          <span
+                            :class="{
+                              'buy-type': item.type === '买入',
+                              'sell-type': item.type === '卖出',
+                            }"
+                            >{{ item.type }}</span
+                          >
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ Number(item.price || 0).toFixed(2) }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.quantity }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.dealt }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 140px">
+                          {{ Number(item.amount || 0).toFixed(2) }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.market }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.orderType }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          <span :class="getStatusClass(item.status)">{{
+                            item.status
+                          }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </el-tab-pane>
           <el-tab-pane label="成交" name="deal">
@@ -507,22 +606,58 @@ const orderRows = ref([
 ]);
 const dealRows = ref([]);
 
-// 虚拟滚动（委托）列定义与高度
-const orderColumns = [
-  { key: 'account', dataKey: 'account', title: '账户', width: 120 },
-  { key: 'time', dataKey: 'time', title: '委托时间', width: 180 },
-  { key: 'stockCode', dataKey: 'stockCode', title: '证券代码', width: 120 },
-  { key: 'type', dataKey: 'type', title: '方向', width: 90 },
-  { key: 'price', dataKey: 'price', title: '委托价', width: 100 },
-  { key: 'quantity', dataKey: 'quantity', title: '委托量', width: 100 },
-  { key: 'dealt', dataKey: 'dealt', title: '成交量', width: 100 },
-  { key: 'amount', dataKey: 'amount', title: '委托金额', width: 140 },
-  { key: 'market', dataKey: 'market', title: '交易市场', width: 120 },
-  { key: 'orderType', dataKey: 'orderType', title: '价格类型', width: 120 },
-  { key: 'status', dataKey: 'status', title: '状态', width: 100 },
-];
-const orderTableHeight = 360;
-const orderRowKey = (row) => `${row.time}-${row.account}-${row.stockCode}`;
+// 虚拟滚动（委托）—与普通交易保持一致
+const virtualScrollContainer = ref();
+const itemHeight = 35; // 每行高度
+const containerHeight = 400; // 容器高度（用于估算可见行数）
+const visibleCount = Math.ceil(containerHeight / itemHeight); // 可见行数
+const bufferSize = 5; // 缓冲区大小
+const scrollTop = ref(0);
+
+const startIndex = computed(() =>
+  Math.max(0, Math.floor(scrollTop.value / itemHeight) - bufferSize)
+);
+const endIndex = computed(() =>
+  Math.min(
+    orderRows.value.length - 1,
+    startIndex.value + visibleCount + bufferSize * 2
+  )
+);
+const visibleItems = computed(() =>
+  orderRows.value.slice(startIndex.value, endIndex.value + 1)
+);
+const totalHeight = computed(() => orderRows.value.length * itemHeight);
+const startOffset = computed(() => startIndex.value * itemHeight);
+const handleScroll = (event) => {
+  scrollTop.value = event.target.scrollTop;
+};
+
+const formatTime = (time) => {
+  if (!time) return '';
+  const date = new Date(time);
+  if (isNaN(date.getTime())) return String(time);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+};
+const getStatusClass = (status) => {
+  switch (status) {
+    case '已报':
+    case '部分成交':
+      return 'status-pending';
+    case '全部成交':
+      return 'status-filled';
+    case '已撤销':
+      return 'status-cancelled';
+    default:
+      return '';
+  }
+};
 </script>
 
 <style scoped>
@@ -664,9 +799,37 @@ const orderRowKey = (row) => `${row.time}-${row.account}-${row.stockCode}`;
 }
 
 /* 修复查询面板标签切换时的抖动问题 */
-.pane-query .el-tabs__content {
+.pane-query :deep(.el-tabs__content) {
   /* 固定标签页内容区域的最小高度，防止不同标签页高度不一致导致抖动 */
   min-height: 300px;
+}
+
+/* 让查询区域的 Tabs 充满父容器高度 */
+.pane-query .pane-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* 允许内部滚动 */
+}
+
+.pane-query :deep(.el-tabs.nt-tabs) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.pane-query :deep(.el-tabs__content) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pane-query :deep(.el-tab-pane) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 稳定滚动条布局 */
@@ -742,5 +905,108 @@ const orderRowKey = (row) => `${row.time}-${row.account}-${row.stockCode}`;
 
 .table-container :deep(.el-table__body-wrapper) {
   max-height: none !important;
+}
+
+/* 虚拟滚动样式（委托）- 对齐普通交易界面 */
+.order-virtual-list {
+  height: 17em;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.virtual-table-header {
+  position: relative;
+  z-index: 10;
+  background: #fafafa;
+  border-bottom: 1px solid #ebeef5;
+  flex-shrink: 0;
+}
+
+.virtual-scroll-container {
+  flex: 1;
+  width: 100%;
+  overflow: auto;
+  min-height: 200px;
+  max-height: 360px;
+}
+
+.virtual-scroll-content {
+  position: relative;
+  width: 100%;
+}
+
+.virtual-scroll-viewport {
+  position: relative;
+}
+
+.virtual-table-row {
+  display: flex;
+  width: 100%;
+  min-width: 1200px;
+  height: 35px;
+  align-items: center;
+  border-bottom: 1px solid #f2f6fc;
+}
+
+.virtual-table-row.header-row {
+  background: #fafafa;
+  font-weight: 600;
+  color: #909399;
+  height: 40px;
+}
+
+.virtual-table-row.data-row:hover {
+  background: #f5f7fa;
+}
+
+.virtual-table-row.row-even {
+  background: #fafafa;
+}
+
+.virtual-table-row.row-even:hover {
+  background: #f0f2f5;
+}
+
+.virtual-table-cell {
+  padding: 0 12px;
+  font-size: 12px;
+  color: #606266;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-right: 1px solid #ebeef5;
+}
+
+.virtual-table-cell:last-child {
+  border-right: none;
+}
+
+.buy-type {
+  color: #f56c6c;
+  font-weight: 600;
+}
+
+.sell-type {
+  color: #67c23a;
+  font-weight: 600;
+}
+
+.status-pending {
+  color: #e6a23c;
+}
+
+.status-filled {
+  color: #67c23a;
+}
+
+.status-cancelled {
+  color: #f56c6c;
 }
 </style>

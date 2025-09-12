@@ -1,3 +1,17 @@
 {
-  "normalBuys": []
+  "normalBuys": [
+    {
+      "id": "dd6c",
+      "timestamp": "2025-09-12T04:30:23.754Z",
+      "account": "ALL",
+      "side": "BUY",
+      "symbol": "600000",
+      "price": 7.48,
+      "qty": 100,
+      "amount": 748,
+      "priceType": "fixed",
+      "strategy": "fixedQty",
+      "distribution": "eachFixedQty"
+    }
+  ]
 }

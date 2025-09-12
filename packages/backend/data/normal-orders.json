@@ -539,6 +539,36 @@
       "orderType": "限价",
       "status": "已报",
       "source": "normal-trade-confirm"
+    },
+    {
+      "id": "1694",
+      "time": "2025-09-12T04:30:25.827Z",
+      "account": "ALL",
+      "symbol": "600000",
+      "type": "买入",
+      "side": "BUY",
+      "price": 7.48,
+      "quantity": 100,
+      "amount": 748,
+      "market": "上交所",
+      "orderType": "限价",
+      "status": "已报",
+      "source": "normal-trade-confirm"
+    },
+    {
+      "id": "8b9f",
+      "time": "2025-09-12T04:30:36.730Z",
+      "account": "ALL",
+      "symbol": "600000",
+      "type": "买入",
+      "side": "BUY",
+      "price": 7.48,
+      "quantity": 300,
+      "amount": 2244,
+      "market": "上交所",
+      "orderType": "限价",
+      "status": "已报",
+      "source": "normal-trade-confirm"
     }
   ]
 }
