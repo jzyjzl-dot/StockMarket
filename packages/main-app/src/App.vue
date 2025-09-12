@@ -3,17 +3,17 @@
     <header class="host-header">
       <div class="logo">Host</div>
       <nav class="nav">
-        <a href="/">首页</a>
-        <a href="/frontend">前端子应用</a>
+        <router-link to="/">首页</router-link>
+        <router-link to="/frontend">前端子应用</router-link>
       </nav>
     </header>
 
     <main class="host-main">
-      <!-- qiankun 子应用的容器 -->
-      <div id="micro-container" class="micro-container"></div>
+      <!-- 路由视图 -->
+      <router-view />
     </main>
   </div>
-</template>
+  </template>
 
 <script setup>
 </script>
@@ -40,12 +40,34 @@
   color: #409eff;
   text-decoration: none;
 }
+.nav a.router-link-active {
+  font-weight: 600;
+}
 .host-main {
   flex: 1;
   overflow: auto;
 }
 .micro-container {
   height: 100%;
+}
+
+.home-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.home-content h1 {
+  color: #409eff;
+  margin-bottom: 16px;
+}
+
+.home-content p {
+  color: #606266;
+  font-size: 14px;
 }
 </style>
 
