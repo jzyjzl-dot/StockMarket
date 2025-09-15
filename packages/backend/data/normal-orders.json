@@ -659,6 +659,21 @@
       "orderType": "限价",
       "status": "已报",
       "source": "normal-trade-confirm"
+    },
+    {
+      "id": "6cff",
+      "time": "2025-09-15T06:23:04.211Z",
+      "account": "ALL",
+      "symbol": "600000",
+      "type": "买入",
+      "side": "BUY",
+      "price": 7.48,
+      "quantity": 100,
+      "amount": 748,
+      "market": "上交所",
+      "orderType": "限价",
+      "status": "已报",
+      "source": "normal-trade-confirm"
     }
   ]
 }

@@ -12,12 +12,10 @@ export const orderAPI = {
   async getOrders() {
     try {
       // 从我们的自定义服务器获取订单数据
-      const response = await fetch('http://localhost:3004/orders');
-      if (response.ok) {
-        const orders = await response.json();
-        console.log('Orders loaded from server:', orders);
-        return orders;
-      }
+      const response = await api.get('/orders');
+      const orders = response.data;
+      console.log('Orders loaded from server:', orders);
+      return orders;
     } catch (error) {
       console.warn(
         'Server not available, falling back to localStorage:',
@@ -36,21 +34,13 @@ export const orderAPI = {
   async saveOrders(orders) {
     try {
       // 尝试保存到json-server
-      const response = await fetch('http://localhost:3004/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orders: orders,
-          timestamp: new Date().toISOString(),
-        }),
+      await api.post('/orders', {
+        orders: orders,
+        timestamp: new Date().toISOString(),
       });
 
-      if (response.ok) {
-        console.log('Orders saved to json-server successfully');
-        return true;
-      }
+      console.log('Orders saved to json-server successfully');
+      return true;
     } catch (error) {
       console.warn('json-server not available:', error.message);
     }
@@ -64,17 +54,8 @@ export const orderAPI = {
   // 更新单个订单
   async updateOrder(orderId, updates) {
     try {
-      const response = await fetch(`http://localhost:3004/orders/${orderId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
-      });
-
-      if (response.ok) {
-        return await response.json();
-      }
+      const response = await api.patch(`/orders/${orderId}`, updates);
+      return response.data;
     } catch (error) {
       console.warn('Failed to update order:', error.message);
     }
@@ -95,13 +76,11 @@ export const userAPI = {
   // 获取所有用户
   async getUsers() {
     try {
-      const response = await fetch('http://localhost:3004/users');
-      if (response.ok) {
-        const users = await response.json();
-        console.log('Users loaded from server:', users);
-        console.log('First user ID type:', typeof users[0]?.id);
-        return users;
-      }
+      const response = await api.get('/users');
+      const users = response.data;
+      console.log('Users loaded from server:', users);
+      console.log('First user ID type:', typeof users[0]?.id);
+      return users;
     } catch (error) {
       console.warn('Server not available for users:', error.message);
     }
@@ -117,29 +96,22 @@ export const userAPI = {
     });
 
     try {
-      const response = await fetch(`http://localhost:3004/users/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
+      const response = await api.patch(`/users/${userId}`, { role: newRole });
 
       console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
+      console.log('Response ok:', response.status < 300);
 
-      if (response.ok) {
-        const updatedUser = await response.json();
-        console.log('User role updated:', updatedUser);
-        return updatedUser;
-      } else {
-        console.error('Update failed with status:', response.status);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-      }
+      const updatedUser = response.data;
+      console.log('User role updated:', updatedUser);
+      return updatedUser;
     } catch (error) {
       console.warn('Failed to update user role:', error.message);
       console.error('Full error:', error);
+
+      if (error.response) {
+        console.error('Update failed with status:', error.response.status);
+        console.error('Error response:', error.response.data);
+      }
     }
     return null;
   },
@@ -147,14 +119,9 @@ export const userAPI = {
   // 删除用户
   async deleteUser(userId) {
     try {
-      const response = await fetch(`http://localhost:3004/users/${userId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        console.log('User deleted:', userId);
-        return true;
-      }
+      await api.delete(`/users/${userId}`);
+      console.log('User deleted:', userId);
+      return true;
     } catch (error) {
       console.warn('Failed to delete user:', error.message);
     }
@@ -252,12 +219,10 @@ export const stockAccountAPI = {
   // 获取所有股票账户
   async getStockAccounts() {
     try {
-      const response = await fetch('http://localhost:3004/stockAccounts');
-      if (response.ok) {
-        const accounts = await response.json();
-        console.log('Stock accounts loaded from server:', accounts);
-        return accounts;
-      }
+      const response = await api.get('/stockAccounts');
+      const accounts = response.data;
+      console.log('Stock accounts loaded from server:', accounts);
+      return accounts;
     } catch (error) {
       console.warn('Server not available for stock accounts:', error.message);
     }
@@ -267,32 +232,22 @@ export const stockAccountAPI = {
   // 更新股票账户
   async updateStockAccount(accountId, accountData) {
     try {
-      const response = await fetch(
-        `http://localhost:3004/stockAccounts/${accountId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...accountData,
-            lastUpdated: new Date().toISOString(),
-          }),
-        }
-      );
+      const response = await api.put(`/stockAccounts/${accountId}`, {
+        ...accountData,
+        lastUpdated: new Date().toISOString(),
+      });
 
-      if (response.ok) {
-        const updatedAccount = await response.json();
-        console.log('Stock account updated:', updatedAccount);
-        return updatedAccount;
-      } else {
-        console.error('Update failed with status:', response.status);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-      }
+      const updatedAccount = response.data;
+      console.log('Stock account updated:', updatedAccount);
+      return updatedAccount;
     } catch (error) {
       console.warn('Failed to update stock account:', error.message);
       console.error('Full error:', error);
+
+      if (error.response) {
+        console.error('Update failed with status:', error.response.status);
+        console.error('Error response:', error.response.data);
+      }
     }
     return null;
   },
@@ -300,31 +255,24 @@ export const stockAccountAPI = {
   // 创建股票账户
   async createStockAccount(accountData) {
     try {
-      const response = await fetch('http://localhost:3004/stockAccounts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...accountData,
-          id: Date.now().toString(),
-          createdDate: new Date().toISOString(),
-          lastUpdated: new Date().toISOString(),
-        }),
+      const response = await api.post('/stockAccounts', {
+        ...accountData,
+        id: Date.now().toString(),
+        createdDate: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
       });
 
-      if (response.ok) {
-        const newAccount = await response.json();
-        console.log('Stock account created:', newAccount);
-        return newAccount;
-      } else {
-        console.error('Create failed with status:', response.status);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-      }
+      const newAccount = response.data;
+      console.log('Stock account created:', newAccount);
+      return newAccount;
     } catch (error) {
       console.warn('Failed to create stock account:', error.message);
       console.error('Full error:', error);
+
+      if (error.response) {
+        console.error('Create failed with status:', error.response.status);
+        console.error('Error response:', error.response.data);
+      }
     }
     return null;
   },
@@ -332,25 +280,18 @@ export const stockAccountAPI = {
   // 删除股票账户
   async deleteStockAccount(accountId) {
     try {
-      const response = await fetch(
-        `http://localhost:3004/stockAccounts/${accountId}`,
-        {
-          method: 'DELETE',
-        }
-      );
-
-      if (response.ok) {
-        console.log('Stock account deleted successfully');
-        return true;
-      } else {
-        console.error('Delete failed with status:', response.status);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        return false;
-      }
+      await api.delete(`/stockAccounts/${accountId}`);
+      console.log('Stock account deleted successfully');
+      return true;
     } catch (error) {
       console.warn('Failed to delete stock account:', error.message);
       console.error('Full error:', error);
+
+      if (error.response) {
+        console.error('Delete failed with status:', error.response.status);
+        console.error('Error response:', error.response.data);
+        return false;
+      }
       return false;
     }
   },

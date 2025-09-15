@@ -12,6 +12,19 @@
       "priceType": "fixed",
       "strategy": "fixedQty",
       "distribution": "eachFixedQty"
+    },
+    {
+      "id": "5c58",
+      "timestamp": "2025-09-15T01:47:58.887Z",
+      "account": "ALL",
+      "side": "BUY",
+      "symbol": "600000",
+      "price": 7.48,
+      "qty": 100,
+      "amount": 748,
+      "priceType": "fixed",
+      "strategy": "fixedQty",
+      "distribution": "eachFixedQty"
     }
   ]
 }

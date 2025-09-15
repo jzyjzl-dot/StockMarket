@@ -3,7 +3,7 @@
     <!-- 顶部三栏：行情 / 下单 / 预览 -->
     <div class="nt-top">
       <!-- 行情界面 -->
-      <section class="pane pane-market">
+      <section v-if="false" class="pane pane-market">
         <header class="pane-header">
           <div class="title">行情</div>
         </header>
@@ -767,7 +767,7 @@ const dealRows = ref([]);
 }
 .nt-top {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 3fr; /* 行情 / 下单 / 预览 */
+  grid-template-columns: 1.5fr 3fr; /* 行情 / 下单 / 预览 */
   gap: 12px;
   align-items: stretch;
   /* 关键：让顶部区域占据可用高度，并允许内部滚动 */

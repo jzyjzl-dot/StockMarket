@@ -2,7 +2,7 @@
   <div class="nt-page">
     <div class="nt-top">
       <!-- 行情 -->
-      <section class="pane pane-market">
+      <section v-if="false" class="pane pane-market">
         <header class="pane-header"><div class="title">行情</div></header>
         <div class="pane-body scroll-y">
           <div class="market-head">
@@ -671,7 +671,7 @@ const getStatusClass = (status) => {
 }
 .nt-top {
   display: grid;
-  grid-template-columns: 260px 320px 320px 1fr; /* 行情 / 算法交易 / 参数 / 预览 */
+  grid-template-columns: 1fr 1fr 3fr;
   gap: 12px;
   align-items: stretch;
   /* min-height: 220px; */
@@ -841,7 +841,7 @@ const getStatusClass = (status) => {
 
 /* 本页：四列布局 - 行情、算法交易、算法参数设置、预览 */
 .nt-page .nt-top {
-  grid-template-columns: 260px 320px 320px 1fr;
+  grid-template-columns: 1fr 1fr 3fr;
 }
 
 /* 预览表格占满剩余宽度 */
