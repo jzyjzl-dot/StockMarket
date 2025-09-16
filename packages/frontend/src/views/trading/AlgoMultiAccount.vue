@@ -294,7 +294,6 @@
                 :data="fundRows"
                 size="small"
                 style="width: 100%"
-                height="30%"
               >
                 <el-table-column
                   prop="available"
@@ -318,7 +317,6 @@
                 :data="positionRows"
                 size="small"
                 style="width: 100%"
-                height="30%"
               >
                 <el-table-column prop="symbol" label="证券代码" width="120" />
                 <el-table-column prop="name" label="证券名称" width="140" />
@@ -450,7 +448,6 @@
                 :data="dealRows"
                 size="small"
                 style="width: 100%"
-                height="30%"
               >
                 <el-table-column prop="time" label="时间" width="160" />
                 <el-table-column
@@ -799,44 +796,41 @@ const getStatusClass = (status) => {
 }
 
 /* 修复查询面板标签切换时的抖动问题 */
-.pane-query :deep(.el-tabs__content) {
+.pane-query .el-tabs__content {
   /* 固定标签页内容区域的最小高度，防止不同标签页高度不一致导致抖动 */
   min-height: 300px;
+  max-height: 450px;
+  overflow: visible;
 }
 
-/* 让查询区域的 Tabs 充满父容器高度 */
 .pane-query .pane-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* 允许内部滚动 */
+  overflow: visible;
+  max-height: 500px;
 }
 
-.pane-query :deep(.el-tabs.nt-tabs) {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+.pane-query .el-tab-pane {
+  overflow: visible;
+  height: auto;
+  max-height: 400px;
 }
 
-.pane-query :deep(.el-tabs__content) {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.pane-query :deep(.el-tab-pane) {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 稳定滚动条布局 */
+/* 稳定滚动条布局 - 只在表格容器内滚动 */
 .scroll-x {
   /* 始终为滚动条预留空间，避免滚动条出现/消失时的布局变化 */
   overflow-x: auto;
+  overflow-y: auto;
   scrollbar-gutter: stable;
+  max-height: 350px;
+}
+
+/* 确保虚拟滚动表格容器有独立的滚动 */
+.scroll-x .virtual-scroll-container {
+  overflow: auto;
+}
+
+/* 限制普通表格的高度 */
+.scroll-x .el-table {
+  max-height: 300px;
 }
 
 /* 本页：四列布局 - 行情、算法交易、算法参数设置、预览 */
