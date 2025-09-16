@@ -15,6 +15,9 @@ const {
   PORT = '3004',
 } = process.env;
 
+const dataDir = path.join(__dirname, 'data');
+let pool;
+
 const numeric = (value) => {
   if (value === null || value === undefined || value === '') return null;
   const num = Number(value);
@@ -32,9 +35,6 @@ const toISOString = (value) => {
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 };
-
-const dataDir = path.join(__dirname, 'data');
-let pool;
 
 async function ensureDatabaseExists() {
   const bootstrapPool = mysql.createPool({
@@ -112,6 +112,60 @@ async function initTables() {
       created_date DATETIME,
       last_updated DATETIME
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS account_groups (
+      id VARCHAR(64) PRIMARY KEY,
+      group_id VARCHAR(64),
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      created_date DATETIME,
+      last_updated DATETIME
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS stocks (
+      id VARCHAR(64) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      symbol VARCHAR(50) NOT NULL,
+      price DECIMAL(18,2) DEFAULT 0,
+      change_value DECIMAL(18,2) DEFAULT 0,
+      change_percent DECIMAL(18,2) DEFAULT 0
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS trades (
+      id VARCHAR(64) PRIMARY KEY,
+      user_id VARCHAR(64),
+      product_id VARCHAR(64),
+      amount DECIMAL(18,2) DEFAULT 0,
+      status VARCHAR(32)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS normal_buys (
+      id VARCHAR(64) PRIMARY KEY,
+      buy_time DATETIME,
+      account VARCHAR(128),
+      side VARCHAR(16),
+      symbol VARCHAR(64),
+      price DECIMAL(18,2) DEFAULT 0,
+      qty INT DEFAULT 0,
+      amount DECIMAL(18,2) DEFAULT 0,
+      price_type VARCHAR(32),
+      strategy VARCHAR(64),
+      distribution VARCHAR(64),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS normal_orders (
+      id VARCHAR(64) PRIMARY KEY,
+      order_time DATETIME,
+      account VARCHAR(128),
+      symbol VARCHAR(64),
+      type VARCHAR(32),
+      side VARCHAR(16),
+      price DECIMAL(18,2) DEFAULT 0,
+      quantity INT DEFAULT 0,
+      dealt INT DEFAULT 0,
+      amount DECIMAL(18,2) DEFAULT 0,
+      market VARCHAR(64),
+      order_type VARCHAR(64),
+      status VARCHAR(32),
+      source VARCHAR(64),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
   ];
 
   for (const sql of tableStatements) {
@@ -119,7 +173,7 @@ async function initTables() {
   }
 }
 
-function readSeedFile(fileName, key) {
+function readSeedArray(fileName, key) {
   try {
     const filePath = path.join(dataDir, fileName);
     if (!fs.existsSync(filePath)) {
@@ -138,7 +192,7 @@ function readSeedFile(fileName, key) {
 async function seedUsers() {
   const [rows] = await pool.query('SELECT COUNT(*) AS count FROM users');
   if (rows[0]?.count > 0) return;
-  const users = readSeedFile('users.json', 'users');
+  const users = readSeedArray('users.json', 'users');
   if (!users.length) return;
   const values = users.map((user) => [
     user.id?.toString() || crypto.randomUUID(),
@@ -148,14 +202,15 @@ async function seedUsers() {
     user.role || null,
   ]);
   await pool.query(
-    'INSERT INTO users (id, username, email, password, role) VALUES ?',[values]
+    'INSERT INTO users (id, username, email, password, role) VALUES ?',
+    [values]
   );
 }
 
 async function seedProducts() {
   const [rows] = await pool.query('SELECT COUNT(*) AS count FROM products');
   if (rows[0]?.count > 0) return;
-  const products = readSeedFile('products.json', 'products');
+  const products = readSeedArray('products.json', 'products');
   if (!products.length) return;
   const values = products.map((product) => [
     product.id?.toString() || crypto.randomUUID(),
@@ -172,7 +227,7 @@ async function seedProducts() {
 async function seedStockAccounts() {
   const [rows] = await pool.query('SELECT COUNT(*) AS count FROM stock_accounts');
   if (rows[0]?.count > 0) return;
-  const accounts = readSeedFile('stockAccounts.json', 'stockAccounts');
+  const accounts = readSeedArray('stockAccounts.json', 'stockAccounts');
   if (!accounts.length) return;
   const values = accounts.map((account) => [
     account.id?.toString() || crypto.randomUUID(),
@@ -196,10 +251,132 @@ async function seedStockAccounts() {
   );
 }
 
+async function seedAccountGroups() {
+  const [rows] = await pool.query('SELECT COUNT(*) AS count FROM account_groups');
+  if (rows[0]?.count > 0) return;
+  const groups = readSeedArray('accountGroups.json', 'accountGroups');
+  if (!groups.length) return;
+  const values = groups.map((group) => [
+    group.id?.toString() || crypto.randomUUID(),
+    group.groupId?.toString() || null,
+    group.name || '',
+    group.description || null,
+    toDate(group.createdDate) || new Date(),
+    toDate(group.lastUpdated) || new Date(),
+  ]);
+  await pool.query(
+    `INSERT INTO account_groups (
+      id, group_id, name, description, created_date, last_updated
+    ) VALUES ?`,
+    [values]
+  );
+}
+
+async function seedStocks() {
+  const [rows] = await pool.query('SELECT COUNT(*) AS count FROM stocks');
+  if (rows[0]?.count > 0) return;
+  const stocks = readSeedArray('stocks.json', 'stocks');
+  if (!stocks.length) return;
+  const values = stocks.map((stock) => [
+    stock.id?.toString() || crypto.randomUUID(),
+    stock.name || '',
+    stock.symbol || '',
+    numeric(stock.price) ?? 0,
+    numeric(stock.change) ?? 0,
+    numeric(stock.changePercent) ?? 0,
+  ]);
+  await pool.query(
+    `INSERT INTO stocks (
+      id, name, symbol, price, change_value, change_percent
+    ) VALUES ?`,
+    [values]
+  );
+}
+
+async function seedTrades() {
+  const [rows] = await pool.query('SELECT COUNT(*) AS count FROM trades');
+  if (rows[0]?.count > 0) return;
+  const trades = readSeedArray('trades.json', 'trades');
+  if (!trades.length) return;
+  const values = trades.map((trade) => [
+    trade.id?.toString() || crypto.randomUUID(),
+    trade.userId?.toString() || null,
+    trade.productId?.toString() || null,
+    numeric(trade.amount) ?? 0,
+    trade.status || null,
+  ]);
+  await pool.query(
+    'INSERT INTO trades (id, user_id, product_id, amount, status) VALUES ?',
+    [values]
+  );
+}
+
+async function seedNormalBuys() {
+  const [rows] = await pool.query('SELECT COUNT(*) AS count FROM normal_buys');
+  if (rows[0]?.count > 0) return;
+  const buys = readSeedArray('normal-buys.json', 'normalBuys');
+  if (!buys.length) return;
+  const values = buys.map((buy) => [
+    buy.id?.toString() || crypto.randomUUID(),
+    toDate(buy.timestamp) || new Date(),
+    buy.account || null,
+    buy.side || null,
+    buy.symbol || null,
+    numeric(buy.price) ?? 0,
+    Number(buy.qty) || 0,
+    numeric(buy.amount) ?? 0,
+    buy.priceType || null,
+    buy.strategy || null,
+    buy.distribution || null,
+  ]);
+  await pool.query(
+    `INSERT INTO normal_buys (
+      id, buy_time, account, side, symbol, price, qty, amount,
+      price_type, strategy, distribution
+    ) VALUES ?`,
+    [values]
+  );
+}
+
+async function seedNormalOrders() {
+  const [rows] = await pool.query('SELECT COUNT(*) AS count FROM normal_orders');
+  if (rows[0]?.count > 0) return;
+  const orders = readSeedArray('normal-orders.json', 'normalOrders');
+  if (!orders.length) return;
+  const values = orders.map((order) => [
+    order.id?.toString() || crypto.randomUUID(),
+    toDate(order.time || order.timestamp) || new Date(),
+    order.account || null,
+    order.symbol || null,
+    order.type || null,
+    order.side || null,
+    numeric(order.price) ?? 0,
+    Number(order.quantity ?? order.qty ?? 0) || 0,
+    Number(order.dealt ?? 0) || 0,
+    numeric(order.amount) ?? 0,
+    order.market || null,
+    order.orderType || null,
+    order.status || null,
+    order.source || null,
+  ]);
+  await pool.query(
+    `INSERT INTO normal_orders (
+      id, order_time, account, symbol, type, side, price, quantity,
+      dealt, amount, market, order_type, status, source
+    ) VALUES ?`,
+    [values]
+  );
+}
+
 async function seedReferenceData() {
   await seedUsers();
   await seedProducts();
   await seedStockAccounts();
+  await seedAccountGroups();
+  await seedStocks();
+  await seedTrades();
+  await seedNormalBuys();
+  await seedNormalOrders();
 }
 
 const asyncHandler = (handler) => (req, res, next) => {
@@ -232,23 +409,62 @@ const mapStockAccountRow = (row) => ({
   lastUpdated: toISOString(row.last_updated),
 });
 
-function normaliseOrder(order) {
-  const price = numeric(order.price) ?? 0;
-  const quantity = numeric(order.quantity) ?? 0;
-  const total = numeric(order.total) ?? price * quantity;
+const mapAccountGroupRow = (row) => ({
+  id: row.id,
+  groupId: row.group_id,
+  name: row.name,
+  description: row.description,
+  createdDate: toISOString(row.created_date),
+  lastUpdated: toISOString(row.last_updated),
+});
 
-  return [
-    (order.id ?? Date.now()).toString(),
-    order.stockId ?? null,
-    order.stockName ?? null,
-    order.stockSymbol ?? null,
-    price,
-    quantity,
-    total ?? 0,
-    toDate(order.date) || new Date(),
-    order.status ?? 'pending',
-  ];
-}
+const mapStockRow = (row) => ({
+  id: row.id,
+  name: row.name,
+  symbol: row.symbol,
+  price: numeric(row.price) ?? 0,
+  change: numeric(row.change_value) ?? 0,
+  changePercent: numeric(row.change_percent) ?? 0,
+});
+
+const mapTradeRow = (row) => ({
+  id: row.id,
+  userId: row.user_id,
+  productId: row.product_id,
+  amount: numeric(row.amount) ?? 0,
+  status: row.status,
+});
+
+const mapNormalBuyRow = (row) => ({
+  id: row.id,
+  timestamp: toISOString(row.buy_time),
+  account: row.account,
+  side: row.side,
+  symbol: row.symbol,
+  price: numeric(row.price) ?? 0,
+  qty: row.qty,
+  amount: numeric(row.amount) ?? 0,
+  priceType: row.price_type,
+  strategy: row.strategy,
+  distribution: row.distribution,
+});
+
+const mapNormalOrderRow = (row) => ({
+  id: row.id,
+  time: toISOString(row.order_time),
+  account: row.account,
+  symbol: row.symbol,
+  type: row.type,
+  side: row.side,
+  price: numeric(row.price) ?? 0,
+  quantity: row.quantity,
+  dealt: row.dealt,
+  amount: numeric(row.amount) ?? 0,
+  market: row.market,
+  orderType: row.order_type,
+  status: row.status,
+  source: row.source,
+});
 
 function buildUpdateParts(payload, fieldMap) {
   const updates = [];
@@ -257,7 +473,9 @@ function buildUpdateParts(payload, fieldMap) {
   Object.entries(fieldMap).forEach(([property, { column, transform }]) => {
     if (payload[property] !== undefined) {
       updates.push(`${column} = ?`);
-      values.push(transform ? transform(payload[property]) : payload[property]);
+      values.push(
+        transform ? transform(payload[property]) : payload[property]
+      );
     }
   });
 
@@ -289,7 +507,22 @@ app.post('/orders', asyncHandler(async (req, res) => {
     await connection.beginTransaction();
     await connection.query('DELETE FROM orders');
     if (orders.length > 0) {
-      const values = orders.map(normaliseOrder);
+      const values = orders.map((order) => {
+        const price = numeric(order.price) ?? 0;
+        const quantity = Number(order.quantity ?? 0) || 0;
+        const total = numeric(order.total) ?? price * quantity;
+        return [
+          (order.id ?? Date.now()).toString(),
+          order.stockId ?? null,
+          order.stockName ?? null,
+          order.stockSymbol ?? null,
+          price,
+          quantity,
+          total ?? 0,
+          toDate(order.date) || new Date(),
+          order.status ?? 'pending',
+        ];
+      });
       await connection.query(
         `INSERT INTO orders (
           id, stock_id, stock_name, stock_symbol, price,
@@ -510,6 +743,160 @@ app.delete('/stockAccounts/:id', asyncHandler(async (req, res) => {
   res.status(204).end();
 }));
 
+app.get('/accountGroups', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM account_groups ORDER BY group_id');
+  res.json(rows.map(mapAccountGroupRow));
+}));
+
+app.post('/accountGroups', asyncHandler(async (req, res) => {
+  const group = req.body || {};
+  const id = (group.id ?? crypto.randomUUID()).toString();
+  await pool.query(
+    `INSERT INTO account_groups (id, group_id, name, description, created_date, last_updated)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      group.groupId?.toString() || null,
+      group.name || '',
+      group.description || null,
+      toDate(group.createdDate) || new Date(),
+      toDate(group.lastUpdated) || new Date(),
+    ]
+  );
+  const [rows] = await pool.query('SELECT * FROM account_groups WHERE id = ?', [id]);
+  res.status(201).json(mapAccountGroupRow(rows[0]));
+}));
+
+app.put('/accountGroups/:id', asyncHandler(async (req, res) => {
+  const group = req.body || {};
+  const fieldMap = {
+    groupId: { column: 'group_id', transform: (v) => v?.toString() ?? null },
+    name: { column: 'name' },
+    description: { column: 'description' },
+    createdDate: { column: 'created_date', transform: toDate },
+    lastUpdated: { column: 'last_updated', transform: toDate },
+  };
+  const { updates, values } = buildUpdateParts(group, fieldMap);
+  if (!updates.length) {
+    return res.status(400).json({ message: 'no updatable fields provided' });
+  }
+  values.push(req.params.id);
+  const [result] = await pool.query(
+    `UPDATE account_groups SET ${updates.join(', ')} WHERE id = ?`,
+    values
+  );
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'account group not found' });
+  }
+  const [rows] = await pool.query('SELECT * FROM account_groups WHERE id = ?', [req.params.id]);
+  res.json(mapAccountGroupRow(rows[0]));
+}));
+
+app.delete('/accountGroups/:id', asyncHandler(async (req, res) => {
+  const [result] = await pool.query('DELETE FROM account_groups WHERE id = ?', [req.params.id]);
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'account group not found' });
+  }
+  res.status(204).end();
+}));
+
+app.get('/stocks', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM stocks ORDER BY name');
+  res.json(rows.map(mapStockRow));
+}));
+
+app.get('/trades', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM trades');
+  res.json(rows.map(mapTradeRow));
+}));
+
+app.get('/normalBuys', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM normal_buys ORDER BY buy_time DESC');
+  res.json(rows.map(mapNormalBuyRow));
+}));
+
+app.post('/normalBuys', asyncHandler(async (req, res) => {
+  const buy = req.body || {};
+  const id = (buy.id ?? crypto.randomUUID()).toString();
+  const buyTime = toDate(buy.timestamp) || new Date();
+
+  await pool.query(
+    `INSERT INTO normal_buys (
+      id, buy_time, account, side, symbol, price, qty, amount,
+      price_type, strategy, distribution
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      buyTime,
+      buy.account || null,
+      buy.side || null,
+      buy.symbol || null,
+      numeric(buy.price) ?? 0,
+      Number(buy.qty) || 0,
+      numeric(buy.amount) ?? 0,
+      buy.priceType || null,
+      buy.strategy || null,
+      buy.distribution || null,
+    ]
+  );
+
+  const [rows] = await pool.query('SELECT * FROM normal_buys WHERE id = ?', [id]);
+  res.status(201).json(mapNormalBuyRow(rows[0]));
+}));
+
+app.delete('/normalBuys/:id', asyncHandler(async (req, res) => {
+  const [result] = await pool.query('DELETE FROM normal_buys WHERE id = ?', [req.params.id]);
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'normal buy not found' });
+  }
+  res.status(204).end();
+}));
+
+app.get('/normalOrders', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM normal_orders ORDER BY order_time DESC');
+  res.json(rows.map(mapNormalOrderRow));
+}));
+
+app.post('/normalOrders', asyncHandler(async (req, res) => {
+  const order = req.body || {};
+  const id = (order.id ?? crypto.randomUUID()).toString();
+  const orderTime = toDate(order.time || order.timestamp) || new Date();
+
+  await pool.query(
+    `INSERT INTO normal_orders (
+      id, order_time, account, symbol, type, side, price, quantity,
+      dealt, amount, market, order_type, status, source
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      orderTime,
+      order.account || null,
+      order.symbol || null,
+      order.type || null,
+      order.side || null,
+      numeric(order.price) ?? 0,
+      Number(order.quantity ?? order.qty ?? 0) || 0,
+      Number(order.dealt ?? 0) || 0,
+      numeric(order.amount) ?? 0,
+      order.market || null,
+      order.orderType || null,
+      order.status || null,
+      order.source || null,
+    ]
+  );
+
+  const [rows] = await pool.query('SELECT * FROM normal_orders WHERE id = ?', [id]);
+  res.status(201).json(mapNormalOrderRow(rows[0]));
+}));
+
+app.delete('/normalOrders/:id', asyncHandler(async (req, res) => {
+  const [result] = await pool.query('DELETE FROM normal_orders WHERE id = ?', [req.params.id]);
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'normal order not found' });
+  }
+  res.status(204).end();
+}));
+
 app.use((err, req, res, next) => {
   console.error('API error:', err);
   res.status(500).json({ message: 'internal server error', detail: err.message });
@@ -534,5 +921,3 @@ async function start() {
 }
 
 start();
-
-
