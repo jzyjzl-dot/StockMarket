@@ -25,6 +25,58 @@
       "priceType": "fixed",
       "strategy": "fixedQty",
       "distribution": "eachFixedQty"
+    },
+    {
+      "id": "0cda",
+      "timestamp": "2025-09-16T05:18:07.293Z",
+      "account": "ALL",
+      "side": "BUY",
+      "symbol": "600000",
+      "price": 7.48,
+      "qty": 100,
+      "amount": 748,
+      "priceType": "fixed",
+      "strategy": "fixedQty",
+      "distribution": "eachFixedQty"
+    },
+    {
+      "id": "36d7",
+      "timestamp": "2025-09-16T05:18:08.582Z",
+      "account": "ALL",
+      "side": "BUY",
+      "symbol": "600000",
+      "price": 7.48,
+      "qty": 100,
+      "amount": 748,
+      "priceType": "fixed",
+      "strategy": "fixedQty",
+      "distribution": "eachFixedQty"
+    },
+    {
+      "id": "e1b1",
+      "timestamp": "2025-09-16T05:18:08.748Z",
+      "account": "ALL",
+      "side": "BUY",
+      "symbol": "600000",
+      "price": 7.48,
+      "qty": 100,
+      "amount": 748,
+      "priceType": "fixed",
+      "strategy": "fixedQty",
+      "distribution": "eachFixedQty"
+    },
+    {
+      "id": "345e",
+      "timestamp": "2025-09-16T05:49:37.550Z",
+      "account": "ALL",
+      "side": "BUY",
+      "symbol": "600000",
+      "price": 7.48,
+      "qty": 100,
+      "amount": 748,
+      "priceType": "fixed",
+      "strategy": "fixedQty",
+      "distribution": "eachFixedQty"
     }
   ]
 }

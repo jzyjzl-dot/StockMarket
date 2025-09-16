@@ -470,7 +470,7 @@ const getStatusClass = (status) => {
 
 // 行情基础数据
 const currentStock = ref({
-  name: '浦发银行',
+  name: '示例股票',
   code: '600000',
   price: 7.48,
   change: -0.12,
@@ -659,7 +659,7 @@ const refreshOrders = async () => {
       '002415',
     ];
     const stockNames = [
-      '浦发银行',
+      '示例股票',
       '平安银行',
       '万科A',
       '招商银行',

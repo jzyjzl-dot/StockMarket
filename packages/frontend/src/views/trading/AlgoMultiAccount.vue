@@ -479,7 +479,7 @@ import { ElMessage } from 'element-plus';
 
 // 行情
 const currentStock = ref({
-  name: '浦发银行',
+  name: '示例股票',
   code: '600000',
   price: 7.49,
   change: 0.01,
