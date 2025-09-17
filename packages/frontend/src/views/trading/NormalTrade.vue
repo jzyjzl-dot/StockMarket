@@ -168,6 +168,7 @@
               :data="previewRows"
               size="small"
               style="width: 100%"
+              max-height="350px"
               @selection-change="onSelectionChange"
             >
               <el-table-column type="selection" width="44" />
