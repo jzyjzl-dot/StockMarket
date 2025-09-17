@@ -166,6 +166,47 @@ async function initTables() {
       source VARCHAR(64),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS algo_buys (
+      id VARCHAR(64) PRIMARY KEY,
+      buy_time DATETIME,
+      account VARCHAR(128),
+      side VARCHAR(16),
+      symbol VARCHAR(64),
+      price DECIMAL(18,2) DEFAULT 0,
+      qty INT DEFAULT 0,
+      amount DECIMAL(18,2) DEFAULT 0,
+      price_type VARCHAR(32),
+      strategy VARCHAR(64),
+      distribution VARCHAR(64),
+      algo_type VARCHAR(32),
+      algo_instance VARCHAR(128),
+      start_time VARCHAR(16),
+      end_time VARCHAR(16),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS algo_orders (
+      id VARCHAR(64) PRIMARY KEY,
+      order_time DATETIME,
+      account VARCHAR(128),
+      symbol VARCHAR(64),
+      type VARCHAR(32),
+      side VARCHAR(16),
+      price DECIMAL(18,2) DEFAULT 0,
+      quantity INT DEFAULT 0,
+      dealt INT DEFAULT 0,
+      amount DECIMAL(18,2) DEFAULT 0,
+      market VARCHAR(64),
+      order_type VARCHAR(64),
+      status VARCHAR(32),
+      source VARCHAR(64),
+      algo_type VARCHAR(32),
+      algo_instance VARCHAR(128),
+      start_time VARCHAR(16),
+      end_time VARCHAR(16),
+      strategy VARCHAR(64),
+      distribution VARCHAR(64),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
   ];
 
   for (const sql of tableStatements) {
@@ -464,6 +505,47 @@ const mapNormalOrderRow = (row) => ({
   orderType: row.order_type,
   status: row.status,
   source: row.source,
+});
+
+const mapAlgoBuyRow = (row) => ({
+  id: row.id,
+  timestamp: toISOString(row.buy_time),
+  account: row.account,
+  side: row.side,
+  symbol: row.symbol,
+  price: numeric(row.price) ?? 0,
+  qty: row.qty,
+  amount: numeric(row.amount) ?? 0,
+  priceType: row.price_type,
+  strategy: row.strategy,
+  distribution: row.distribution,
+  algoType: row.algo_type,
+  algoInstance: row.algo_instance,
+  startTime: row.start_time,
+  endTime: row.end_time,
+});
+
+const mapAlgoOrderRow = (row) => ({
+  id: row.id,
+  time: toISOString(row.order_time),
+  account: row.account,
+  symbol: row.symbol,
+  type: row.type,
+  side: row.side,
+  price: numeric(row.price) ?? 0,
+  quantity: row.quantity,
+  dealt: row.dealt,
+  amount: numeric(row.amount) ?? 0,
+  market: row.market,
+  orderType: row.order_type,
+  status: row.status,
+  source: row.source,
+  algoType: row.algo_type,
+  algoInstance: row.algo_instance,
+  startTime: row.start_time,
+  endTime: row.end_time,
+  strategy: row.strategy,
+  distribution: row.distribution,
 });
 
 function buildUpdateParts(payload, fieldMap) {
@@ -893,6 +975,106 @@ app.delete('/normalOrders/:id', asyncHandler(async (req, res) => {
   const [result] = await pool.query('DELETE FROM normal_orders WHERE id = ?', [req.params.id]);
   if (!result.affectedRows) {
     return res.status(404).json({ message: 'normal order not found' });
+  }
+  res.status(204).end();
+}));
+
+// Algo multi-account endpoints
+app.get('/algoBuys', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM algo_buys ORDER BY buy_time DESC');
+  res.json(rows.map(mapAlgoBuyRow));
+}));
+
+app.post('/algoBuys', asyncHandler(async (req, res) => {
+  const buy = req.body || {};
+  const id = (buy.id ?? crypto.randomUUID()).toString();
+  const buyTime = toDate(buy.timestamp) || new Date();
+
+  await pool.query(
+    `INSERT INTO algo_buys (
+      id, buy_time, account, side, symbol, price, qty, amount,
+      price_type, strategy, distribution, algo_type, algo_instance,
+      start_time, end_time
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      buyTime,
+      buy.account || null,
+      buy.side || null,
+      buy.symbol || null,
+      numeric(buy.price) ?? 0,
+      Number(buy.qty) || 0,
+      numeric(buy.amount) ?? 0,
+      buy.priceType || null,
+      buy.strategy || null,
+      buy.distribution || null,
+      buy.algoType || null,
+      buy.algoInstance || null,
+      buy.startTime || null,
+      buy.endTime || null,
+    ]
+  );
+
+  const [rows] = await pool.query('SELECT * FROM algo_buys WHERE id = ?', [id]);
+  res.status(201).json(mapAlgoBuyRow(rows[0]));
+}));
+
+app.delete('/algoBuys/:id', asyncHandler(async (req, res) => {
+  const [result] = await pool.query('DELETE FROM algo_buys WHERE id = ?', [req.params.id]);
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'algo buy not found' });
+  }
+  res.status(204).end();
+}));
+
+app.get('/algoOrders', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM algo_orders ORDER BY order_time DESC');
+  res.json(rows.map(mapAlgoOrderRow));
+}));
+
+app.post('/algoOrders', asyncHandler(async (req, res) => {
+  const order = req.body || {};
+  const id = (order.id ?? crypto.randomUUID()).toString();
+  const orderTime = toDate(order.time || order.timestamp) || new Date();
+
+  await pool.query(
+    `INSERT INTO algo_orders (
+      id, order_time, account, symbol, type, side, price, quantity,
+      dealt, amount, market, order_type, status, source,
+      algo_type, algo_instance, start_time, end_time, strategy, distribution
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      orderTime,
+      order.account || null,
+      order.symbol || null,
+      order.type || null,
+      order.side || null,
+      numeric(order.price) ?? 0,
+      Number(order.quantity ?? order.qty ?? 0) || 0,
+      Number(order.dealt ?? 0) || 0,
+      numeric(order.amount) ?? 0,
+      order.market || null,
+      order.orderType || null,
+      order.status || null,
+      order.source || null,
+      order.algoType || null,
+      order.algoInstance || null,
+      order.startTime || null,
+      order.endTime || null,
+      order.strategy || null,
+      order.distribution || null,
+    ]
+  );
+
+  const [rows] = await pool.query('SELECT * FROM algo_orders WHERE id = ?', [id]);
+  res.status(201).json(mapAlgoOrderRow(rows[0]));
+}));
+
+app.delete('/algoOrders/:id', asyncHandler(async (req, res) => {
+  const [result] = await pool.query('DELETE FROM algo_orders WHERE id = ?', [req.params.id]);
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'algo order not found' });
   }
   res.status(204).end();
 }));
