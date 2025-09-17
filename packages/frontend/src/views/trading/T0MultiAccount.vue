@@ -52,9 +52,9 @@
         </div>
       </section>
 
-      <!-- T0 交易 -->
+      <!-- T0策略交易 -->
       <section class="pane pane-algo-trade">
-        <header class="pane-header"><div class="title">T0交易</div></header>
+        <header class="pane-header"><div class="title">T0策略交易</div></header>
         <div class="pane-body scroll-y">
           <el-form :model="t0OrderForm" label-width="60px" size="small">
             <el-form-item label="委托账户">
@@ -68,42 +68,66 @@
                 />
               </el-select>
             </el-form-item>
+            <el-form-item label="委托方式">
+              <el-select
+                v-model="t0OrderForm.entrustMethod"
+                style="width: 100%"
+              >
+                <el-option label="股票" value="stock" />
+                <el-option label="债券" value="bond" />
+                <el-option label="基金" value="fund" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="证券代码">
-              <el-input v-model="t0OrderForm.symbol" placeholder="如600000">
-                <template #append>{{ t0Stock.name }}</template>
+              <el-input
+                v-model="t0OrderForm.symbol"
+                placeholder="如600000"
+                style="width: 70%"
+              >
               </el-input>
             </el-form-item>
-            <el-form-item label="交易方向">
-              <el-select v-model="t0OrderForm.entrustType" style="width: 100%">
-                <el-option label="普通买入" value="BUY" />
-                <el-option label="普通卖出" value="SELL" />
+            <el-form-item label="算法实例">
+              <el-select v-model="t0OrderForm.algoInstance" style="width: 100%">
+                <el-option label="KT_10" value="KT_10" />
+                <el-option label="KT_20" value="KT_20" />
+                <el-option label="KT_30" value="KT_30" />
               </el-select>
             </el-form-item>
-            <el-form-item label="价格类型">
-              <el-select v-model="t0OrderForm.priceType" style="width: 100%">
-                <el-option label="限价" value="fixed" />
-                <el-option label="对手价" value="counter" />
-                <el-option label="排队价" value="queue" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="委托价格">
-              <el-input-number
-                v-model="t0OrderForm.price"
-                :precision="2"
-                :step="0.01"
-                :min="0"
-                controls-position="right"
+            <el-form-item label="算法时间">
+              <el-time-picker
+                v-model="t0OrderForm.businessHours"
+                is-range
+                range-separator="-"
+                start-placeholder="开始时间"
+                end-placeholder="结束时间"
+                format="HH:mm:ss"
+                value-format="HH:mm:ss"
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item label="下单策略">
+            <el-form-item label="买入方向">
+              <el-select v-model="t0OrderForm.buyDirection" style="width: 100%">
+                <el-option label="普通买入" value="normal_buy" />
+                <el-option label="融资买入" value="margin_buy" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="卖出方向">
+              <el-select
+                v-model="t0OrderForm.sellDirection"
+                style="width: 100%"
+              >
+                <el-option label="普通卖出" value="normal_sell" />
+                <el-option label="融券卖出" value="short_sell" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="委托策略">
               <el-select v-model="t0OrderForm.strategy" style="width: 100%">
                 <el-option label="固定数量" value="fixedQty" />
                 <el-option label="固定金额" value="fixedAmt" />
                 <el-option label="百分比" value="percentage" />
               </el-select>
             </el-form-item>
-            <el-form-item label="委托数量">
+            <el-form-item label="任务数量">
               <div class="qty-row">
                 <el-input-number
                   v-model="t0OrderForm.qty"
@@ -112,87 +136,62 @@
                   style="flex: 1"
                 />
                 <span>股</span>
+                <el-button size="small" style="margin-left: 8px">+</el-button>
+                <el-button size="small">-</el-button>
               </div>
             </el-form-item>
             <el-form-item label="分配方式">
               <el-select v-model="t0OrderForm.distribution" style="width: 100%">
-                <el-option label="各账户固定数量" value="eachFixedQty" />
+                <el-option label="每客户固定数量" value="eachFixedQty" />
                 <el-option label="按可用资金比例" value="byProportion" />
               </el-select>
             </el-form-item>
             <el-form-item>
               <el-button
-                type="danger"
+                type="primary"
                 style="width: 100%"
                 @click="t0PlaceOrder"
               >
-                {{ t0OrderForm.entrustType === 'BUY' ? '买入' : '卖出' }}
+                下达策略
               </el-button>
             </el-form-item>
           </el-form>
         </div>
       </section>
 
-      <!-- T0 参数设置 -->
+      <!-- T0参数设置 -->
       <section class="pane pane-algo-params">
         <header class="pane-header"><div class="title">T0参数设置</div></header>
         <div class="pane-body scroll-y">
           <el-form :model="t0Params" label-width="80px" size="small">
-            <el-form-item label="篮子编号"
-              ><el-input v-model="t0Params.boxNo" placeholder="请输入"
-            /></el-form-item>
-            <el-form-item label="外部编号"
-              ><el-input v-model="t0Params.externalNo" placeholder="请输入"
-            /></el-form-item>
-            <el-form-item label="父单限价">
-              <el-input-number
-                v-model="t0Params.parentLimitPrice"
-                :min="0"
-                :step="0.01"
-                controls-position="right"
-                style="width: 100%"
-              />
+            <el-form-item label="篮子编号">
+              <el-input v-model="t0Params.basketNo" placeholder="请输入" />
             </el-form-item>
-            <el-form-item label="上涨限制(%)"
-              ><el-input-number
-                v-model="t0Params.riseLimitPct"
-                :min="0"
-                :step="0.1"
-                style="width: 100%"
-            /></el-form-item>
-            <el-form-item label="下跌限制(%)"
-              ><el-input-number
-                v-model="t0Params.fallLimitPct"
-                :min="0"
-                :step="0.1"
-                style="width: 100%"
-            /></el-form-item>
-            <el-form-item label="滑点(bps)"
-              ><el-input-number
-                v-model="t0Params.slippageBps"
-                :min="0"
-                :step="1"
-                style="width: 100%"
-            /></el-form-item>
-            <el-form-item label="风控规则">
-              <el-select v-model="t0Params.limitRule" style="width: 100%">
-                <el-option label="严格" value="strict" />
-                <el-option label="宽松" value="loose" />
+            <el-form-item label="外部编号">
+              <el-input v-model="t0Params.externalNo" placeholder="请输入" />
+            </el-form-item>
+            <el-form-item label="风险敞口">
+              <el-select v-model="t0Params.riskExposure" style="width: 100%">
+                <el-option label="低风险" value="low" />
+                <el-option label="中风险" value="medium" />
+                <el-option label="高风险" value="high" />
               </el-select>
             </el-form-item>
-            <el-form-item label="盘口限制"
-              ><el-input-number
-                v-model="t0Params.orderbookLimit"
-                :min="0"
-                :step="1"
-                style="width: 100%"
-            /></el-form-item>
-            <el-form-item label="过期后执行"
-              ><el-switch v-model="t0Params.execAfterExpire"
-            /></el-form-item>
-            <el-form-item label="立即执行"
-              ><el-switch v-model="t0Params.executeImmediately"
-            /></el-form-item>
+            <el-form-item>
+              <div style="display: flex; align-items: center">
+                <el-checkbox v-model="t0Params.execAfterExpire">
+                  过期后执行
+                </el-checkbox>
+                <el-icon style="margin-left: 8px; color: #999">
+                  <QuestionFilled />
+                </el-icon>
+              </div>
+            </el-form-item>
+            <el-form-item>
+              <el-checkbox v-model="t0Params.executeImmediately">
+                立即交易
+              </el-checkbox>
+            </el-form-item>
           </el-form>
         </div>
       </section>
@@ -447,6 +446,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import { QuestionFilled } from '@element-plus/icons-vue';
 import axios from 'axios';
 
 // 行情（示例数据）
@@ -475,10 +475,12 @@ const t0SelectedAccounts = ref(t0Accounts.value.map((a) => a.id));
 // 下单表单
 const t0OrderForm = ref({
   account: 'ALL',
+  entrustMethod: 'stock',
   symbol: '600000',
-  entrustType: 'BUY',
-  priceType: 'fixed',
-  price: 7.49,
+  algoInstance: 'KT_10',
+  businessHours: ['15:17:44', '17:57:00'],
+  buyDirection: 'normal_buy',
+  sellDirection: 'normal_sell',
   strategy: 'fixedQty',
   qty: 1000,
   distribution: 'eachFixedQty',
@@ -494,13 +496,13 @@ const t0OnSelectionChange = (rows) => {
 };
 
 const t0BuildPreviewRow = (acc) => {
-  const price = Number(t0OrderForm.value.price) || 0;
   const qty = Number(t0OrderForm.value.qty) || 0;
+  const price = 7.49; // 模拟当前市价
   const amount = price * qty;
   return {
     account: acc?.name || acc?.id || '账户',
     symbol: t0OrderForm.value.symbol,
-    side: t0OrderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
+    side: '买入', // 根据策略确定
     qty,
     price: price ? price.toFixed(2) : '-',
     amount: amount ? amount.toFixed(2) : '-',
@@ -650,16 +652,11 @@ const t0ConfirmSelected = async () => {
 
 // 参数设置（T0专用）
 const t0Params = ref({
-  boxNo: '',
+  basketNo: '',
   externalNo: '',
-  parentLimitPrice: null,
-  riseLimitPct: null,
-  fallLimitPct: null,
-  slippageBps: null,
-  limitRule: 'strict',
-  orderbookLimit: null,
+  riskExposure: 'medium',
   execAfterExpire: false,
-  executeImmediately: true,
+  executeImmediately: false,
 });
 
 const t0PreviewAccountCount = computed(
