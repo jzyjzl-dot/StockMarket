@@ -1,402 +1,1101 @@
-<template>
-  <div class="trading-page">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <h2>T0多账户号交易</h2>
-          <p>当日买入卖出策略，在多个账户间进行T0操作</p>
-        </div>
-      </template>
-
-      <div class="content">
-        <!-- T0策略配置 -->
-        <el-card class="t0-config" shadow="hover">
-          <template #header>
-            <div class="config-header">
-              <el-icon><Setting /></el-icon>
-              <span>T0策略配置</span>
+﻿<template>
+  <div class="nt-page">
+    <div class="nt-top">
+      <!-- 行情（可按需启用） -->
+      <section v-if="false" class="pane pane-market">
+        <header class="pane-header"><div class="title">行情</div></header>
+        <div class="pane-body scroll-y">
+          <div class="market-head">
+            <div class="stock">
+              <div class="name">{{ t0Stock.name }}</div>
+              <div class="code">{{ t0Stock.code }}</div>
             </div>
-          </template>
-          <el-form :model="t0Config" label-width="140px">
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="目标股票池">
-                  <el-select
-                    v-model="t0Config.stockPool"
-                    multiple
-                    placeholder="选择股票池"
-                  >
-                    <el-option label="沪深300" value="hs300"></el-option>
-                    <el-option label="创业板" value="cyb"></el-option>
-                    <el-option label="科创板" value="kcb"></el-option>
-                    <el-option label="自定义池" value="custom"></el-option>
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="单股持仓比例">
-                  <el-slider
-                    v-model="t0Config.positionRatio"
-                    :min="1"
-                    :max="10"
-                    :step="0.5"
-                    show-input
-                  ></el-slider>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="20">
-              <el-col :span="8">
-                <el-form-item label="买入阈值(%)">
-                  <el-input-number
-                    v-model="t0Config.buyThreshold"
-                    :min="0.1"
-                    :max="5"
-                    :step="0.1"
-                  ></el-input-number>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="卖出阈值(%)">
-                  <el-input-number
-                    v-model="t0Config.sellThreshold"
-                    :min="0.1"
-                    :max="5"
-                    :step="0.1"
-                  ></el-input-number>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="最大持仓时间(分钟)">
-                  <el-input-number
-                    v-model="t0Config.maxHoldTime"
-                    :min="5"
-                    :max="240"
-                    :step="5"
-                  ></el-input-number>
-                </el-form-item>
-              </el-col>
-            </el-row>
+            <div class="price-box">
+              <div class="price">{{ t0Stock.price.toFixed(2) }}</div>
+              <div
+                class="delta"
+                :class="{ up: t0Stock.change >= 0, down: t0Stock.change < 0 }"
+              >
+                <span
+                  >{{ t0Stock.change >= 0 ? '+' : ''
+                  }}{{ t0Stock.change.toFixed(2) }}</span
+                >
+                <span>({{ (t0Stock.changePct * 100).toFixed(2) }}%)</span>
+              </div>
+            </div>
+          </div>
+          <div class="market-table">
+            <table>
+              <tbody>
+                <tr v-for="(row, idx) in t0MarketRows" :key="'ask-' + idx">
+                  <td class="side sell">卖{{ 10 - idx }}</td>
+                  <td class="price sell">{{ row.ask.price.toFixed(2) }}</td>
+                  <td class="vol">{{ row.ask.vol }}</td>
+                </tr>
+                <tr class="sep">
+                  <td colspan="3"></td>
+                </tr>
+                <tr v-for="(row, idx) in t0MarketRows" :key="'bid-' + idx">
+                  <td class="side buy">买{{ idx + 1 }}</td>
+                  <td class="price buy">{{ row.bid.price.toFixed(2) }}</td>
+                  <td class="vol">{{ row.bid.vol }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="preview-summary">
+            <span>合计</span>
+            <span class="mono">{{ t0TotalPrice.toFixed(2) }}</span>
+            <span class="mono">{{ t0TotalAvailable.toFixed(2) }}</span>
+            <span class="mono">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- T0 交易 -->
+      <section class="pane pane-algo-trade">
+        <header class="pane-header"><div class="title">T0交易</div></header>
+        <div class="pane-body scroll-y">
+          <el-form :model="t0OrderForm" label-width="60px" size="small">
+            <el-form-item label="委托账户">
+              <el-select v-model="t0OrderForm.account" style="width: 100%">
+                <el-option label="全部账户" value="ALL" />
+                <el-option
+                  v-for="acc in t0Accounts"
+                  :key="acc.id"
+                  :label="acc.name"
+                  :value="acc.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="证券代码">
+              <el-input v-model="t0OrderForm.symbol" placeholder="如600000">
+                <template #append>{{ t0Stock.name }}</template>
+              </el-input>
+            </el-form-item>
+            <el-form-item label="交易方向">
+              <el-select v-model="t0OrderForm.entrustType" style="width: 100%">
+                <el-option label="普通买入" value="BUY" />
+                <el-option label="普通卖出" value="SELL" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="价格类型">
+              <el-select v-model="t0OrderForm.priceType" style="width: 100%">
+                <el-option label="限价" value="fixed" />
+                <el-option label="对手价" value="counter" />
+                <el-option label="排队价" value="queue" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="委托价格">
+              <el-input-number
+                v-model="t0OrderForm.price"
+                :precision="2"
+                :step="0.01"
+                :min="0"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-form-item>
+            <el-form-item label="下单策略">
+              <el-select v-model="t0OrderForm.strategy" style="width: 100%">
+                <el-option label="固定数量" value="fixedQty" />
+                <el-option label="固定金额" value="fixedAmt" />
+                <el-option label="百分比" value="percentage" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="委托数量">
+              <div class="qty-row">
+                <el-input-number
+                  v-model="t0OrderForm.qty"
+                  :min="0"
+                  :step="100"
+                  style="flex: 1"
+                />
+                <span>股</span>
+              </div>
+            </el-form-item>
+            <el-form-item label="分配方式">
+              <el-select v-model="t0OrderForm.distribution" style="width: 100%">
+                <el-option label="各账户固定数量" value="eachFixedQty" />
+                <el-option label="按可用资金比例" value="byProportion" />
+              </el-select>
+            </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="saveT0Config"
-                >保存配置</el-button
-              >
               <el-button
-                type="success"
-                @click="startT0Strategy"
-                :loading="strategyLoading"
-                >启动T0策略</el-button
+                type="danger"
+                style="width: 100%"
+                @click="t0PlaceOrder"
               >
-              <el-button type="danger" @click="stopT0Strategy"
-                >停止策略</el-button
-              >
+                {{ t0OrderForm.entrustType === 'BUY' ? '买入' : '卖出' }}
+              </el-button>
             </el-form-item>
           </el-form>
-        </el-card>
+        </div>
+      </section>
 
-        <!-- 多账户状态监控 -->
-        <el-row :gutter="20" style="margin-top: 20px">
-          <el-col :span="12">
-            <el-card class="account-monitor" shadow="hover">
-              <template #header>
-                <div class="monitor-header">
-                  <el-icon><User /></el-icon>
-                  <span>账户状态监控</span>
-                </div>
-              </template>
-              <el-table :data="accountStatus" size="small" :show-header="false">
-                <el-table-column prop="account" label="账户"></el-table-column>
-                <el-table-column prop="status" label="状态" width="80">
-                  <template #default="scope">
-                    <el-tag
-                      :type="
-                        scope.row.status === '正常' ? 'success' : 'warning'
-                      "
-                    >
-                      {{ scope.row.status }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
+      <!-- T0 参数设置 -->
+      <section class="pane pane-algo-params">
+        <header class="pane-header"><div class="title">T0参数设置</div></header>
+        <div class="pane-body scroll-y">
+          <el-form :model="t0Params" label-width="80px" size="small">
+            <el-form-item label="篮子编号"
+              ><el-input v-model="t0Params.boxNo" placeholder="请输入"
+            /></el-form-item>
+            <el-form-item label="外部编号"
+              ><el-input v-model="t0Params.externalNo" placeholder="请输入"
+            /></el-form-item>
+            <el-form-item label="父单限价">
+              <el-input-number
+                v-model="t0Params.parentLimitPrice"
+                :min="0"
+                :step="0.01"
+                controls-position="right"
+                style="width: 100%"
+              />
+            </el-form-item>
+            <el-form-item label="上涨限制(%)"
+              ><el-input-number
+                v-model="t0Params.riseLimitPct"
+                :min="0"
+                :step="0.1"
+                style="width: 100%"
+            /></el-form-item>
+            <el-form-item label="下跌限制(%)"
+              ><el-input-number
+                v-model="t0Params.fallLimitPct"
+                :min="0"
+                :step="0.1"
+                style="width: 100%"
+            /></el-form-item>
+            <el-form-item label="滑点(bps)"
+              ><el-input-number
+                v-model="t0Params.slippageBps"
+                :min="0"
+                :step="1"
+                style="width: 100%"
+            /></el-form-item>
+            <el-form-item label="风控规则">
+              <el-select v-model="t0Params.limitRule" style="width: 100%">
+                <el-option label="严格" value="strict" />
+                <el-option label="宽松" value="loose" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="盘口限制"
+              ><el-input-number
+                v-model="t0Params.orderbookLimit"
+                :min="0"
+                :step="1"
+                style="width: 100%"
+            /></el-form-item>
+            <el-form-item label="过期后执行"
+              ><el-switch v-model="t0Params.execAfterExpire"
+            /></el-form-item>
+            <el-form-item label="立即执行"
+              ><el-switch v-model="t0Params.executeImmediately"
+            /></el-form-item>
+          </el-form>
+        </div>
+      </section>
+
+      <!-- 预览（多账号逐行） -->
+      <section class="pane pane-preview">
+        <header class="pane-header">
+          <div class="title">预览</div>
+          <div class="sub">
+            账户数：{{ t0PreviewAccountCount }} 委托笔数：{{
+              t0PreviewRows.length
+            }}
+          </div>
+        </header>
+        <div class="pane-body">
+          <div class="scroll-x">
+            <el-table
+              v-resizable-columns
+              :data="t0PreviewRows"
+              size="small"
+              style="width: 100%"
+              max-height="350px"
+              @selection-change="t0OnSelectionChange"
+            >
+              <el-table-column type="selection" width="44" />
+              <el-table-column prop="account" label="账户" width="120" />
+              <el-table-column prop="symbol" label="证券代码" width="120" />
+              <el-table-column prop="side" label="方向" width="90" />
+              <el-table-column prop="qty" label="委托量" width="100" />
+              <el-table-column prop="price" label="委托价" width="100" />
+              <el-table-column prop="amount" label="委托金额" min-width="140" />
+              <el-table-column
+                prop="available"
+                label="可用资金"
+                min-width="140"
+              />
+              <el-table-column
+                prop="buyable"
+                label="可买数量"
+                min-width="100"
+              />
+            </el-table>
+          </div>
+          <div class="preview-summary">
+            <span>合计</span>
+            <span class="mono">{{ t0TotalPrice.toFixed(2) }}</span>
+            <span class="mono">{{ t0TotalAvailable.toFixed(2) }}</span>
+            <span class="mono">0</span>
+            <el-button
+              type="primary"
+              size="small"
+              :disabled="t0SelectedRows.length === 0"
+              @click="t0ConfirmSelected"
+              >确认</el-button
+            >
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 查询（与算法多账号同布局，但使用T0数据源） -->
+    <section class="pane pane-query" style="margin-top: 12px">
+      <header class="pane-header"><div class="title">查询</div></header>
+      <div class="pane-body">
+        <el-tabs v-model="t0ActiveTab" type="card" class="nt-tabs">
+          <el-tab-pane label="资金" name="fund">
+            <div class="scroll-x">
+              <el-table
+                v-resizable-columns
+                :data="t0FundRows"
+                size="small"
+                style="width: 100%"
+              >
                 <el-table-column
-                  prop="balance"
+                  prop="available"
                   label="可用资金"
-                  align="right"
-                ></el-table-column>
+                  width="140"
+                />
+                <el-table-column prop="frozen" label="冻结资金" width="140" />
+                <el-table-column prop="marketValue" label="市值" width="140" />
+                <el-table-column
+                  prop="totalAssets"
+                  label="总资产"
+                  width="160"
+                />
               </el-table>
-            </el-card>
-          </el-col>
-
-          <el-col :span="12">
-            <el-card class="performance-monitor" shadow="hover">
-              <template #header>
-                <div class="monitor-header">
-                  <el-icon><TrendCharts /></el-icon>
-                  <span>当日表现</span>
-                </div>
-              </template>
-              <div class="performance-stats">
-                <el-row :gutter="20">
-                  <el-col :span="12">
-                    <div class="stat-item">
-                      <div class="stat-label">总盈亏</div>
-                      <div class="stat-value positive">+15,680.00</div>
-                    </div>
-                  </el-col>
-                  <el-col :span="12">
-                    <div class="stat-item">
-                      <div class="stat-label">胜率</div>
-                      <div class="stat-value">68.5%</div>
-                    </div>
-                  </el-col>
-                </el-row>
-                <el-row :gutter="20" style="margin-top: 15px">
-                  <el-col :span="12">
-                    <div class="stat-item">
-                      <div class="stat-label">交易次数</div>
-                      <div class="stat-value">127</div>
-                    </div>
-                  </el-col>
-                  <el-col :span="12">
-                    <div class="stat-item">
-                      <div class="stat-label">平均持仓</div>
-                      <div class="stat-value">12.5min</div>
-                    </div>
-                  </el-col>
-                </el-row>
-              </div>
-            </el-card>
-          </el-col>
-        </el-row>
-
-        <!-- 实时交易记录 -->
-        <el-card class="trade-records" style="margin-top: 20px">
-          <template #header>
-            <div class="records-header">
-              <el-icon><List /></el-icon>
-              <span>实时交易记录</span>
-              <el-tag type="success" size="small">运行中</el-tag>
             </div>
-          </template>
-          <el-table
-            :data="tradeRecords"
-            style="width: 100%"
-            size="small"
-            height="300"
-          >
-            <el-table-column
-              prop="time"
-              label="时间"
-              width="140"
-            ></el-table-column>
-            <el-table-column
-              prop="account"
-              label="账户"
-              width="100"
-            ></el-table-column>
-            <el-table-column
-              prop="stockCode"
-              label="股票代码"
-              width="100"
-            ></el-table-column>
-            <el-table-column prop="type" label="操作" width="80">
-              <template #default="scope">
-                <el-tag
-                  :type="scope.row.type === '买入' ? 'success' : 'danger'"
-                  size="small"
+          </el-tab-pane>
+          <el-tab-pane label="持仓" name="pos">
+            <div class="scroll-x">
+              <el-table
+                v-resizable-columns
+                :data="t0PositionRows"
+                size="small"
+                style="width: 100%"
+              >
+                <el-table-column
+                  prop="stockCode"
+                  label="证券代码"
+                  width="120"
+                />
+                <el-table-column prop="qty" label="数量" width="100" />
+                <el-table-column prop="price" label="成本价" width="100" />
+                <el-table-column prop="pnl" label="盈亏" width="100" />
+              </el-table>
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="委托" name="order">
+            <div class="order-virtual-list">
+              <!-- 固定表头 -->
+              <div class="virtual-table-header">
+                <div class="virtual-table-row header-row">
+                  <div class="virtual-table-cell" style="width: 100px">
+                    账户
+                  </div>
+                  <div class="virtual-table-cell" style="width: 160px">
+                    委托时间
+                  </div>
+                  <div class="virtual-table-cell" style="width: 120px">
+                    证券代码
+                  </div>
+                  <div class="virtual-table-cell" style="width: 80px">方向</div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    委托价
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    委托量
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    成交量
+                  </div>
+                  <div class="virtual-table-cell" style="width: 140px">
+                    委托金额
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    交易市场
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    价格类型
+                  </div>
+                  <div class="virtual-table-cell" style="width: 100px">
+                    状态
+                  </div>
+                </div>
+              </div>
+
+              <!-- 虚拟滚动容器 -->
+              <div
+                ref="t0VirtualScrollContainer"
+                class="virtual-scroll-container"
+                @scroll="t0HandleScroll"
+              >
+                <!-- 虚拟滚动内容 -->
+                <div
+                  class="virtual-scroll-content"
+                  :style="{ height: t0TotalHeight + 'px' }"
                 >
-                  {{ scope.row.type }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="price"
-              label="价格"
-              width="80"
-            ></el-table-column>
-            <el-table-column
-              prop="quantity"
-              label="数量"
-              width="80"
-            ></el-table-column>
-            <el-table-column prop="pnl" label="盈亏" width="80">
-              <template #default="scope">
-                <span :class="scope.row.pnl >= 0 ? 'positive' : 'negative'">
-                  {{ scope.row.pnl >= 0 ? '+' : ''
-                  }}{{ scope.row.pnl.toFixed(2) }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="holdTime"
-              label="持仓时间"
-              width="100"
-            ></el-table-column>
-          </el-table>
-        </el-card>
+                  <div
+                    class="virtual-scroll-viewport"
+                    :style="{ transform: `translateY(${t0StartOffset}px)` }"
+                  >
+                    <!-- 可见行 -->
+                    <div class="virtual-table-body">
+                      <div
+                        v-for="(item, index) in t0VisibleItems"
+                        :key="item.id || `${t0StartIndex + index}`"
+                        class="virtual-table-row data-row"
+                        :class="{
+                          'row-even': (t0StartIndex + index) % 2 === 0,
+                        }"
+                      >
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.account }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 160px">
+                          {{ t0FormatTime(item.time) }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 120px">
+                          {{ item.stockCode }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 80px">
+                          <span
+                            :class="{
+                              'buy-type': item.type === '买入',
+                              'sell-type': item.type === '卖出',
+                            }"
+                            >{{ item.type }}</span
+                          >
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ Number(item.price || 0).toFixed(2) }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.quantity }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.dealt }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 140px">
+                          {{ Number(item.amount || 0).toFixed(2) }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.market }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          {{ item.orderType }}
+                        </div>
+                        <div class="virtual-table-cell" style="width: 100px">
+                          <span :class="t0GetStatusClass(item.status)">{{
+                            item.status
+                          }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="成交" name="deal">
+            <div class="scroll-x">
+              <el-table
+                v-resizable-columns
+                :data="t0DealRows"
+                size="small"
+                style="width: 100%"
+              >
+                <el-table-column prop="time" label="时间" width="160" />
+                <el-table-column
+                  prop="stockCode"
+                  label="证券代码"
+                  width="120"
+                />
+                <el-table-column prop="type" label="方向" width="80" />
+                <el-table-column prop="price" label="成交价" width="100" />
+                <el-table-column prop="quantity" label="成交量" width="100" />
+                <el-table-column
+                  prop="amount"
+                  label="成交金额"
+                  min-width="140"
+                />
+                <el-table-column prop="status" label="状态" width="100" />
+              </el-table>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
-    </el-card>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Setting, User, TrendCharts, List } from '@element-plus/icons-vue';
+import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import axios from 'axios';
 
-const t0Config = ref({
-  stockPool: [],
-  positionRatio: 5,
-  buyThreshold: 1.5,
-  sellThreshold: 2.0,
-  maxHoldTime: 60,
+// 行情（示例数据）
+const t0Stock = ref({
+  name: '示例股票',
+  code: '600000',
+  price: 7.49,
+  change: 0.01,
+  changePct: 0.0013,
+});
+const t0MarketRows = ref(
+  Array.from({ length: 10 }).map((_, i) => ({
+    ask: { price: 7.6 - i * 0.01, vol: 2000 + i * 100 },
+    bid: { price: 7.46 - i * 0.01, vol: 1800 + i * 100 },
+  }))
+);
+
+// 多账户（T0专用数据，不和算法共用）
+const t0Accounts = ref([
+  { id: 'T01', name: 'T0-账户1', available: 600000.0 },
+  { id: 'T02', name: 'T0-账户2', available: 420000.0 },
+  { id: 'T03', name: 'T0-账户3', available: 300000.0 },
+]);
+const t0SelectedAccounts = ref(t0Accounts.value.map((a) => a.id));
+
+// 下单表单
+const t0OrderForm = ref({
+  account: 'ALL',
+  symbol: '600000',
+  entrustType: 'BUY',
+  priceType: 'fixed',
+  price: 7.49,
+  strategy: 'fixedQty',
+  qty: 1000,
+  distribution: 'eachFixedQty',
 });
 
-const strategyLoading = ref(false);
+const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
 
-const accountStatus = ref([
-  { account: '主账户', status: '正常', balance: '500,000.00' },
-  { account: '账户A', status: '正常', balance: '300,000.00' },
-  { account: '账户B', status: '正常', balance: '250,000.00' },
-  { account: '账户C', status: '正常', balance: '200,000.00' },
-]);
-
-const tradeRecords = ref([
-  {
-    time: '14:32:15',
-    account: '主账户',
-    stockCode: '000001',
-    type: '买入',
-    price: 15.25,
-    quantity: 1000,
-    pnl: 0,
-    holdTime: '-',
-  },
-  {
-    time: '14:35:22',
-    account: '账户A',
-    stockCode: '000001',
-    type: '卖出',
-    price: 15.45,
-    quantity: 1000,
-    pnl: 200.0,
-    holdTime: '3分8秒',
-  },
-  {
-    time: '14:38:45',
-    account: '账户B',
-    stockCode: '000002',
-    type: '买入',
-    price: 28.5,
-    quantity: 500,
-    pnl: 0,
-    holdTime: '-',
-  },
-]);
-
-const saveT0Config = () => {
-  ElMessage.success('T0策略配置已保存');
-  console.log('保存T0配置:', t0Config.value);
+// 预览
+const t0PreviewRows = ref([]);
+const t0SelectedRows = ref([]);
+const t0OnSelectionChange = (rows) => {
+  t0SelectedRows.value = rows || [];
 };
 
-const startT0Strategy = async () => {
-  strategyLoading.value = true;
+const t0BuildPreviewRow = (acc) => {
+  const price = Number(t0OrderForm.value.price) || 0;
+  const qty = Number(t0OrderForm.value.qty) || 0;
+  const amount = price * qty;
+  return {
+    account: acc?.name || acc?.id || '账户',
+    symbol: t0OrderForm.value.symbol,
+    side: t0OrderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
+    qty,
+    price: price ? price.toFixed(2) : '-',
+    amount: amount ? amount.toFixed(2) : '-',
+    available: (acc?.available ?? 0).toFixed(2),
+    buyable: Math.floor((acc?.available ?? 0) / (price || 1) / 100) * 100,
+  };
+};
+
+const t0RefreshPreview = async () => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // 模拟启动时间
-    ElMessage.success('T0策略已启动，开始监控市场机会');
-  } catch (error) {
-    ElMessage.error('启动策略失败');
-  } finally {
-    strategyLoading.value = false;
+    const { data } = await axios.get(`${jsBase}/normalBuys`);
+    if (Array.isArray(data)) {
+      t0PreviewRows.value = data.map((item) => {
+        const priceNum = Number(item.price) || 0;
+        const qtyNum = Number(item.qty) || 0;
+        const amountNum =
+          item.amount != null ? Number(item.amount) : priceNum * qtyNum;
+        return {
+          id: item.id,
+          account: item.account || '账户',
+          symbol: item.symbol,
+          side: item.side === 'SELL' ? '卖出' : '买入',
+          qty: qtyNum,
+          price: priceNum ? priceNum.toFixed(2) : '-',
+          amount: amountNum ? amountNum.toFixed(2) : '-',
+          available: '-',
+          buyable: 0,
+        };
+      });
+    }
+  } catch (e) {
+    console.warn('加载 normalBuys 失败: ', e?.message || e);
   }
 };
 
-const stopT0Strategy = () => {
-  ElMessage.warning('T0策略已停止');
-  console.log('停止T0策略');
+const t0RefreshOrders = async () => {
+  try {
+    const { data } = await axios.get(`${jsBase}/normalOrders`);
+    if (Array.isArray(data)) {
+      t0OrderRows.value = data.map((o) => ({
+        id: o.id,
+        time: o.time || o.order_time,
+        account: o.account || '账户',
+        stockCode: o.symbol,
+        type: o.side === 'SELL' ? '卖出' : '买入',
+        price: Number(o.price) || 0,
+        quantity: Number(o.quantity ?? o.qty ?? 0) || 0,
+        dealt: Number(o.dealt ?? 0) || 0,
+        amount: Number(o.amount) || 0,
+        market: o.market || '上交所',
+        orderType: o.orderType || o.order_type || '限价',
+        status: o.status || '已报',
+      }));
+    }
+  } catch (e) {
+    console.warn('加载 normalOrders 失败: ', e?.message || e);
+  }
 };
 
-onMounted(() => {
-  console.log('T0多账户号交易页面加载完成');
+const t0PlaceOrder = async () => {
+  if (
+    !t0OrderForm.value.symbol ||
+    !t0OrderForm.value.qty ||
+    t0SelectedAccounts.value.length === 0
+  ) {
+    ElMessage.warning('请完善下单信息与选择账户');
+    return;
+  }
+
+  const selected = t0SelectedAccounts.value
+    .map((id) => t0Accounts.value.find((a) => a.id === id))
+    .filter(Boolean);
+
+  const newRows = selected.map((acc) => t0BuildPreviewRow(acc));
+  t0PreviewRows.value.push(...newRows);
+
+  if (t0OrderForm.value.entrustType === 'BUY') {
+    try {
+      await Promise.all(
+        newRows.map((row) =>
+          axios.post(`${jsBase}/normalBuys`, {
+            timestamp: new Date().toISOString(),
+            account: row.account,
+            side: 'BUY',
+            symbol: row.symbol,
+            price: Number(row.price) || 0,
+            qty: Number(row.qty) || 0,
+            amount: Number(row.amount) || 0,
+            priceType: t0OrderForm.value.priceType,
+            strategy: t0OrderForm.value.strategy,
+            distribution: t0OrderForm.value.distribution,
+          })
+        )
+      );
+      ElMessage.success('买入已导入预览并保存');
+      await t0RefreshPreview();
+    } catch (e) {
+      console.error('保存T0买入失败: ', e);
+      ElMessage.error('保存买入数据失败，请检查后端服务');
+    }
+  } else {
+    ElMessage.success('卖出已导入预览');
+  }
+};
+
+const t0ConfirmSelected = async () => {
+  if (!t0SelectedRows.value.length) {
+    ElMessage.warning('请先选择要确认的预览行');
+    return;
+  }
+
+  try {
+    const toConfirm = [...t0SelectedRows.value];
+    await Promise.all(
+      toConfirm.map((row) =>
+        axios.post(`${jsBase}/normalOrders`, {
+          time: new Date().toISOString(),
+          account: row.account || '账户',
+          symbol: row.symbol,
+          type: row.side,
+          side: row.side === '卖出' ? 'SELL' : 'BUY',
+          price: Number(row.price) || 0,
+          quantity: Number(row.qty) || 0,
+          dealt: 0,
+          amount: Number(row.amount) || 0,
+          market: '上交所',
+          orderType: '限价',
+          status: '已报',
+        })
+      )
+    );
+    const ids = toConfirm.map((r) => r.id).filter(Boolean);
+    if (ids.length) {
+      await Promise.all(
+        ids.map((id) => axios.delete(`${jsBase}/normalBuys/${id}`))
+      );
+    }
+    ElMessage.success('已确认、移出预览并保存到委托');
+    await t0RefreshPreview();
+    await t0RefreshOrders();
+    t0SelectedRows.value = [];
+  } catch (e) {
+    console.error('确认T0预览失败: ', e);
+    ElMessage.error('确认失败，请检查后端服务');
+  }
+};
+
+// 参数设置（T0专用）
+const t0Params = ref({
+  boxNo: '',
+  externalNo: '',
+  parentLimitPrice: null,
+  riseLimitPct: null,
+  fallLimitPct: null,
+  slippageBps: null,
+  limitRule: 'strict',
+  orderbookLimit: null,
+  execAfterExpire: false,
+  executeImmediately: true,
+});
+
+const t0PreviewAccountCount = computed(
+  () => new Set(t0PreviewRows.value.map((r) => r.account)).size
+);
+const t0TotalPrice = computed(() =>
+  t0PreviewRows.value.reduce(
+    (sum, r) => sum + (r.amount === '-' ? 0 : Number(r.amount)),
+    0
+  )
+);
+const t0TotalAvailable = computed(() =>
+  t0SelectedAccounts.value.reduce((sum, id) => {
+    const acc = t0Accounts.value.find((a) => a.id === id);
+    return sum + (acc?.available ?? 0);
+  }, 0)
+);
+
+// 查询（T0独立数据）
+const t0ActiveTab = ref('order');
+const t0FundRows = computed(() =>
+  t0Accounts.value.map((a) => ({
+    available: a.available.toFixed(2),
+    frozen: (0).toFixed(2),
+    marketValue: (0).toFixed(2),
+    totalAssets: a.available.toFixed(2),
+  }))
+);
+const t0PositionRows = ref([]);
+const t0OrderRows = ref([]);
+const t0DealRows = ref([]);
+
+// 虚拟滚动（委托）
+const t0VirtualScrollContainer = ref();
+const t0ItemHeight = 35;
+const t0ContainerHeight = 400;
+const t0VisibleCount = Math.ceil(t0ContainerHeight / t0ItemHeight);
+const t0BufferSize = 5;
+const t0ScrollTop = ref(0);
+const t0StartIndex = computed(() =>
+  Math.max(0, Math.floor(t0ScrollTop.value / t0ItemHeight) - t0BufferSize)
+);
+const t0EndIndex = computed(() =>
+  Math.min(
+    t0OrderRows.value.length - 1,
+    t0StartIndex.value + t0VisibleCount + t0BufferSize * 2
+  )
+);
+const t0VisibleItems = computed(() =>
+  t0OrderRows.value.slice(t0StartIndex.value, t0EndIndex.value + 1)
+);
+const t0TotalHeight = computed(() => t0OrderRows.value.length * t0ItemHeight);
+const t0StartOffset = computed(() => t0StartIndex.value * t0ItemHeight);
+const t0HandleScroll = (e) => {
+  t0ScrollTop.value = e.target.scrollTop;
+};
+const t0FormatTime = (time) => {
+  if (!time) return '';
+  const date = new Date(time);
+  if (isNaN(date.getTime())) return String(time);
+  return date.toLocaleString('zh-CN', { hour12: false });
+};
+const t0GetStatusClass = (status) => {
+  switch (status) {
+    case '已报':
+    case '部分成交':
+      return 'status-pending';
+    case '全部成交':
+    case '已成':
+      return 'status-filled';
+    case '已撤':
+    case '已撤销':
+      return 'status-cancelled';
+    default:
+      return '';
+  }
+};
+
+// 初始化加载T0数据
+onMounted(async () => {
+  try {
+    await t0RefreshPreview();
+    await t0RefreshOrders();
+  } catch (e) {
+    console.warn('加载 T0 委托失败: ', e?.message || e);
+  }
 });
 </script>
 
 <style scoped>
-.trading-page {
-  padding: 20px;
+/* 页面骨架与布局：统一为组件内样式（不依赖全局） */
+.nt-page {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 97%;
+  /* min-height: 0; */
+}
+.nt-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr 3fr;
+  gap: 12px;
+  align-items: stretch;
+  /* min-height: 220px; */
 }
 
-.card-header {
+/* 卡片面板 */
+.pane {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.pane-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4%;
+}
+.pane-header .title {
+  font-weight: 600;
+  color: #303133;
+}
+.pane-body {
+  flex: 1;
+  min-height: 0;
+}
+.scroll-y {
+  overflow-y: auto;
+}
+
+/* 表格横向溢出支持 */
+.scroll-x :deep(.el-table),
+.scroll-x :deep(.el-table-v2) {
+  min-width: 900px;
+}
+
+/* 行情样式 */
+.market-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 10px;
+}
+.market-head .name {
+  font-size: 14px;
+  color: #606266;
+}
+.market-head .code {
+  font-size: 12px;
+  color: #909399;
+}
+.market-head .price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #303133;
+}
+.market-head .delta {
+  font-size: 12px;
+}
+.market-head .delta.up {
+  color: #2ecb70;
+}
+.market-head .delta.down {
+  color: #ff6b6b;
+}
+.market-table {
+  padding: 0 10px 10px;
+}
+.market-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.market-table td {
+  padding: 6px 4px;
+  font-size: 12px;
+}
+.market-table .side {
+  width: 42px;
+  color: #8a9098;
+}
+.market-table .price {
+  width: 70px;
+  font-weight: 600;
+}
+.market-table .price.buy {
+  color: #2ecb70;
+}
+.market-table .price.sell {
+  color: #ff6b6b;
+}
+.market-table .sep td {
+  height: 6px;
+  border-top: 1px dashed #ebeef5;
+}
+.market-table .vol {
+  text-align: right;
+  color: #606266;
+}
+
+/* 所有顶部面板保持统一高度 */
+.pane-market .pane-body,
+.pane-algo-trade .pane-body,
+.pane-algo-params .pane-body,
+.pane-preview .pane-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px; /* 给栅格留一些外边距 */
+}
+.quick-ops {
+  display: flex;
+  gap: 6px;
+}
+
+/* 横向溢出时使用滚动条 */
+.scroll-x :deep(.el-table),
+.scroll-x :deep(.el-table-v2) {
+  min-width: 900px;
+}
+
+/* 修复查询面板标签切换时的抖动问题 */
+.pane-query .el-tabs__content {
+  /* 固定标签页内容区域的最小高度，防止不同标签页高度不一致导致抖动 */
+  min-height: 300px;
+  max-height: 450px;
+  overflow: visible;
+}
+
+.pane-query .pane-body {
+  overflow: visible;
+  max-height: 500px;
+}
+
+.pane-query .el-tab-pane {
+  overflow: visible;
+  height: auto;
+  max-height: 400px;
+}
+
+/* 稳定滚动条布局 - 只在表格容器内滚动 */
+.scroll-x {
+  /* 始终为滚动条预留空间，避免滚动条出现/消失时的布局变化 */
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  max-height: 350px;
+}
+
+/* 确保虚拟滚动表格容器有独立的滚动 */
+.scroll-x .virtual-scroll-container {
+  overflow: auto;
+}
+
+/* 限制普通表格的高度 */
+.scroll-x .el-table {
+  max-height: 300px;
+}
+
+/* 本页：四列布局 - 行情、算法交易、算法参数设置、预览 */
+.nt-page .nt-top {
+  grid-template-columns: 1fr 1fr 3fr;
+}
+
+/* 预览表格占满剩余宽度 */
+.pane-preview .scroll-x {
+  width: 100%;
+}
+
+.pane-preview .scroll-x .el-table {
+  /* 确保表格能够利用所有可用宽�?*/
+  width: 100% !important;
+  min-width: 800px; /* 设置最小宽度确保表格不会过度压�?*/
+}
+
+/* 让某些列能够自适应宽度 */
+.pane-preview .el-table .el-table__body-wrapper {
+  overflow-x: auto;
+}
+
+/* 行情合计样式 */
+.preview-summary {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  padding: 8px 10px;
+  background-color: #f5f7fa;
+  border-top: 1px solid #e4e7ed;
+  font-size: 12px;
+  color: #606266;
+  margin-top: auto; /* 推到底部 */
 }
 
-.card-header h2 {
-  margin: 0;
-  color: #333;
+.preview-summary .mono {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: 600;
 }
 
-.card-header p {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
+.sub-title {
+  margin: 6px 0 8px;
+  font-weight: 600;
 }
-
-.config-header,
-.monitor-header,
-.records-header {
-  display: flex;
-  align-items: center;
+.time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
-
-.config-header .el-icon,
-.monitor-header .el-icon,
-.records-header .el-icon {
-  color: #409eff;
+.qty-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.t0-config,
-.account-monitor,
-.performance-monitor,
-.trade-records {
-  margin-top: 20px;
+/* 统一清除顶部 Tabs Header 的外边距（仅作用于本页） */
+.pane-query :deep(.el-tabs__header.is-top) {
+  margin: 0 !important;
 }
 
-.performance-stats {
-  padding: 15px 0;
+/* 表格容器样式 */
+.table-container {
+  height: 200px;
+  overflow-y: auto;
 }
 
-.stat-item {
-  text-align: center;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 6px;
+.table-container :deep(.el-table__body-wrapper) {
+  max-height: none !important;
 }
 
-.stat-label {
+/* 虚拟滚动样式（委托）- 对齐普通交易界面 */
+.order-virtual-list {
+  height: 17em;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.virtual-table-header {
+  position: relative;
+  z-index: 10;
+  background: #fafafa;
+  border-bottom: 1px solid #ebeef5;
+  flex-shrink: 0;
+}
+
+.virtual-scroll-container {
+  flex: 1;
+  width: 100%;
+  overflow: auto;
+  min-height: 200px;
+  max-height: 360px;
+}
+
+.virtual-scroll-content {
+  position: relative;
+  width: 100%;
+}
+
+.virtual-scroll-viewport {
+  position: relative;
+}
+
+.virtual-table-row {
+  display: flex;
+  width: 100%;
+  min-width: 1200px;
+  height: 35px;
+  align-items: center;
+  border-bottom: 1px solid #f2f6fc;
+}
+
+.virtual-table-row.header-row {
+  background: #fafafa;
+  font-weight: 600;
+  color: #909399;
+  height: 40px;
+}
+
+.virtual-table-row.data-row:hover {
+  background: #f5f7fa;
+}
+
+.virtual-table-row.row-even {
+  background: #fafafa;
+}
+
+.virtual-table-row.row-even:hover {
+  background: #f0f2f5;
+}
+
+.virtual-table-cell {
+  padding: 0 12px;
   font-size: 12px;
-  color: #666;
-  margin-bottom: 5px;
+  color: #606266;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-right: 1px solid #ebeef5;
 }
 
-.stat-value {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
+.virtual-table-cell:last-child {
+  border-right: none;
 }
 
-.stat-value.positive {
-  color: #67c23a;
-}
-
-.positive {
-  color: #67c23a;
-  font-weight: 600;
-}
-
-.negative {
+.buy-type {
   color: #f56c6c;
   font-weight: 600;
 }
+
+.sell-type {
+  color: #67c23a;
+  font-weight: 600;
+}
+
+.status-pending {
+  color: #e6a23c;
+}
+
+.status-filled {
+  color: #67c23a;
+}
+
+.status-cancelled {
+  color: #f56c6c;
+}
 </style>
+
+.status-pending { color: #e6a23c; } .status-filled { color: #67c23a; }
+.status-cancelled { color: #f56c6c; }
