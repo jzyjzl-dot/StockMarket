@@ -107,6 +107,12 @@ const routes = [
         component: () => import('../views/management/DeviceInfo.vue'),
         meta: { requiresAuth: true, roles: ['manager'] },
       },
+      {
+        path: '/management/trading-system',
+        name: 'TradingSystem',
+        component: () => import('../views/management/TradingSystem.vue'),
+        meta: { requiresAuth: true, roles: ['manager'] },
+      },
     ],
   },
 ];

@@ -195,10 +195,10 @@ const toggleSidebar = () => {
             <!-- 将用户管理移入管理下拉菜单，置于首位并重命名为系统账户管理 -->
             <el-menu-item index="/users">系统账户管理</el-menu-item>
             <el-menu-item index="/management/account-edit"
-              >账号编辑</el-menu-item
+              >资金账户编辑</el-menu-item
             >
             <el-menu-item index="/management/account-group-edit"
-              >账号组编辑</el-menu-item
+              >资金账号组编辑</el-menu-item
             >
             <el-menu-item index="/management/risk-management"
               >风控管理</el-menu-item
@@ -214,6 +214,9 @@ const toggleSidebar = () => {
             >
             <el-menu-item index="/management/device-info"
               >设备信息采集</el-menu-item
+            >
+            <el-menu-item index="/management/trading-system"
+              >交易系统</el-menu-item
             >
           </el-sub-menu>
         </el-menu>
