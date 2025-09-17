@@ -170,7 +170,6 @@ const toggleSidebar = () => {
             <el-icon><Document /></el-icon>
             报表查询
           </el-menu-item>
-          <el-menu-item index="/users"> 用户管理 </el-menu-item>
 
           <!-- 交易子菜单 -->
           <el-sub-menu index="trading">
@@ -193,6 +192,8 @@ const toggleSidebar = () => {
               <el-icon><Management /></el-icon>
               <span>管理</span>
             </template>
+            <!-- 将用户管理移入管理下拉菜单，置于首位并重命名为系统账户管理 -->
+            <el-menu-item index="/users">系统账户管理</el-menu-item>
             <el-menu-item index="/management/account-edit"
               >账号编辑</el-menu-item
             >
