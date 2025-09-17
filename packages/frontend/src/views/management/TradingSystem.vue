@@ -4,50 +4,44 @@
       <h2>交易系统</h2>
       <div class="header-actions">
         <el-button type="primary" @click="handleAdd">新增</el-button>
-        <el-button @click="handleRefresh">刷新</el-button>
+        <el-button :loading="loading" @click="handleRefresh">刷新</el-button>
       </div>
     </div>
 
     <div class="table-container">
       <el-table
         v-loading="loading"
-        :data="tableData"
+        :data="paginatedData"
         stripe
         style="width: 100%"
       >
         <el-table-column prop="id" label="交易系统ID" width="120" />
         <el-table-column prop="name" label="交易系统名称" width="180" />
         <el-table-column prop="type" label="交易系统类型" width="150">
-          <template #default="scope">
-            {{ getTypeLabel(scope.row.type) }}
+          <template #default="{ row }">
+            {{ getTypeLabel(row.type) }}
           </template>
         </el-table-column>
         <el-table-column prop="path" label="共享目录" min-width="200" />
         <el-table-column prop="status" label="状态" width="100">
-          <template #default="scope">
-            <el-tag
-              :type="scope.row.status === 'active' ? 'success' : 'danger'"
-            >
-              {{ scope.row.status === 'active' ? '启用' : '禁用' }}
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
+              {{ row.status === 'active' ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column prop="createTime" label="创建时间" width="200">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createTime) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="creator" label="创建人" width="120" />
         <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button
-              type="primary"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleEdit(row)">
               编辑
             </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="handleDelete(scope.row)"
-            >
+            <el-button type="danger" size="small" @click="handleDelete(row)">
               删除
             </el-button>
           </template>
@@ -67,7 +61,6 @@
       </div>
     </div>
 
-    <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
@@ -102,7 +95,9 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSubmit">
+            确定
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -110,11 +105,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { tradingSystemAPI } from '../../utils/api.js';
 
-// 响应式数据
 const loading = ref(false);
+const saving = ref(false);
 const tableData = ref([]);
 const dialogVisible = ref(false);
 const dialogTitle = ref('');
@@ -123,7 +119,6 @@ const currentPage = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
 
-// 表单数据
 const form = ref({
   id: '',
   name: '',
@@ -134,7 +129,6 @@ const form = ref({
 
 const formRef = ref();
 
-// 表单验证规则
 const rules = {
   name: [{ required: true, message: '请输入交易系统名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择交易系统类型', trigger: 'change' }],
@@ -142,65 +136,70 @@ const rules = {
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 };
 
-// 初始化数据
-const initData = () => {
-  tableData.value = [
-    {
-      id: '72',
-      name: 'TradeData_Wu',
-      type: 'ldp',
-      path: '/home/hts_hx/tradeData_Wu',
-      status: 'active',
-      createTime: '2024-03-20 14:51:16',
-      creator: 'hx00007',
-    },
-    {
-      id: '71',
-      name: 'TradeData_web',
-      type: 'qmt',
-      path: '/home/hts_hx/tradeData_web',
-      status: 'active',
-      createTime: '2024-03-18 17:15:22',
-      creator: 'hx00006',
-    },
-    {
-      id: '70',
-      name: 'TradeData_web',
-      type: 'atx',
-      path: '/home/hts_hx/tradeData_web',
-      status: 'active',
-      createTime: '2024-03-14 15:03:18',
-      creator: 'hx00006',
-    },
-    {
-      id: '55',
-      name: 'TradeData_x50',
-      type: 'ldp',
-      path: '/home/hts_hx/tradeData_x50',
-      status: 'inactive',
-      createTime: '2024-03-11 17:07:34',
-      creator: 'hx00007',
-    },
-  ];
-  total.value = tableData.value.length;
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return tableData.value.slice(start, start + pageSize.value);
+});
+
+const ensurePageInRange = () => {
+  const maxPage = Math.max(Math.ceil(total.value / pageSize.value), 1);
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage;
+  }
+  if (currentPage.value < 1) {
+    currentPage.value = 1;
+  }
 };
 
-// 新增
+const formatDateTime = (value) => {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  const pad = (num) => String(num).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
+
+const fetchTradingSystems = async () => {
+  loading.value = true;
+  try {
+    const systems = await tradingSystemAPI.getTradingSystems();
+    tableData.value = Array.isArray(systems) ? systems : [];
+    total.value = tableData.value.length;
+    ensurePageInRange();
+    return true;
+  } catch (error) {
+    console.error('加载交易系统失败:', error);
+    ElMessage.error('加载交易系统失败');
+    return false;
+  } finally {
+    loading.value = false;
+  }
+};
+
 const handleAdd = () => {
   dialogTitle.value = '新增交易系统';
   isEdit.value = false;
+  resetForm();
   dialogVisible.value = true;
 };
 
-// 编辑
 const handleEdit = (row) => {
   dialogTitle.value = '编辑交易系统';
   isEdit.value = true;
-  form.value = { ...row };
+  form.value = {
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    path: row.path,
+    status: row.status,
+    creator: row.creator,
+    createTime: row.createTime,
+  };
   dialogVisible.value = true;
 };
 
-// 删除
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(
@@ -210,54 +209,69 @@ const handleDelete = async (row) => {
         type: 'warning',
       }
     );
-
-    const index = tableData.value.findIndex((item) => item.id === row.id);
-    if (index > -1) {
-      tableData.value.splice(index, 1);
-      total.value = tableData.value.length;
-      ElMessage.success('删除成功');
+    await tradingSystemAPI.deleteTradingSystem(row.id);
+    ElMessage.success('删除成功');
+    const success = await fetchTradingSystems();
+    if (success && total.value === 0) {
+      currentPage.value = 1;
     }
-  } catch {
-    // 用户取消删除
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      console.error('删除交易系统失败:', error);
+      ElMessage.error('删除失败');
+    }
   }
 };
 
-// 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return;
 
   try {
-    await formRef.value.validate();
+    const valid = await formRef.value.validate();
+    if (!valid) return;
+
+    saving.value = true;
 
     if (isEdit.value) {
-      // 编辑
-      const index = tableData.value.findIndex(
-        (item) => item.id === form.value.id
-      );
-      if (index > -1) {
-        tableData.value[index] = { ...form.value };
-        ElMessage.success('编辑成功');
-      }
-    } else {
-      // 新增
-      const newItem = {
-        ...form.value,
-        id: Date.now().toString(),
-        createTime: new Date().toLocaleString('zh-CN'),
-        creator: 'hx00001', // 当前用户
+      const payload = {
+        name: form.value.name,
+        type: form.value.type,
+        path: form.value.path,
+        status: form.value.status,
+        creator: form.value.creator,
+        createTime: form.value.createTime,
+        updateTime: new Date().toISOString(),
       };
-      tableData.value.unshift(newItem);
-      total.value = tableData.value.length;
+      await tradingSystemAPI.updateTradingSystem(form.value.id, payload);
+      ElMessage.success('编辑成功');
+    } else {
+      const now = new Date().toISOString();
+      const payload = {
+        name: form.value.name,
+        type: form.value.type,
+        path: form.value.path,
+        status: form.value.status,
+        creator: 'hx00001',
+        createTime: now,
+        updateTime: now,
+      };
+      await tradingSystemAPI.createTradingSystem(payload);
       ElMessage.success('新增成功');
     }
 
     dialogVisible.value = false;
-  } catch {
-    // 表单验证失败
+    currentPage.value = 1;
+    await fetchTradingSystems();
+  } catch (error) {
+    if (error !== false) {
+      console.error('保存交易系统失败:', error);
+      ElMessage.error('保存失败');
+    }
+  } finally {
+    saving.value = false;
   }
 };
 
-// 重置表单
 const resetForm = () => {
   form.value = {
     id: '',
@@ -271,7 +285,6 @@ const resetForm = () => {
   }
 };
 
-// 获取类型标签
 const getTypeLabel = (type) => {
   const typeMap = {
     ldp: 'LDP',
@@ -281,29 +294,26 @@ const getTypeLabel = (type) => {
   return typeMap[type] || type;
 };
 
-// 刷新
-const handleRefresh = () => {
-  loading.value = true;
-  setTimeout(() => {
-    initData();
-    loading.value = false;
+const handleRefresh = async () => {
+  const success = await fetchTradingSystems();
+  if (success) {
     ElMessage.success('刷新成功');
-  }, 500);
+  }
 };
 
-// 分页相关
 const handleSizeChange = (val) => {
   pageSize.value = val;
   currentPage.value = 1;
+  ensurePageInRange();
 };
 
 const handleCurrentChange = (val) => {
   currentPage.value = val;
+  ensurePageInRange();
 };
 
-// 组件挂载时初始化数据
 onMounted(() => {
-  initData();
+  fetchTradingSystems();
 });
 </script>
 
