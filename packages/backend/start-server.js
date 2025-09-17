@@ -80,6 +80,16 @@ async function initTables() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS trading_systems (
+      id VARCHAR(64) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      type VARCHAR(64),
+      path VARCHAR(512),
+      status VARCHAR(32),
+      creator VARCHAR(64),
+      create_time DATETIME,
+      update_time DATETIME
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS products (
       id VARCHAR(64) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
@@ -265,6 +275,29 @@ async function seedProducts() {
   );
 }
 
+async function seedTradingSystems() {
+  const [rows] = await pool.query('SELECT COUNT(*) AS count FROM trading_systems');
+  if (rows[0]?.count > 0) return;
+  const systems = readSeedArray('tradingSystems.json', 'tradingSystems');
+  if (!systems.length) return;
+  const values = systems.map((system) => [
+    system.id?.toString() || crypto.randomUUID(),
+    system.name || '',
+    system.type || null,
+    system.path || null,
+    system.status || 'inactive',
+    system.creator || null,
+    toDate(system.createTime) || new Date(),
+    toDate(system.updateTime || system.createTime) || new Date(),
+  ]);
+  await pool.query(
+    `INSERT INTO trading_systems (
+      id, name, type, path, status, creator, create_time, update_time
+    ) VALUES ?`,
+    [values]
+  );
+}
+
 async function seedStockAccounts() {
   const [rows] = await pool.query('SELECT COUNT(*) AS count FROM stock_accounts');
   if (rows[0]?.count > 0) return;
@@ -413,6 +446,7 @@ async function seedReferenceData() {
   await seedUsers();
   await seedProducts();
   await seedStockAccounts();
+  await seedTradingSystems();
   await seedAccountGroups();
   await seedStocks();
   await seedTrades();
@@ -434,6 +468,17 @@ const mapOrderRow = (row) => ({
   total: numeric(row.total) ?? 0,
   date: toISOString(row.order_date),
   status: row.status,
+});
+
+const mapTradingSystemRow = (row) => ({
+  id: row.id,
+  name: row.name,
+  type: row.type,
+  path: row.path,
+  status: row.status,
+  creator: row.creator,
+  createTime: toISOString(row.create_time),
+  updateTime: toISOString(row.update_time),
 });
 
 const mapStockAccountRow = (row) => ({
@@ -743,6 +788,80 @@ app.delete('/products/:id', asyncHandler(async (req, res) => {
   res.status(204).end();
 }));
 
+app.get('/tradingSystems', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM trading_systems ORDER BY create_time DESC, name');
+  res.json(rows.map(mapTradingSystemRow));
+}));
+
+app.post('/tradingSystems', asyncHandler(async (req, res) => {
+  const system = req.body || {};
+  const id = (system.id ?? crypto.randomUUID()).toString();
+  const createTime = toDate(system.createTime) || new Date();
+  const updateTime = toDate(system.updateTime) || createTime;
+
+  await pool.query(
+    `INSERT INTO trading_systems (
+      id, name, type, path, status, creator, create_time, update_time
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      system.name || '',
+      system.type || null,
+      system.path || null,
+      system.status || 'active',
+      system.creator || null,
+      createTime,
+      updateTime,
+    ]
+  );
+
+  const [rows] = await pool.query('SELECT * FROM trading_systems WHERE id = ?', [id]);
+  res.status(201).json(mapTradingSystemRow(rows[0]));
+}));
+
+app.put('/tradingSystems/:id', asyncHandler(async (req, res) => {
+  const system = req.body || {};
+  const id = req.params.id;
+  const updateTime = toDate(system.updateTime) || new Date();
+  const createTime = toDate(system.createTime);
+
+  const [result] = await pool.query(
+    `UPDATE trading_systems SET
+      name = ?,
+      type = ?,
+      path = ?,
+      status = ?,
+      creator = ?,
+      create_time = COALESCE(?, create_time),
+      update_time = ?
+    WHERE id = ?`,
+    [
+      system.name || '',
+      system.type || null,
+      system.path || null,
+      system.status || 'active',
+      system.creator || null,
+      createTime,
+      updateTime,
+      id,
+    ]
+  );
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'trading system not found' });
+  }
+
+  const [rows] = await pool.query('SELECT * FROM trading_systems WHERE id = ?', [id]);
+  res.json(mapTradingSystemRow(rows[0]));
+}));
+
+app.delete('/tradingSystems/:id', asyncHandler(async (req, res) => {
+  const [result] = await pool.query('DELETE FROM trading_systems WHERE id = ?', [req.params.id]);
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'trading system not found' });
+  }
+  res.status(204).end();
+}));
 app.get('/stockAccounts', asyncHandler(async (req, res) => {
   const [rows] = await pool.query('SELECT * FROM stock_accounts ORDER BY account_name');
   res.json(rows.map(mapStockAccountRow));
@@ -1103,3 +1222,4 @@ async function start() {
 }
 
 start();
+

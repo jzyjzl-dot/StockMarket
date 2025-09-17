@@ -214,6 +214,52 @@ export const productAPI = {
   },
 };
 
+// 交易系统管理API
+export const tradingSystemAPI = {
+  // 获取所有交易系统
+  async getTradingSystems() {
+    try {
+      const response = await api.get('/tradingSystems');
+      return response.data;
+    } catch (error) {
+      console.error('获取交易系统列表失败:', error);
+      throw error;
+    }
+  },
+
+  // 创建交易系统
+  async createTradingSystem(system) {
+    try {
+      const response = await api.post('/tradingSystems', system);
+      return response.data;
+    } catch (error) {
+      console.error('创建交易系统失败:', error);
+      throw error;
+    }
+  },
+
+  // 更新交易系统
+  async updateTradingSystem(id, system) {
+    try {
+      const response = await api.put(`/tradingSystems/${id}`, system);
+      return response.data;
+    } catch (error) {
+      console.error('更新交易系统失败:', error);
+      throw error;
+    }
+  },
+
+  // 删除交易系统
+  async deleteTradingSystem(id) {
+    try {
+      await api.delete(`/tradingSystems/${id}`);
+      return true;
+    } catch (error) {
+      console.error('删除交易系统失败:', error);
+      throw error;
+    }
+  },
+};
 // 股票账户管理API
 export const stockAccountAPI = {
   // 获取所有股票账户

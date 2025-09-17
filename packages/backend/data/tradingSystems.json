@@ -1,0 +1,44 @@
+﻿{
+  "tradingSystems": [
+    {
+      "id": "72",
+      "name": "TradeData_Wu",
+      "type": "ldp",
+      "path": "/home/hts_hx/tradeData_Wu",
+      "status": "active",
+      "creator": "hx00007",
+      "createTime": "2024-03-20T14:51:16.000Z",
+      "updateTime": "2024-03-20T14:51:16.000Z"
+    },
+    {
+      "id": "71",
+      "name": "TradeData_web",
+      "type": "qmt",
+      "path": "/home/hts_hx/tradeData_web",
+      "status": "active",
+      "creator": "hx00006",
+      "createTime": "2024-03-18T17:15:22.000Z",
+      "updateTime": "2024-03-18T17:15:22.000Z"
+    },
+    {
+      "id": "70",
+      "name": "TradeData_web",
+      "type": "atx",
+      "path": "/home/hts_hx/tradeData_web",
+      "status": "active",
+      "creator": "hx00006",
+      "createTime": "2024-03-14T15:03:18.000Z",
+      "updateTime": "2024-03-14T15:03:18.000Z"
+    },
+    {
+      "id": "55",
+      "name": "TradeData_x50",
+      "type": "ldp",
+      "path": "/home/hts_hx/tradeData_x50",
+      "status": "inactive",
+      "creator": "hx00007",
+      "createTime": "2024-03-11T17:07:34.000Z",
+      "updateTime": "2024-03-11T17:07:34.000Z"
+    }
+  ]
+}
