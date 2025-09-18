@@ -1,4 +1,4 @@
-锘縞onst fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
@@ -217,10 +217,117 @@ async function initTables() {
       distribution VARCHAR(64),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS t0_buys (
+      id VARCHAR(64) PRIMARY KEY,
+      buy_time DATETIME,
+      account VARCHAR(128),
+      entrust_method VARCHAR(32),
+      symbol VARCHAR(64),
+      algo_instance VARCHAR(128),
+      business_start_time VARCHAR(16),
+      business_end_time VARCHAR(16),
+      buy_direction VARCHAR(32),
+      sell_direction VARCHAR(32),
+      strategy VARCHAR(64),
+      qty INT DEFAULT 0,
+      price DECIMAL(18,2) DEFAULT 0,
+      amount DECIMAL(18,2) DEFAULT 0,
+      distribution VARCHAR(64),
+      basket_no VARCHAR(128),
+      external_no VARCHAR(128),
+      risk_exposure VARCHAR(32),
+      exec_after_expire BOOLEAN DEFAULT FALSE,
+      execute_immediately BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE TABLE IF NOT EXISTS t0_orders (
+      id VARCHAR(64) PRIMARY KEY,
+      order_time DATETIME,
+      account VARCHAR(128),
+      symbol VARCHAR(64),
+      type VARCHAR(32),
+      side VARCHAR(16),
+      price DECIMAL(18,2) DEFAULT 0,
+      quantity INT DEFAULT 0,
+      dealt INT DEFAULT 0,
+      amount DECIMAL(18,2) DEFAULT 0,
+      market VARCHAR(64),
+      order_type VARCHAR(64),
+      status VARCHAR(32),
+      source VARCHAR(64) DEFAULT 'T0',
+      algo_instance VARCHAR(128),
+      business_start_time VARCHAR(16),
+      business_end_time VARCHAR(16),
+      buy_direction VARCHAR(32),
+      sell_direction VARCHAR(32),
+      strategy VARCHAR(64),
+      distribution VARCHAR(64),
+      basket_no VARCHAR(128),
+      external_no VARCHAR(128),
+      risk_exposure VARCHAR(32),
+      exec_after_expire BOOLEAN DEFAULT FALSE,
+      execute_immediately BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
   ];
 
   for (const sql of tableStatements) {
     await pool.query(sql);
+  }
+}
+
+// Ensure schema compatibility with older DBs
+async function ensureColumn(tableName, columnName, addColumnDDL) {
+  const [rows] = await pool.query(
+    `SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?` ,
+    [MYSQL_DATABASE, tableName, columnName]
+  );
+  if (!rows.length) {
+    await pool.query(`ALTER TABLE \`${tableName}\` ${addColumnDDL}`);
+  }
+}
+
+async function migrateSchema() {
+  // Keep legacy databases in sync with the latest T0 schema
+  const t0OrderColumnEnsures = [
+    ['type', 'ADD COLUMN `type` VARCHAR(32) NULL AFTER `symbol`'],
+    ['source', "ADD COLUMN `source` VARCHAR(64) DEFAULT 'T0' AFTER `status`"],
+    ['algo_instance', 'ADD COLUMN `algo_instance` VARCHAR(128) NULL AFTER `source`'],
+    ['business_start_time', 'ADD COLUMN `business_start_time` VARCHAR(16) NULL AFTER `algo_instance`'],
+    ['business_end_time', 'ADD COLUMN `business_end_time` VARCHAR(16) NULL AFTER `business_start_time`'],
+    ['buy_direction', 'ADD COLUMN `buy_direction` VARCHAR(32) NULL AFTER `business_end_time`'],
+    ['sell_direction', 'ADD COLUMN `sell_direction` VARCHAR(32) NULL AFTER `buy_direction`'],
+    ['strategy', 'ADD COLUMN `strategy` VARCHAR(64) NULL AFTER `sell_direction`'],
+    ['distribution', 'ADD COLUMN `distribution` VARCHAR(64) NULL AFTER `strategy`'],
+    ['basket_no', 'ADD COLUMN `basket_no` VARCHAR(128) NULL AFTER `distribution`'],
+    ['external_no', 'ADD COLUMN `external_no` VARCHAR(128) NULL AFTER `basket_no`'],
+    ['risk_exposure', 'ADD COLUMN `risk_exposure` VARCHAR(32) NULL AFTER `external_no`'],
+    ['exec_after_expire', 'ADD COLUMN `exec_after_expire` BOOLEAN DEFAULT FALSE AFTER `risk_exposure`'],
+    ['execute_immediately', 'ADD COLUMN `execute_immediately` BOOLEAN DEFAULT FALSE AFTER `exec_after_expire`'],
+  ];
+
+  for (const [column, ddl] of t0OrderColumnEnsures) {
+    await ensureColumn('t0_orders', column, ddl);
+  }
+
+  const t0BuyColumnEnsures = [
+    ['entrust_method', 'ADD COLUMN `entrust_method` VARCHAR(32) NULL AFTER `account`'],
+    ['algo_instance', 'ADD COLUMN `algo_instance` VARCHAR(128) NULL AFTER `symbol`'],
+    ['business_start_time', 'ADD COLUMN `business_start_time` VARCHAR(16) NULL AFTER `algo_instance`'],
+    ['business_end_time', 'ADD COLUMN `business_end_time` VARCHAR(16) NULL AFTER `business_start_time`'],
+    ['buy_direction', 'ADD COLUMN `buy_direction` VARCHAR(32) NULL AFTER `business_end_time`'],
+    ['sell_direction', 'ADD COLUMN `sell_direction` VARCHAR(32) NULL AFTER `buy_direction`'],
+    ['strategy', 'ADD COLUMN `strategy` VARCHAR(64) NULL AFTER `sell_direction`'],
+    ['distribution', 'ADD COLUMN `distribution` VARCHAR(64) NULL AFTER `strategy`'],
+    ['basket_no', 'ADD COLUMN `basket_no` VARCHAR(128) NULL AFTER `distribution`'],
+    ['external_no', 'ADD COLUMN `external_no` VARCHAR(128) NULL AFTER `basket_no`'],
+    ['risk_exposure', 'ADD COLUMN `risk_exposure` VARCHAR(32) NULL AFTER `external_no`'],
+    ['exec_after_expire', 'ADD COLUMN `exec_after_expire` BOOLEAN DEFAULT FALSE AFTER `risk_exposure`'],
+    ['execute_immediately', 'ADD COLUMN `execute_immediately` BOOLEAN DEFAULT FALSE AFTER `exec_after_expire`'],
+  ];
+
+  for (const [column, ddl] of t0BuyColumnEnsures) {
+    await ensureColumn('t0_buys', column, ddl);
   }
 }
 
@@ -1198,6 +1305,249 @@ app.delete('/algoOrders/:id', asyncHandler(async (req, res) => {
   res.status(204).end();
 }));
 
+// T0 Buys路由
+function mapT0BuyRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    buyTime: toISOString(row.buy_time),
+    account: row.account,
+    entrustMethod: row.entrust_method,
+    symbol: row.symbol,
+    algoInstance: row.algo_instance,
+    businessStartTime: row.business_start_time,
+    businessEndTime: row.business_end_time,
+    buyDirection: row.buy_direction,
+    sellDirection: row.sell_direction,
+    strategy: row.strategy,
+    qty: Number(row.qty || 0),
+    price: Number(row.price || 0),
+    amount: Number(row.amount || 0),
+    distribution: row.distribution,
+    basketNo: row.basket_no,
+    externalNo: row.external_no,
+    riskExposure: row.risk_exposure,
+    execAfterExpire: Boolean(row.exec_after_expire),
+    executeImmediately: Boolean(row.execute_immediately),
+    createdAt: toISOString(row.created_at),
+  };
+}
+
+function mapT0OrderRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    orderTime: toISOString(row.order_time),
+    account: row.account,
+    symbol: row.symbol,
+    type: row.type,
+    side: row.side,
+    price: Number(row.price || 0),
+    quantity: Number(row.quantity || 0),
+    dealt: Number(row.dealt || 0),
+    amount: Number(row.amount || 0),
+    market: row.market,
+    orderType: row.order_type,
+    status: row.status,
+    source: row.source,
+    algoInstance: row.algo_instance,
+    businessStartTime: row.business_start_time,
+    businessEndTime: row.business_end_time,
+    buyDirection: row.buy_direction,
+    sellDirection: row.sell_direction,
+    strategy: row.strategy,
+    distribution: row.distribution,
+    basketNo: row.basket_no,
+    externalNo: row.external_no,
+    riskExposure: row.risk_exposure,
+    execAfterExpire: Boolean(row.exec_after_expire),
+    executeImmediately: Boolean(row.execute_immediately),
+    createdAt: toISOString(row.created_at),
+  };
+}
+
+// 获取T0 Buys列表
+app.get('/t0Buys', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM t0_buys ORDER BY buy_time DESC');
+  res.json(rows.map(mapT0BuyRow));
+}));
+
+// 创建T0 Buy
+app.post('/t0Buys', asyncHandler(async (req, res) => {
+  const buy = req.body || {};
+  const id = (buy.id ?? crypto.randomUUID()).toString();
+  const buyTime = toDate(buy.buyTime || buy.timestamp) || new Date();
+
+  await pool.query(
+    `INSERT INTO t0_buys (
+      id, buy_time, account, entrust_method, symbol, algo_instance,
+      business_start_time, business_end_time, buy_direction, sell_direction,
+      strategy, qty, price, amount, distribution, basket_no, external_no, 
+      risk_exposure, exec_after_expire, execute_immediately
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      buyTime,
+      buy.account || null,
+      buy.entrustMethod || null,
+      buy.symbol || null,
+      buy.algoInstance || null,
+      buy.businessStartTime || null,
+      buy.businessEndTime || null,
+      buy.buyDirection || null,
+      buy.sellDirection || null,
+      buy.strategy || null,
+      Number(buy.qty || 0),
+      numeric(buy.price) ?? 0,
+      numeric(buy.amount) ?? 0,
+      buy.distribution || null,
+      buy.basketNo || null,
+      buy.externalNo || null,
+      buy.riskExposure || null,
+      Boolean(buy.execAfterExpire),
+      Boolean(buy.executeImmediately),
+    ]
+  );
+
+  const [rows] = await pool.query('SELECT * FROM t0_buys WHERE id = ?', [id]);
+  res.status(201).json(mapT0BuyRow(rows[0]));
+}));
+
+// 删除T0 Buy
+app.delete('/t0Buys/:id', asyncHandler(async (req, res) => {
+  const [result] = await pool.query('DELETE FROM t0_buys WHERE id = ?', [req.params.id]);
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'T0 buy not found' });
+  }
+  res.status(204).end();
+}));
+
+// 获取T0订单列表
+app.get('/t0Orders', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM t0_orders ORDER BY order_time DESC');
+  res.json(rows.map(mapT0OrderRow));
+}));
+
+// 创建T0订单（从t0_buys确认）
+app.post('/t0Orders', asyncHandler(async (req, res) => {
+  const order = req.body || {};
+  const id = (order.id ?? crypto.randomUUID()).toString();
+  const orderTime = toDate(order.orderTime) || new Date();
+
+  await pool.query(
+    `INSERT INTO t0_orders (
+      id, order_time, account, symbol, \`type\`, side, price, quantity, dealt, amount,
+      market, order_type, status, source, algo_instance, business_start_time,
+      business_end_time, buy_direction, sell_direction, strategy, distribution,
+      basket_no, external_no, risk_exposure, exec_after_expire, execute_immediately
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      orderTime,
+      order.account || null,
+      order.symbol || null,
+      order.type || null,
+      order.side || null,
+      numeric(order.price) ?? 0,
+      Number(order.quantity || 0),
+      Number(order.dealt || 0),
+      numeric(order.amount) ?? 0,
+      order.market || 'SH',
+      order.orderType || 'LIMIT',
+      order.status || 'pending',
+      order.source || 'T0',
+      order.algoInstance || null,
+      order.businessStartTime || null,
+      order.businessEndTime || null,
+      order.buyDirection || null,
+      order.sellDirection || null,
+      order.strategy || null,
+      order.distribution || null,
+      order.basketNo || null,
+      order.externalNo || null,
+      order.riskExposure || null,
+      Boolean(order.execAfterExpire),
+      Boolean(order.executeImmediately),
+    ]
+  );
+
+  const [rows] = await pool.query('SELECT * FROM t0_orders WHERE id = ?', [id]);
+  res.status(201).json(mapT0OrderRow(rows[0]));
+}));
+
+// 从T0 Buy确认到T0 Order (批量确认)
+app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
+  const { buyIds } = req.body;
+  
+  if (!Array.isArray(buyIds) || buyIds.length === 0) {
+    return res.status(400).json({ message: 'buyIds is required and must be an array' });
+  }
+
+  // 获取要确认的t0_buys记录
+  const placeholders = buyIds.map(() => '?').join(',');
+  const [buyRows] = await pool.query(
+    `SELECT * FROM t0_buys WHERE id IN (${placeholders})`,
+    buyIds
+  );
+
+  if (buyRows.length === 0) {
+    return res.status(404).json({ message: 'No T0 buys found for the provided IDs' });
+  }
+
+  const confirmedOrders = [];
+
+  for (const buy of buyRows) {
+    const orderId = crypto.randomUUID();
+    const orderTime = new Date();
+
+    // 插入到t0_orders表
+    await pool.query(
+      `INSERT INTO t0_orders (
+        id, order_time, account, symbol, \`type\`, side, price, quantity, dealt, amount,
+        market, order_type, status, source, algo_instance, business_start_time,
+        business_end_time, buy_direction, sell_direction, strategy, distribution,
+        basket_no, external_no, risk_exposure, exec_after_expire, execute_immediately
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        orderId,
+        orderTime,
+        buy.account,
+        buy.symbol,
+        'T0策略',
+        'BUY', // 默认买入，可以根据策略调整
+        buy.price,
+        buy.qty,
+        0, // dealt
+        buy.amount,
+        'SH', // market
+        'LIMIT', // order_type
+        'pending', // status
+        'T0',
+        buy.algo_instance,
+        buy.business_start_time,
+        buy.business_end_time,
+        buy.buy_direction,
+        buy.sell_direction,
+        buy.strategy,
+        buy.distribution,
+        buy.basket_no,
+        buy.external_no,
+        buy.risk_exposure,
+        buy.exec_after_expire,
+        buy.execute_immediately,
+      ]
+    );
+
+    // 删除对应的t0_buys记录
+    await pool.query('DELETE FROM t0_buys WHERE id = ?', [buy.id]);
+
+    const [orderRows] = await pool.query('SELECT * FROM t0_orders WHERE id = ?', [orderId]);
+    confirmedOrders.push(mapT0OrderRow(orderRows[0]));
+  }
+
+  res.status(201).json(confirmedOrders);
+}));
+
 app.use((err, req, res, next) => {
   console.error('API error:', err);
   res.status(500).json({ message: 'internal server error', detail: err.message });
@@ -1208,6 +1558,7 @@ async function start() {
     await ensureDatabaseExists();
     await initPool();
     await initTables();
+    await migrateSchema();
     await seedReferenceData();
 
     const port = Number(PORT) || 3004;
@@ -1222,4 +1573,5 @@ async function start() {
 }
 
 start();
+
 
