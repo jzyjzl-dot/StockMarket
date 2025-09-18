@@ -64,10 +64,10 @@
               <el-select v-model="orderForm.account" style="width: 100%">
                 <el-option label="全部账户" value="ALL" />
                 <el-option
-                  v-for="acc in accounts"
-                  :key="acc.id"
-                  :label="acc.name"
-                  :value="acc.id"
+                  v-for="g in accountGroups"
+                  :key="g.id"
+                  :label="g.name"
+                  :value="g.id"
                 />
               </el-select>
             </el-form-item>
@@ -514,6 +514,24 @@ const accounts = ref([
 ]);
 const selectedAccounts = ref(accounts.value.map((a) => a.id));
 
+// 账户组：从后端加载，展示"账号组名称"
+const accountGroups = ref([]);
+const fetchAccountGroups = async () => {
+  try {
+    const { data } = await axios.get(`${jsBase}/accountGroups`);
+    if (Array.isArray(data)) {
+      accountGroups.value = data.map((g) => ({
+        id: g.id ?? g.groupId ?? String(g.id || ''),
+        groupId: g.groupId ?? g.id,
+        name: g.name ?? `组${g.groupId ?? g.id}`,
+      }));
+    }
+  } catch (e) {
+    console.warn('加载账户组失败: ', e?.message || e);
+    accountGroups.value = [];
+  }
+};
+
 // 下单
 const orderForm = ref({
   account: 'ALL',
@@ -822,6 +840,7 @@ const confirmSelected = async () => {
 onMounted(() => {
   refreshPreview();
   refreshOrders();
+  fetchAccountGroups();
 });
 </script>
 

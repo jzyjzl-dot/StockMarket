@@ -61,10 +61,10 @@
               <el-select v-model="t0OrderForm.account" style="width: 100%">
                 <el-option label="全部账户" value="ALL" />
                 <el-option
-                  v-for="acc in t0Accounts"
-                  :key="acc.id"
-                  :label="acc.name"
-                  :value="acc.id"
+                  v-for="g in t0AccountGroups"
+                  :key="g.id"
+                  :label="g.name"
+                  :value="g.id"
                 />
               </el-select>
             </el-form-item>
@@ -472,6 +472,24 @@ const t0Accounts = ref([
 ]);
 const t0SelectedAccounts = ref(t0Accounts.value.map((a) => a.id));
 
+// T0账户组：从后端加载，展示"账号组名称"
+const t0AccountGroups = ref([]);
+const fetchT0AccountGroups = async () => {
+  try {
+    const { data } = await axios.get(`${jsBase}/accountGroups`);
+    if (Array.isArray(data)) {
+      t0AccountGroups.value = data.map((g) => ({
+        id: g.id ?? g.groupId ?? String(g.id || ''),
+        groupId: g.groupId ?? g.id,
+        name: g.name ?? `组${g.groupId ?? g.id}`,
+      }));
+    }
+  } catch (e) {
+    console.warn('加载T0账户组失败: ', e?.message || e);
+    t0AccountGroups.value = [];
+  }
+};
+
 // 下单表单
 const t0OrderForm = ref({
   account: 'ALL',
@@ -745,6 +763,7 @@ onMounted(async () => {
   try {
     await t0RefreshPreview();
     await t0RefreshOrders();
+    await fetchT0AccountGroups();
   } catch (e) {
     console.warn('加载 T0 委托失败: ', e?.message || e);
   }
