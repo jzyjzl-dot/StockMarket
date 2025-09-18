@@ -513,18 +513,18 @@ const t0BuildPreviewRow = (acc) => {
 
 const t0RefreshPreview = async () => {
   try {
-    const { data } = await axios.get(`${jsBase}/normalBuys`);
+    const { data } = await axios.get(`${jsBase}/t0Buys`);
     if (Array.isArray(data)) {
       t0PreviewRows.value = data.map((item) => {
         const priceNum = Number(item.price) || 0;
         const qtyNum = Number(item.qty) || 0;
-        const amountNum =
-          item.amount != null ? Number(item.amount) : priceNum * qtyNum;
+        const amountNum = Number(item.amount) || 0;
         return {
           id: item.id,
           account: item.account || '账户',
           symbol: item.symbol,
-          side: item.side === 'SELL' ? '卖出' : '买入',
+          // t0_buys不存side，这里统一展示为买入（或按策略自定）
+          side: '买入',
           qty: qtyNum,
           price: priceNum ? priceNum.toFixed(2) : '-',
           amount: amountNum ? amountNum.toFixed(2) : '-',
@@ -534,31 +534,31 @@ const t0RefreshPreview = async () => {
       });
     }
   } catch (e) {
-    console.warn('加载 normalBuys 失败: ', e?.message || e);
+    console.warn('加载 T0 buys 失败: ', e?.message || e);
   }
 };
 
 const t0RefreshOrders = async () => {
   try {
-    const { data } = await axios.get(`${jsBase}/normalOrders`);
+    const { data } = await axios.get(`${jsBase}/t0Orders`);
     if (Array.isArray(data)) {
       t0OrderRows.value = data.map((o) => ({
         id: o.id,
-        time: o.time || o.order_time,
+        time: o.orderTime,
         account: o.account || '账户',
         stockCode: o.symbol,
         type: o.side === 'SELL' ? '卖出' : '买入',
         price: Number(o.price) || 0,
-        quantity: Number(o.quantity ?? o.qty ?? 0) || 0,
-        dealt: Number(o.dealt ?? 0) || 0,
+        quantity: Number(o.quantity) || 0,
+        dealt: Number(o.dealt) || 0,
         amount: Number(o.amount) || 0,
         market: o.market || '上交所',
-        orderType: o.orderType || o.order_type || '限价',
+        orderType: o.orderType || '限价',
         status: o.status || '已报',
       }));
     }
   } catch (e) {
-    console.warn('加载 normalOrders 失败: ', e?.message || e);
+    console.warn('加载 t0Orders 失败: ', e?.message || e);
   }
 };
 
@@ -572,39 +572,47 @@ const t0PlaceOrder = async () => {
     return;
   }
 
-  const selected = t0SelectedAccounts.value
-    .map((id) => t0Accounts.value.find((a) => a.id === id))
-    .filter(Boolean);
+  try {
+    // 为每个选中的账户创建T0买单预览记录
+    const selected = t0SelectedAccounts.value
+      .map((id) => t0Accounts.value.find((a) => a.id === id))
+      .filter(Boolean);
 
-  const newRows = selected.map((acc) => t0BuildPreviewRow(acc));
-  t0PreviewRows.value.push(...newRows);
+    const newRows = selected.map((acc) => t0BuildPreviewRow(acc));
 
-  if (t0OrderForm.value.entrustType === 'BUY') {
-    try {
-      await Promise.all(
-        newRows.map((row) =>
-          axios.post(`${jsBase}/normalBuys`, {
-            timestamp: new Date().toISOString(),
-            account: row.account,
-            side: 'BUY',
-            symbol: row.symbol,
-            price: Number(row.price) || 0,
-            qty: Number(row.qty) || 0,
-            amount: Number(row.amount) || 0,
-            priceType: t0OrderForm.value.priceType,
-            strategy: t0OrderForm.value.strategy,
-            distribution: t0OrderForm.value.distribution,
-          })
-        )
-      );
-      ElMessage.success('买入已导入预览并保存');
-      await t0RefreshPreview();
-    } catch (e) {
-      console.error('保存T0买入失败: ', e);
-      ElMessage.error('保存买入数据失败，请检查后端服务');
-    }
-  } else {
-    ElMessage.success('卖出已导入预览');
+    // 将预览数据保存到t0_buys表（字段对齐后端）
+    await Promise.all(
+      newRows.map((row) =>
+        axios.post(`${jsBase}/t0Buys`, {
+          buyTime: new Date().toISOString(),
+          account: row.account,
+          entrustMethod: t0OrderForm.value.entrustMethod,
+          symbol: row.symbol,
+          price: Number(row.price) || 0,
+          qty: Number(row.qty) || 0,
+          amount: Number(row.amount) || 0,
+          algoInstance: t0OrderForm.value.algoInstance,
+          strategy: t0OrderForm.value.strategy,
+          distribution: t0OrderForm.value.distribution,
+          // T0策略参数
+          basketNo: t0Params.value.basketNo,
+          externalNo: t0Params.value.externalNo,
+          riskExposure: t0Params.value.riskExposure,
+          execAfterExpire: t0Params.value.execAfterExpire,
+          executeImmediately: t0Params.value.executeImmediately,
+          businessStartTime: t0OrderForm.value.businessHours?.[0],
+          businessEndTime: t0OrderForm.value.businessHours?.[1],
+          buyDirection: t0OrderForm.value.buyDirection,
+          sellDirection: t0OrderForm.value.sellDirection,
+        })
+      )
+    );
+
+    ElMessage.success('T0策略已提交到预览，请在预览中确认');
+    await t0RefreshPreview();
+  } catch (e) {
+    console.error('提交T0策略失败: ', e);
+    ElMessage.error('提交T0策略失败，请检查后端服务');
   }
 };
 
@@ -615,38 +623,35 @@ const t0ConfirmSelected = async () => {
   }
 
   try {
-    const toConfirm = [...t0SelectedRows.value];
-    await Promise.all(
-      toConfirm.map((row) =>
-        axios.post(`${jsBase}/normalOrders`, {
-          time: new Date().toISOString(),
-          account: row.account || '账户',
-          symbol: row.symbol,
-          type: row.side,
-          side: row.side === '卖出' ? 'SELL' : 'BUY',
-          price: Number(row.price) || 0,
-          quantity: Number(row.qty) || 0,
-          dealt: 0,
-          amount: Number(row.amount) || 0,
-          market: '上交所',
-          orderType: '限价',
-          status: '已报',
-        })
-      )
-    );
-    const ids = toConfirm.map((r) => r.id).filter(Boolean);
-    if (ids.length) {
-      await Promise.all(
-        ids.map((id) => axios.delete(`${jsBase}/normalBuys/${id}`))
-      );
+    // 获取选中的t0_buys记录的ID
+    const selectedIds = t0SelectedRows.value
+      .map((row) => row.id)
+      .filter(Boolean);
+
+    if (selectedIds.length === 0) {
+      ElMessage.warning('没有有效的预览记录ID');
+      return;
     }
-    ElMessage.success('已确认、移出预览并保存到委托');
+
+    // 调用批量确认API，将t0_buys记录转移到t0_orders
+    await axios.post(`${jsBase}/t0Orders/confirmFromBuys`, {
+      buyIds: selectedIds,
+    });
+
+    ElMessage.success('T0策略已确认并下达委托');
+
+    // 刷新预览和委托数据
     await t0RefreshPreview();
     await t0RefreshOrders();
+
+    // 清空选中状态
     t0SelectedRows.value = [];
   } catch (e) {
-    console.error('确认T0预览失败: ', e);
-    ElMessage.error('确认失败，请检查后端服务');
+    console.error('确认T0策略失败: ', e);
+    ElMessage.error(
+      '确认T0策略失败: ' +
+        (e.response?.data?.detail || e.response?.data?.message || e.message)
+    );
   }
 };
 
