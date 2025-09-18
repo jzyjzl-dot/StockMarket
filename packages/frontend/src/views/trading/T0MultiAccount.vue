@@ -470,7 +470,6 @@ const t0Accounts = ref([
   { id: 'T02', name: 'T0-账户2', available: 420000.0 },
   { id: 'T03', name: 'T0-账户3', available: 300000.0 },
 ]);
-const t0SelectedAccounts = ref(t0Accounts.value.map((a) => a.id));
 
 // T0账户组：从后端加载，展示"账号组名称"
 const t0AccountGroups = ref([]);
@@ -503,7 +502,13 @@ const t0OrderForm = ref({
   qty: 1000,
   distribution: 'eachFixedQty',
 });
-
+const t0SelectedAccountIds = computed(() => {
+  const selected = t0OrderForm.value.account;
+  if (!selected || selected === 'ALL') {
+    return t0Accounts.value.map((a) => a.id);
+  }
+  return [selected];
+});
 const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
 
 // 预览
@@ -513,19 +518,21 @@ const t0OnSelectionChange = (rows) => {
   t0SelectedRows.value = rows || [];
 };
 
-const t0BuildPreviewRow = (acc) => {
+const t0BuildPreviewRow = (accountId) => {
   const qty = Number(t0OrderForm.value.qty) || 0;
   const price = 7.49; // 模拟当前市价
   const amount = price * qty;
+  const accountInfo = t0Accounts.value.find((a) => a.id === accountId);
+  const available = Number(accountInfo?.available ?? 0);
   return {
-    account: acc?.name || acc?.id || '账户',
+    account: accountId || accountInfo?.id || '账户',
     symbol: t0OrderForm.value.symbol,
     side: '买入', // 根据策略确定
     qty,
     price: price ? price.toFixed(2) : '-',
     amount: amount ? amount.toFixed(2) : '-',
-    available: (acc?.available ?? 0).toFixed(2),
-    buyable: Math.floor((acc?.available ?? 0) / (price || 1) / 100) * 100,
+    available: available.toFixed(2),
+    buyable: Math.floor(available / (price || 1) / 100) * 100,
   };
 };
 
@@ -581,10 +588,11 @@ const t0RefreshOrders = async () => {
 };
 
 const t0PlaceOrder = async () => {
+  const selectedIds = t0SelectedAccountIds.value;
   if (
     !t0OrderForm.value.symbol ||
     !t0OrderForm.value.qty ||
-    t0SelectedAccounts.value.length === 0
+    selectedIds.length === 0
   ) {
     ElMessage.warning('请完善下单信息与选择账户');
     return;
@@ -592,11 +600,7 @@ const t0PlaceOrder = async () => {
 
   try {
     // 为每个选中的账户创建T0买单预览记录
-    const selected = t0SelectedAccounts.value
-      .map((id) => t0Accounts.value.find((a) => a.id === id))
-      .filter(Boolean);
-
-    const newRows = selected.map((acc) => t0BuildPreviewRow(acc));
+    const newRows = selectedIds.map((id) => t0BuildPreviewRow(id));
 
     // 将预览数据保存到t0_buys表（字段对齐后端）
     await Promise.all(
@@ -692,7 +696,7 @@ const t0TotalPrice = computed(() =>
   )
 );
 const t0TotalAvailable = computed(() =>
-  t0SelectedAccounts.value.reduce((sum, id) => {
+  t0SelectedAccountIds.value.reduce((sum, id) => {
     const acc = t0Accounts.value.find((a) => a.id === id);
     return sum + (acc?.available ?? 0);
   }, 0)

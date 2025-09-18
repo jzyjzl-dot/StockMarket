@@ -512,7 +512,6 @@ const accounts = ref([
   { id: 'A02', name: '账户2', available: 707258.0 },
   { id: 'A03', name: '账户3', available: 120300.0 },
 ]);
-const selectedAccounts = ref(accounts.value.map((a) => a.id));
 
 // 账户组：从后端加载，展示"账号组名称"
 const accountGroups = ref([]);
@@ -547,6 +546,13 @@ const orderForm = ref({
   qty: 1000,
   distribution: 'eachFixedQty',
 });
+const selectedAccountIds = computed(() => {
+  const selected = orderForm.value.account;
+  if (!selected || selected === 'ALL') {
+    return accounts.value.map((a) => a.id);
+  }
+  return [selected];
+});
 const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
 
 const previewRows = ref([]);
@@ -555,19 +561,21 @@ const onSelectionChange = (rows) => {
   selectedRows.value = rows || [];
 };
 
-const buildPreviewRow = (acc) => {
+const buildPreviewRow = (accountId) => {
   const price = Number(orderForm.value.price) || 0;
   const qty = Number(orderForm.value.qty) || 0;
   const amount = price * qty;
+  const accountInfo = accounts.value.find((a) => a.id === accountId);
+  const available = Number(accountInfo?.available ?? 0);
   return {
-    account: acc?.name || acc?.id || '账户',
+    account: accountId || accountInfo?.id || '账户',
     symbol: orderForm.value.symbol,
     side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
     qty,
     price: price ? price.toFixed(2) : '-',
     amount: amount ? amount.toFixed(2) : '-',
-    available: (acc?.available ?? 0).toFixed(2),
-    buyable: Math.floor((acc?.available ?? 0) / (price || 1) / 100) * 100,
+    available: available.toFixed(2),
+    buyable: Math.floor(available / (price || 1) / 100) * 100,
     // algo meta (用于后端与确认时携带)
     algoType: orderForm.value.algoType,
     algoInstance: orderForm.value.algoInstance,
@@ -614,20 +622,17 @@ const refreshPreview = async () => {
 };
 
 const placeOrder = async () => {
+  const selectedIds = selectedAccountIds.value;
   if (
     !orderForm.value.symbol ||
     !orderForm.value.qty ||
-    selectedAccounts.value.length === 0
+    selectedIds.length === 0
   ) {
     ElMessage.warning('请完善下单信息与选择账户');
     return;
   }
 
-  const selected = selectedAccounts.value
-    .map((id) => accounts.value.find((a) => a.id === id))
-    .filter(Boolean);
-
-  const newRows = selected.map((acc) => buildPreviewRow(acc));
+  const newRows = selectedIds.map((id) => buildPreviewRow(id));
   previewRows.value.push(...newRows);
 
   if (orderForm.value.entrustType === 'BUY') {
@@ -694,7 +699,7 @@ const totalPrice = computed(() =>
 );
 
 const totalAvailable = computed(() =>
-  selectedAccounts.value.reduce((sum, id) => {
+  selectedAccountIds.value.reduce((sum, id) => {
     const acc = accounts.value.find((a) => a.id === id);
     return sum + (acc?.available ?? 0);
   }, 0)

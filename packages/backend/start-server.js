@@ -1305,7 +1305,6 @@ app.delete('/algoOrders/:id', asyncHandler(async (req, res) => {
   res.status(204).end();
 }));
 
-// T0 Buys·��
 function mapT0BuyRow(row) {
   if (!row) return null;
   return {
@@ -1366,13 +1365,11 @@ function mapT0OrderRow(row) {
   };
 }
 
-// ��ȡT0 Buys�б�
 app.get('/t0Buys', asyncHandler(async (req, res) => {
   const [rows] = await pool.query('SELECT * FROM t0_buys ORDER BY buy_time DESC');
   res.json(rows.map(mapT0BuyRow));
 }));
 
-// ����T0 Buy
 app.post('/t0Buys', asyncHandler(async (req, res) => {
   const buy = req.body || {};
   const id = (buy.id ?? crypto.randomUUID()).toString();
@@ -1413,7 +1410,6 @@ app.post('/t0Buys', asyncHandler(async (req, res) => {
   res.status(201).json(mapT0BuyRow(rows[0]));
 }));
 
-// ɾ��T0 Buy
 app.delete('/t0Buys/:id', asyncHandler(async (req, res) => {
   const [result] = await pool.query('DELETE FROM t0_buys WHERE id = ?', [req.params.id]);
   if (!result.affectedRows) {
@@ -1422,13 +1418,11 @@ app.delete('/t0Buys/:id', asyncHandler(async (req, res) => {
   res.status(204).end();
 }));
 
-// ��ȡT0�����б�
 app.get('/t0Orders', asyncHandler(async (req, res) => {
   const [rows] = await pool.query('SELECT * FROM t0_orders ORDER BY order_time DESC');
   res.json(rows.map(mapT0OrderRow));
 }));
 
-// ����T0��������t0_buysȷ�ϣ�
 app.post('/t0Orders', asyncHandler(async (req, res) => {
   const order = req.body || {};
   const id = (order.id ?? crypto.randomUUID()).toString();
@@ -1475,7 +1469,6 @@ app.post('/t0Orders', asyncHandler(async (req, res) => {
   res.status(201).json(mapT0OrderRow(rows[0]));
 }));
 
-// ��T0 Buyȷ�ϵ�T0 Order (����ȷ��)
 app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
   const { buyIds } = req.body;
   
@@ -1483,7 +1476,6 @@ app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'buyIds is required and must be an array' });
   }
 
-  // ��ȡҪȷ�ϵ�t0_buys��¼
   const placeholders = buyIds.map(() => '?').join(',');
   const [buyRows] = await pool.query(
     `SELECT * FROM t0_buys WHERE id IN (${placeholders})`,
@@ -1500,7 +1492,6 @@ app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
     const orderId = crypto.randomUUID();
     const orderTime = new Date();
 
-    // ���뵽t0_orders��
     await pool.query(
       `INSERT INTO t0_orders (
         id, order_time, account, symbol, \`type\`, side, price, quantity, dealt, amount,
@@ -1513,8 +1504,8 @@ app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
         orderTime,
         buy.account,
         buy.symbol,
-        'T0����',
-        'BUY', // Ĭ�����룬���Ը��ݲ��Ե���
+        'T0策略',
+        'BUY', // 默认值，表示买入
         buy.price,
         buy.qty,
         0, // dealt
@@ -1538,7 +1529,6 @@ app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
       ]
     );
 
-    // ɾ����Ӧ��t0_buys��¼
     await pool.query('DELETE FROM t0_buys WHERE id = ?', [buy.id]);
 
     const [orderRows] = await pool.query('SELECT * FROM t0_orders WHERE id = ?', [orderId]);
