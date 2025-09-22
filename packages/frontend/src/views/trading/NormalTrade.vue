@@ -685,26 +685,29 @@ const refreshOrders = async () => {
   try {
     const { data } = await axios.get(jsBase + '/normalOrders');
     if (Array.isArray(data)) {
-      orderRows.value = data.map((o) => {
-        const priceNum = Number(o.price) || 0;
-        const qtyNum = Number(o.quantity ?? o.qty ?? 0) || 0;
-        const amountNum = Number(o.amount ?? priceNum * qtyNum) || 0;
-        return {
-          id: o.id || Math.random().toString(36).slice(2, 11),
-          accountId: o.accountId || o.account || '',
-          account: o.accountName || o.account || o.accountId || '资金账号',
-          time: o.time || o.timestamp || new Date().toISOString(),
-          stockCode: o.symbol || o.stockCode,
-          type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
-          price: priceNum,
-          quantity: qtyNum,
-          dealt: Number(o.dealt ?? 0) || 0,
-          amount: amountNum,
-          market: o.market || '沪深市场',
-          orderType: o.orderType || (o.priceType === 'fixed' ? '限价' : '限价'),
-          status: o.status || '已报',
-        };
-      });
+      orderRows.value = data
+        .map((o) => {
+          const priceNum = Number(o.price) || 0;
+          const qtyNum = Number(o.quantity ?? o.qty ?? 0) || 0;
+          const amountNum = Number(o.amount ?? priceNum * qtyNum) || 0;
+          return {
+            id: o.id || Math.random().toString(36).slice(2, 11),
+            accountId: o.accountId || o.account || '',
+            account: o.accountName || o.account || o.accountId || '资金账号',
+            time: o.time || o.timestamp || new Date().toISOString(),
+            stockCode: o.symbol || o.stockCode,
+            type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
+            price: priceNum,
+            quantity: qtyNum,
+            dealt: Number(o.dealt ?? 0) || 0,
+            amount: amountNum,
+            market: o.market || '沪深市场',
+            orderType:
+              o.orderType || (o.priceType === 'fixed' ? '限价' : '限价'),
+            status: o.status || '已报',
+          };
+        })
+        .filter((row) => isToday(row.time));
       return;
     }
     orderRows.value = [];
@@ -760,7 +763,7 @@ const refreshOrders = async () => {
         status: statuses[Math.floor(Math.random() * statuses.length)],
       };
     });
-    orderRows.value = testData;
+    orderRows.value = testData.filter((row) => isToday(row.time));
   }
 };
 
