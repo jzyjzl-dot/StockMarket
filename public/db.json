@@ -27,13 +27,13 @@
       "id": "1",
       "name": "产品A",
       "price": 100,
-      "description": "这是一个产品"
+      "description": "这是一个产品示例"
     },
     {
       "id": "2",
       "name": "产品B",
       "price": 200,
-      "description": "另一个产品"
+      "description": "另一个产品示例"
     }
   ],
   "trades": [
@@ -86,5 +86,45 @@
       "change": 25.0,
       "changePercent": 0.9
     }
-  ]
+  ],
+  "accountGroups": [
+    {
+      "id": "G001",
+      "groupId": "G001",
+      "name": "普通交易组"
+    },
+    {
+      "id": "G002",
+      "groupId": "G002",
+      "name": "量化交易组"
+    }
+  ],
+  "stockAccounts": [
+    {
+      "id": "ACC001",
+      "group": "G001",
+      "accountName": "模拟证券账户1",
+      "accountNumber": "1100001",
+      "availableFunds": 500000,
+      "balance": 750000
+    },
+    {
+      "id": "ACC002",
+      "group": "G001",
+      "accountName": "模拟证券账户2",
+      "accountNumber": "1100002",
+      "availableFunds": 300000,
+      "balance": 410000
+    },
+    {
+      "id": "ACC101",
+      "group": "G002",
+      "accountName": "量化交易账户1",
+      "accountNumber": "2200001",
+      "availableFunds": 1200000,
+      "balance": 1500000
+    }
+  ],
+  "normalBuys": [],
+  "normalOrders": []
 }

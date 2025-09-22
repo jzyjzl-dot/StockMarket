@@ -721,20 +721,21 @@ const t0RefreshOrders = async () => {
         .map((o) => ({
           id: o.id,
           accountId: o.accountId || o.account || '',
-          account: o.accountName || o.account || o.accountId || '资金账号',
+          account: o.accountName || o.account || o.accountId || '????',
           time:
             o.time || o.order_time || o.timestamp || new Date().toISOString(),
           stockCode: o.symbol,
-          type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
+          type: o.type || (o.side === 'SELL' ? '??' : '??'),
           price: Number(o.price) || 0,
           quantity: Number(o.quantity ?? o.qty ?? 0) || 0,
           dealt: Number(o.dealt ?? 0) || 0,
           amount: Number(o.amount) || 0,
-          market: o.market || '沪深市场',
-          orderType: o.orderType || '限价',
-          status: o.status || '已报',
+          market: o.market || '????',
+          orderType: o.orderType || '??',
+          status: o.status || '??',
         }))
         .filter((row) => isToday(row.time));
+      t0OrderRows.value.sort((a, b) => new Date(b.time) - new Date(a.time));
     } else {
       t0OrderRows.value = [];
     }

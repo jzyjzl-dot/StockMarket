@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="nt-page">
     <!-- 顶部三栏：行情 / 下单 / 预览 -->
     <div class="nt-top">
@@ -502,6 +502,22 @@ const orderRows = ref([]);
 const stockAccounts = ref([]);
 const accountGroups = ref([]);
 
+const isToday = (value) => {
+  if (!value) {
+    return false;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+};
+
 const onSelectionChange = (rows) => {
   selectedRows.value = rows || [];
 };
@@ -708,6 +724,9 @@ const refreshOrders = async () => {
           };
         })
         .filter((row) => isToday(row.time));
+      orderRows.value = orderRows.value.sort(
+        (a, b) => new Date(b.time) - new Date(a.time)
+      );
       return;
     }
     orderRows.value = [];
@@ -763,7 +782,9 @@ const refreshOrders = async () => {
         status: statuses[Math.floor(Math.random() * statuses.length)],
       };
     });
-    orderRows.value = testData.filter((row) => isToday(row.time));
+    orderRows.value = testData
+      .filter((row) => isToday(row.time))
+      .sort((a, b) => new Date(b.time) - new Date(a.time));
   }
 };
 
