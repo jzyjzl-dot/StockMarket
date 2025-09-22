@@ -36,12 +36,7 @@
               </el-button>
             </div>
 
-            <el-form
-              v-if="showQueryUI"
-              :inline="true"
-              :model="queryForm"
-              class="query-form"
-            >
+            <el-form :inline="true" :model="queryForm" class="query-form">
               <el-form-item label="请选择账户组合">
                 <el-select
                   v-model="queryForm.accountGroup"
@@ -64,7 +59,7 @@
             </el-form>
 
             <el-table
-              :show-header="showQueryUI"
+              v-if="showTables"
               :data="getCurrentData()"
               style="width: 100%"
               stripe
@@ -181,12 +176,7 @@
               </el-button>
             </div>
 
-            <el-form
-              v-if="showQueryUI"
-              :inline="true"
-              :model="queryForm"
-              class="query-form"
-            >
+            <el-form :inline="true" :model="queryForm" class="query-form">
               <el-form-item label="请选择账户组合">
                 <el-select
                   v-model="queryForm.accountGroup"
@@ -209,7 +199,7 @@
             </el-form>
 
             <el-table
-              :show-header="showQueryUI"
+              v-if="showTables"
               :data="getCurrentData()"
               style="width: 100%"
               stripe
@@ -268,12 +258,7 @@
               </el-button>
             </div>
 
-            <el-form
-              v-if="showQueryUI"
-              :inline="true"
-              :model="queryForm"
-              class="query-form"
-            >
+            <el-form :inline="true" :model="queryForm" class="query-form">
               <el-form-item label="请选择账户组合">
                 <el-select
                   v-model="queryForm.accountGroup"
@@ -296,7 +281,7 @@
             </el-form>
 
             <el-table
-              :show-header="showQueryUI"
+              v-if="showTables"
               :data="getCurrentData()"
               style="width: 100%"
               stripe
@@ -374,12 +359,7 @@
               </el-button>
             </div>
 
-            <el-form
-              v-if="showQueryUI"
-              :inline="true"
-              :model="queryForm"
-              class="query-form"
-            >
+            <el-form :inline="true" :model="queryForm" class="query-form">
               <el-form-item label="请选择账户组合">
                 <el-select
                   v-model="queryForm.accountGroup"
@@ -402,7 +382,7 @@
             </el-form>
 
             <el-table
-              :show-header="showQueryUI"
+              v-if="showTables"
               :data="getCurrentData()"
               style="width: 100%"
               stripe
@@ -473,7 +453,7 @@ const queryForm = reactive({
   accountGroup: '',
 });
 
-const showQueryUI = ref(false);
+const showTables = ref(false);
 
 // 根据当前选中的标签页和子标签页获取对应数据
 const getCurrentData = () => {
