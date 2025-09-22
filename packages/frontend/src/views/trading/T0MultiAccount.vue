@@ -490,6 +490,22 @@ const t0OrderRows = ref([]);
 const stockAccounts = ref([]);
 const t0AccountGroups = ref([]);
 
+const isToday = (value) => {
+  if (!value) {
+    return false;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+};
+
 const t0OnSelectionChange = (rows) => {
   t0SelectedRows.value = rows || [];
 };
@@ -701,21 +717,24 @@ const t0RefreshOrders = async () => {
   try {
     const { data } = await axios.get(jsBase + '/t0Orders');
     if (Array.isArray(data)) {
-      t0OrderRows.value = data.map((o) => ({
-        id: o.id,
-        accountId: o.accountId || o.account || '',
-        account: o.accountName || o.account || o.accountId || '资金账号',
-        time: o.time || o.order_time || o.timestamp || new Date().toISOString(),
-        stockCode: o.symbol,
-        type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
-        price: Number(o.price) || 0,
-        quantity: Number(o.quantity ?? o.qty ?? 0) || 0,
-        dealt: Number(o.dealt ?? 0) || 0,
-        amount: Number(o.amount) || 0,
-        market: o.market || '沪深市场',
-        orderType: o.orderType || '限价',
-        status: o.status || '已报',
-      }));
+      t0OrderRows.value = data
+        .map((o) => ({
+          id: o.id,
+          accountId: o.accountId || o.account || '',
+          account: o.accountName || o.account || o.accountId || '资金账号',
+          time:
+            o.time || o.order_time || o.timestamp || new Date().toISOString(),
+          stockCode: o.symbol,
+          type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
+          price: Number(o.price) || 0,
+          quantity: Number(o.quantity ?? o.qty ?? 0) || 0,
+          dealt: Number(o.dealt ?? 0) || 0,
+          amount: Number(o.amount) || 0,
+          market: o.market || '沪深市场',
+          orderType: o.orderType || '限价',
+          status: o.status || '已报',
+        }))
+        .filter((row) => isToday(row.time));
     } else {
       t0OrderRows.value = [];
     }
