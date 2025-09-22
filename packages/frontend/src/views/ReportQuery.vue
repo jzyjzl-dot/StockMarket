@@ -124,6 +124,18 @@
         <el-tab-pane label="委托查询" name="orders">
           <div class="query-section">
             <el-form :inline="true" :model="ordersForm" class="query-form">
+              <el-form-item label="交易方式">
+                <el-select
+                  v-model="ordersForm.tradeType"
+                  placeholder="选择交易方式"
+                  clearable
+                >
+                  <el-option label="全部" value="all" />
+                  <el-option label="普通交易" value="normal" />
+                  <el-option label="多账号算法交易" value="algo" />
+                  <el-option label="T0策略交易" value="t0" />
+                </el-select>
+              </el-form-item>
               <el-form-item label="股票代码">
                 <el-input
                   v-model="ordersForm.stockCode"
@@ -151,6 +163,7 @@
                   <el-option label="部分成交" value="partial" />
                   <el-option label="全部成交" value="filled" />
                   <el-option label="已撤销" value="cancelled" />
+                  <el-option label="已完成" value="completed" />
                 </el-select>
               </el-form-item>
               <el-form-item label="日期范围">
@@ -289,6 +302,7 @@ const positionsData = ref([]);
 
 // 委托查询
 const ordersForm = reactive({
+  tradeType: 'all',
   stockCode: '',
   orderType: '',
   status: '',
@@ -372,42 +386,112 @@ const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
 // 委托查询，支持过滤并写入虚拟表格数据源
 const queryOrders = async () => {
   try {
-    const { data } = await axios.get(`${jsBase}/normalOrders`);
-    let rows = Array.isArray(data)
-      ? data.map((o) => ({
-          orderId: o.id,
-          stockCode: o.symbol || o.stockCode,
-          stockName: o.name || '-',
-          orderType: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
-          quantity: o.quantity ?? o.qty ?? 0,
-          price: o.price ?? 0,
-          status: o.status || '-',
-          time: o.time || o.timestamp || '-',
-        }))
-      : [];
+    let allRows = [];
 
+    // 根据交易方式获取不同数据源
+    if (ordersForm.tradeType === 'all' || ordersForm.tradeType === 'normal') {
+      // 普通交易订单
+      try {
+        const { data: normalData } = await axios.get(`${jsBase}/normalOrders`);
+        if (Array.isArray(normalData)) {
+          const normalRows = normalData.map((o) => ({
+            orderId: o.id,
+            stockCode: o.symbol || o.stockCode,
+            stockName: o.name || '-',
+            orderType: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
+            quantity: o.quantity ?? o.qty ?? 0,
+            price: o.price ?? 0,
+            status: o.status || '-',
+            time: o.time || o.timestamp || '-',
+            tradeType: '普通交易',
+            source: 'normal',
+          }));
+          allRows = allRows.concat(normalRows);
+        }
+      } catch (error) {
+        console.warn('普通交易数据获取失败:', error);
+      }
+    }
+
+    if (ordersForm.tradeType === 'all' || ordersForm.tradeType === 'algo') {
+      // 多账号算法交易订单
+      try {
+        const { data: algoData } = await axios.get(`${jsBase}/algoOrders`);
+        if (Array.isArray(algoData)) {
+          const algoRows = algoData.map((o) => ({
+            orderId: o.id,
+            stockCode: o.symbol || o.stockCode,
+            stockName: o.name || o.stockName || '-',
+            orderType: o.type || o.side || '买入',
+            quantity: o.quantity ?? o.qty ?? 0,
+            price: o.price ?? 0,
+            status: o.status || '-',
+            time: o.time || o.timestamp || o.created_at || '-',
+            tradeType: '多账号算法交易',
+            source: 'algo',
+            algoType: o.algo_type || '-',
+            algoInstance: o.algo_instance || '-',
+          }));
+          allRows = allRows.concat(algoRows);
+        }
+      } catch (error) {
+        console.warn('算法交易数据获取失败:', error);
+      }
+    }
+
+    if (ordersForm.tradeType === 'all' || ordersForm.tradeType === 't0') {
+      // T0策略交易订单
+      try {
+        const { data: t0Data } = await axios.get(`${jsBase}/t0Orders`);
+        if (Array.isArray(t0Data)) {
+          const t0Rows = t0Data.map((o) => ({
+            orderId: o.id,
+            stockCode: o.symbol || o.stockCode,
+            stockName: o.name || o.stockName || '-',
+            orderType: o.type || (o.side === 'BUY' ? '买入' : '卖出'),
+            quantity: o.quantity ?? o.qty ?? 0,
+            price: o.price ?? 0,
+            status: o.status === 'pending' ? '待成交' : o.status || '-',
+            time: o.orderTime || o.time || o.timestamp || o.createdAt || '-',
+            tradeType: 'T0策略交易',
+            source: 't0',
+            algoInstance: o.algoInstance || '-',
+          }));
+          allRows = allRows.concat(t0Rows);
+        }
+      } catch (error) {
+        console.warn('T0策略交易数据获取失败:', error);
+      }
+    }
+
+    // 应用过滤条件
     const statusMap = {
       pending: '已报',
       partial: '部分成交',
       filled: '全部成交',
       cancelled: '已撤销',
+      completed: '已完成',
     };
     const sideMap = { buy: 'BUY', sell: 'SELL' };
 
+    let filteredRows = allRows;
+
     if (ordersForm.stockCode) {
-      rows = rows.filter((r) =>
-        String(r.stockCode || '').includes(ordersForm.stockCode.trim())
+      filteredRows = filteredRows.filter(
+        (r) =>
+          String(r.stockCode || '').includes(ordersForm.stockCode.trim()) ||
+          String(r.stockName || '').includes(ordersForm.stockCode.trim())
       );
     }
     if (ordersForm.orderType) {
       const side = sideMap[ordersForm.orderType];
-      rows = rows.filter((r) =>
+      filteredRows = filteredRows.filter((r) =>
         side === 'SELL' ? r.orderType === '卖出' : r.orderType === '买入'
       );
     }
     if (ordersForm.status) {
-      const zh = statusMap[ordersForm.status];
-      if (zh) rows = rows.filter((r) => r.status === zh);
+      const zh = statusMap[ordersForm.status] || ordersForm.status;
+      filteredRows = filteredRows.filter((r) => r.status === zh);
     }
     if (
       Array.isArray(ordersForm.dateRange) &&
@@ -416,14 +500,14 @@ const queryOrders = async () => {
       const [start, end] = ordersForm.dateRange;
       const s = new Date(start);
       const e = new Date(end);
-      rows = rows.filter((r) => {
+      filteredRows = filteredRows.filter((r) => {
         const t = new Date(r.time);
         return !isNaN(t) && t >= s && t <= e;
       });
     }
 
-    ordersData.value = rows;
-    ElMessage.success('委托查询成功');
+    ordersData.value = filteredRows;
+    ElMessage.success(`委托查询成功，共找到 ${filteredRows.length} 条记录`);
   } catch (error) {
     console.error('委托查询失败:', error);
     ElMessage.error('委托查询失败，请检查后端 json-server');
@@ -431,6 +515,7 @@ const queryOrders = async () => {
   }
 };
 const resetOrders = () => {
+  ordersForm.tradeType = 'all';
   ordersForm.stockCode = '';
   ordersForm.orderType = '';
   ordersForm.status = '';
@@ -478,6 +563,25 @@ const ordersColumns = [
   { key: 'stockCode', title: '股票代码', dataKey: 'stockCode', width: 120 },
   { key: 'stockName', title: '股票名称', dataKey: 'stockName', width: 140 },
   {
+    key: 'tradeType',
+    title: '交易方式',
+    dataKey: 'tradeType',
+    width: 140,
+    cellRenderer: ({ rowData }) =>
+      h(
+        ElTag,
+        {
+          type:
+            rowData.tradeType === '普通交易'
+              ? 'primary'
+              : rowData.tradeType === '多账号算法交易'
+                ? 'success'
+                : 'warning',
+        },
+        () => rowData.tradeType
+      ),
+  },
+  {
     key: 'orderType',
     title: '委托类型',
     dataKey: 'orderType',
@@ -501,7 +605,7 @@ const ordersColumns = [
         ElTag,
         {
           type:
-            rowData.status === '全部成交'
+            rowData.status === '全部成交' || rowData.status === '已完成'
               ? 'success'
               : rowData.status === '已撤销'
                 ? 'danger'
