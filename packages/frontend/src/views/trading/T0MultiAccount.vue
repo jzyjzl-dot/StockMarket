@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="nt-page">
     <div class="nt-top">
       <!-- 行情（可按需启用） -->
@@ -59,7 +59,6 @@
           <el-form :model="t0OrderForm" label-width="60px" size="small">
             <el-form-item label="委托账户">
               <el-select v-model="t0OrderForm.account" style="width: 100%">
-                <el-option label="全部账户" value="ALL" />
                 <el-option
                   v-for="g in t0AccountGroups"
                   :key="g.id"
@@ -482,6 +481,9 @@ const fetchT0AccountGroups = async () => {
         groupId: g.groupId ?? g.id,
         name: g.name ?? `组${g.groupId ?? g.id}`,
       }));
+      if (!t0OrderForm.value.account && t0AccountGroups.value.length) {
+        t0OrderForm.value.account = t0AccountGroups.value[0].id;
+      }
     }
   } catch (e) {
     console.warn('加载T0账户组失败: ', e?.message || e);
@@ -491,7 +493,7 @@ const fetchT0AccountGroups = async () => {
 
 // 下单表单
 const t0OrderForm = ref({
-  account: 'ALL',
+  account: null,
   entrustMethod: 'stock',
   symbol: '600000',
   algoInstance: 'KT_10',
@@ -504,7 +506,7 @@ const t0OrderForm = ref({
 });
 const t0SelectedAccountIds = computed(() => {
   const selected = t0OrderForm.value.account;
-  if (!selected || selected === 'ALL') {
+  if (!selected) {
     return t0Accounts.value.map((a) => a.id);
   }
   return [selected];

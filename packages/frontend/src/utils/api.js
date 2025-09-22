@@ -260,6 +260,56 @@ export const tradingSystemAPI = {
     }
   },
 };
+// 账户组管理API
+export const accountGroupAPI = {
+  async getAccountGroups() {
+    try {
+      const response = await api.get('/accountGroups');
+      return response.data;
+    } catch (error) {
+      console.error('获取账户组列表失败:', error);
+      throw error;
+    }
+  },
+
+  async createAccountGroup(group) {
+    try {
+      const now = new Date().toISOString();
+      const response = await api.post('/accountGroups', {
+        createdDate: group?.createdDate ?? now,
+        lastUpdated: group?.lastUpdated ?? now,
+        ...group,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('创建账户组失败:', error);
+      throw error;
+    }
+  },
+
+  async updateAccountGroup(id, group) {
+    try {
+      const response = await api.put('/accountGroups/' + id, {
+        ...group,
+        lastUpdated: new Date().toISOString(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('更新账户组失败:', error);
+      throw error;
+    }
+  },
+
+  async deleteAccountGroup(id) {
+    try {
+      await api.delete('/accountGroups/' + id);
+      return true;
+    } catch (error) {
+      console.error('删除账户组失败:', error);
+      throw error;
+    }
+  },
+};
 // 股票账户管理API
 export const stockAccountAPI = {
   // 获取所有股票账户

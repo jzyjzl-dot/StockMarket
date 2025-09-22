@@ -61,7 +61,6 @@
           <el-form :model="orderForm" label-width="60px" size="small">
             <el-form-item label="委托账户">
               <el-select v-model="orderForm.account" style="width: 100%">
-                <el-option label="全部账户" value="ALL" />
                 <el-option
                   v-for="g in accountGroups"
                   :key="g.id"
@@ -487,7 +486,7 @@ const marketRows = ref(
 // 资金、下单与预览
 const funds = ref({ available: 900000.0 });
 const orderForm = ref({
-  account: 'ALL',
+  account: null,
   entrustType: 'BUY',
   symbol: '600000',
   priceType: 'fixed',
@@ -513,9 +512,11 @@ const buildPreviewRow = () => {
   const qty = Number(orderForm.value.qty) || 0;
   const price = Number(orderForm.value.price) || 0;
   const amount = qty * price;
+  const selectedAccount =
+    orderForm.value.account || accountGroups.value[0]?.id || '未选择账户';
   return {
-    // 绑定所选账户组（使用组ID；若为“全部账户”则为 'ALL'）
-    account: orderForm.value.account || 'ALL',
+    // 绑定所选账户组（使用组ID；默认选取首个组）
+    account: selectedAccount,
     symbol: orderForm.value.symbol,
     side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
     qty,
@@ -544,6 +545,9 @@ const fetchAccountGroups = async () => {
         groupId: g.groupId ?? g.id,
         name: g.name ?? `组${g.groupId ?? g.id}`,
       }));
+      if (!orderForm.value.account && accountGroups.value.length) {
+        orderForm.value.account = accountGroups.value[0].id;
+      }
     }
   } catch (e) {
     console.warn('加载账户组失败: ', e?.message || e);

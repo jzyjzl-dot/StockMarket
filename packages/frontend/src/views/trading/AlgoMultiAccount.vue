@@ -62,7 +62,6 @@
           <el-form :model="orderForm" label-width="60px" size="small">
             <el-form-item label="委托账户">
               <el-select v-model="orderForm.account" style="width: 100%">
-                <el-option label="全部账户" value="ALL" />
                 <el-option
                   v-for="g in accountGroups"
                   :key="g.id"
@@ -524,6 +523,9 @@ const fetchAccountGroups = async () => {
         groupId: g.groupId ?? g.id,
         name: g.name ?? `组${g.groupId ?? g.id}`,
       }));
+      if (!orderForm.value.account && accountGroups.value.length) {
+        orderForm.value.account = accountGroups.value[0].id;
+      }
     }
   } catch (e) {
     console.warn('加载账户组失败: ', e?.message || e);
@@ -533,7 +535,7 @@ const fetchAccountGroups = async () => {
 
 // 下单
 const orderForm = ref({
-  account: 'ALL',
+  account: null,
   symbol: '600000',
   algoType: 'TWAP',
   algoInstance: 'kf_twap_plus',
@@ -548,7 +550,7 @@ const orderForm = ref({
 });
 const selectedAccountIds = computed(() => {
   const selected = orderForm.value.account;
-  if (!selected || selected === 'ALL') {
+  if (!selected) {
     return accounts.value.map((a) => a.id);
   }
   return [selected];

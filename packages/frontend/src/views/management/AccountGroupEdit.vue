@@ -310,7 +310,7 @@
                   <span>总组数</span>
                 </div>
               </template>
-              <div class="stat-value">{{ accountGroups.length }}</div>
+              <div class="stat-value">{{ processedGroups.length }}</div>
             </el-card>
           </el-col>
           <el-col :span="12">
@@ -328,7 +328,7 @@
         <el-divider>各组详情</el-divider>
         <div class="group-stats">
           <div
-            v-for="group in accountGroups"
+            v-for="group in processedGroups"
             :key="group.id"
             class="group-stat-item"
           >
@@ -359,7 +359,7 @@ import {
   DataAnalysis,
   Money,
 } from '@element-plus/icons-vue';
-import { stockAccountAPI } from '../../utils/api.js';
+import { accountGroupAPI, stockAccountAPI } from '../../utils/api.js';
 
 const accountGroups = ref([]);
 const allAccounts = ref([]);
@@ -384,22 +384,26 @@ const pageSize = ref(10);
 
 const editForm = ref({
   id: '',
-  groupId: '',
+  groupId: null,
   description: '',
   createdDate: '',
   lastUpdated: '',
+  name: '',
 });
 
 const addForm = ref({
-  groupId: '',
+  groupId: null,
   description: '',
 });
 
 // 组颜色映射
 const getGroupColor = (groupId) => {
-  // 基于组ID的颜色映射，可以根据需要调整
   const colors = ['success', 'warning', 'info', 'primary', 'danger'];
-  return colors[Math.abs(groupId) % colors.length] || 'info';
+  const numericId = Number(groupId);
+  if (!Number.isNaN(numericId)) {
+    return colors[Math.abs(numericId) % colors.length] || 'info';
+  }
+  return 'info';
 };
 
 // 账户类型颜色映射
@@ -440,31 +444,67 @@ const formatDate = (dateString) => {
 
 // 计算账户组统计信息
 const processedGroups = computed(() => {
-  const groupMap = new Map();
+  const statsMap = new Map();
 
-  // 统计每个组的账户数量和总余额
   allAccounts.value.forEach((account) => {
-    const groupId = account.group;
-    if (!groupMap.has(groupId)) {
-      groupMap.set(groupId, {
-        id: Date.now() + Math.random(),
-        groupId: groupId,
-        description: getGroupDescription(groupId),
-        accountCount: 0,
-        totalBalance: 0,
-        createdDate: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-      });
+    const groupId = account.group?.toString() ?? '';
+    const stats = statsMap.get(groupId) || {
+      accountCount: 0,
+      totalBalance: 0,
+    };
+    stats.accountCount += 1;
+    const balance = Number(account.balance);
+    if (!Number.isNaN(balance)) {
+      stats.totalBalance += balance;
     }
-
-    const group = groupMap.get(groupId);
-    group.accountCount += 1;
-    group.totalBalance += account.balance;
+    statsMap.set(groupId, stats);
   });
 
-  return Array.from(groupMap.values());
-});
+  const groups = accountGroups.value.map((group) => {
+    const key = group.groupId?.toString() ?? '';
+    const stats = statsMap.get(key) || { accountCount: 0, totalBalance: 0 };
 
+    return {
+      ...group,
+      groupId: key,
+      accountCount: stats.accountCount,
+      totalBalance: stats.totalBalance,
+    };
+  });
+
+  statsMap.forEach((stats, key) => {
+    const exists = groups.some(
+      (group) => (group.groupId ?? '').toString() === key
+    );
+    if (!exists && key !== '') {
+      groups.push({
+        id: `unregistered-${key}`,
+        groupId: key,
+        name: `未注册组 ${key}`,
+        description: getGroupDescription(key),
+        createdDate: '',
+        lastUpdated: '',
+        accountCount: stats.accountCount,
+        totalBalance: stats.totalBalance,
+      });
+    }
+  });
+
+  return groups.sort((a, b) => {
+    const asNumber = Number(a.groupId);
+    const bsNumber = Number(b.groupId);
+    const aIsNumber = !Number.isNaN(asNumber);
+    const bIsNumber = !Number.isNaN(bsNumber);
+
+    if (aIsNumber && bIsNumber) {
+      return asNumber - bsNumber;
+    }
+
+    return (a.groupId ?? '')
+      .toString()
+      .localeCompare((b.groupId ?? '').toString());
+  });
+});
 // 获取组描述
 const getGroupDescription = (groupId) => {
   const descriptions = {
@@ -524,7 +564,7 @@ const filteredAvailableAccounts = computed(() => {
 // 总资产
 const totalAssets = computed(() => {
   return processedGroups.value.reduce(
-    (sum, group) => sum + group.totalBalance,
+    (sum, group) => sum + (Number(group.totalBalance) || 0),
     0
   );
 });
@@ -551,6 +591,20 @@ const handleSizeChange = (newSize) => {
 // 处理页码变化
 const handleCurrentChange = (newPage) => {
   currentPage.value = newPage;
+};
+
+// 获取账户组列表
+const fetchAccountGroups = async () => {
+  try {
+    const groups = await accountGroupAPI.getAccountGroups();
+    accountGroups.value = groups.map((group) => ({
+      ...group,
+      groupId: group?.groupId?.toString() ?? '',
+    }));
+  } catch (error) {
+    console.error('获取账户组列表失败:', error);
+    ElMessage.error('获取账户组列表失败');
+  }
 };
 
 // 获取股票账户列表
@@ -645,24 +699,57 @@ const filterAvailableAccounts = () => {
 
 // 编辑组
 const editGroup = (group) => {
-  editForm.value = { ...group };
+  const parsedGroupId = Number(group.groupId);
+  editForm.value = {
+    id: group.id,
+    groupId: Number.isNaN(parsedGroupId) ? null : parsedGroupId,
+    description: group.description ?? '',
+    createdDate: group.createdDate ?? '',
+    lastUpdated: group.lastUpdated ?? '',
+    name: group.name ?? '',
+  };
   showEditDialog.value = true;
 };
 
 // 保存组
 const saveGroup = async () => {
+  if (!editForm.value.id) {
+    ElMessage.error('缺少组标识，无法保存');
+    return;
+  }
+
+  const groupIdValue =
+    editForm.value.groupId !== null ? editForm.value.groupId.toString() : '';
+  if (!groupIdValue) {
+    ElMessage.warning('请输入有效的组ID');
+    return;
+  }
+
   try {
-    // 这里可以添加保存组信息的逻辑
-    // 目前只是更新本地数据
+    const payload = {
+      groupId: groupIdValue,
+      description: editForm.value.description?.trim() || '',
+    };
+    payload.name =
+      editForm.value.name?.trim() ||
+      payload.description ||
+      '组 ' + groupIdValue;
+
+    const updatedGroup = await accountGroupAPI.updateAccountGroup(
+      editForm.value.id,
+      payload
+    );
+
     const index = accountGroups.value.findIndex(
-      (g) => g.id === editForm.value.id
+      (group) => group.id === updatedGroup.id
     );
     if (index !== -1) {
       accountGroups.value[index] = {
-        ...editForm.value,
-        lastUpdated: new Date().toISOString(),
+        ...updatedGroup,
+        groupId: updatedGroup.groupId?.toString() ?? payload.groupId,
       };
     }
+
     ElMessage.success('组信息更新成功');
     showEditDialog.value = false;
   } catch (error) {
@@ -673,9 +760,18 @@ const saveGroup = async () => {
 
 // 删除组
 const deleteGroup = async (group) => {
+  if (!group?.id || group.id.toString().startsWith('unregistered-')) {
+    ElMessage.warning('该组未注册，无法删除');
+    return;
+  }
+
   try {
     await ElMessageBox.confirm(
-      `确定要删除组 ${group.groupId} 吗？此操作将影响 ${group.accountCount} 个账户。`,
+      '确定要删除组 ' +
+        group.groupId +
+        ' 吗？此操作将影响 ' +
+        group.accountCount +
+        ' 个账户。',
       '提示',
       {
         confirmButtonText: '确定',
@@ -684,7 +780,6 @@ const deleteGroup = async (group) => {
       }
     );
 
-    // 将该组的所有账户移到默认组
     const accountsToUpdate = allAccounts.value.filter(
       (account) => account.group === group.groupId.toString()
     );
@@ -696,9 +791,11 @@ const deleteGroup = async (group) => {
       });
     }
 
+    await accountGroupAPI.deleteAccountGroup(group.id);
+    await Promise.all([fetchStockAccounts(), fetchAccountGroups()]);
+
+    currentPage.value = 1;
     ElMessage.success('组删除成功，相关账户已移至未分组');
-    await fetchStockAccounts();
-    currentPage.value = 1; // 操作后重置到第一页
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除组失败:', error);
@@ -709,24 +806,42 @@ const deleteGroup = async (group) => {
 
 // 添加组
 const addGroup = async () => {
+  const groupIdValue =
+    addForm.value.groupId !== null
+      ? addForm.value.groupId.toString().trim()
+      : '';
+  if (!groupIdValue) {
+    ElMessage.warning('请输入有效的组ID');
+    return;
+  }
+
+  const exists = accountGroups.value.some(
+    (group) => (group.groupId ?? '').toString() === groupIdValue
+  );
+  if (exists) {
+    ElMessage.warning('组ID已存在');
+    return;
+  }
+
   try {
-    // 这里可以添加创建新组的逻辑
-    // 目前只是添加本地数据
-    const newGroup = {
-      id: Date.now(),
-      groupId: addForm.value.groupId,
-      description: addForm.value.description,
-      accountCount: 0,
-      totalBalance: 0,
-      createdDate: new Date().toISOString(),
-      lastUpdated: new Date().toISOString(),
+    const now = new Date().toISOString();
+    const payload = {
+      groupId: groupIdValue,
+      description: addForm.value.description?.trim() || '',
+      name: addForm.value.description?.trim() || '组 ' + groupIdValue,
+      createdDate: now,
+      lastUpdated: now,
     };
-    accountGroups.value.push(newGroup);
+    const createdGroup = await accountGroupAPI.createAccountGroup(payload);
+    accountGroups.value.push({
+      ...createdGroup,
+      groupId: createdGroup.groupId?.toString() ?? groupIdValue,
+    });
 
     ElMessage.success('组添加成功');
     showAddDialog.value = false;
     addForm.value = {
-      groupId: '',
+      groupId: null,
       description: '',
     };
   } catch (error) {
@@ -741,6 +856,7 @@ const showGroupStats = () => {
 };
 
 onMounted(() => {
+  fetchAccountGroups();
   fetchStockAccounts();
 });
 </script>
