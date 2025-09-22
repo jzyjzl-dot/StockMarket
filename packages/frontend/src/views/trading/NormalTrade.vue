@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="nt-page">
     <!-- 顶部三栏：行情 / 下单 / 预览 -->
     <div class="nt-top">
@@ -402,15 +402,13 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
 
-// 虚拟滚动相关状态
 const virtualScrollContainer = ref();
-const itemHeight = 35; // 每行高度
-const containerHeight = 400; // 容器高度
-const visibleCount = Math.ceil(containerHeight / itemHeight); // 可见行数
-const bufferSize = 5; // 缓冲区大小
+const itemHeight = 35;
+const containerHeight = 400;
+const visibleCount = Math.ceil(containerHeight / itemHeight);
+const bufferSize = 5;
 const scrollTop = ref(0);
 
-// 虚拟滚动计算属性
 const startIndex = computed(() => {
   return Math.max(0, Math.floor(scrollTop.value / itemHeight) - bufferSize);
 });
@@ -434,12 +432,10 @@ const startOffset = computed(() => {
   return startIndex.value * itemHeight;
 });
 
-// 虚拟滚动处理函数
 const handleScroll = (event) => {
   scrollTop.value = event.target.scrollTop;
 };
 
-// 格式化时间显示
 const formatTime = (time) => {
   if (!time) return '';
   const date = new Date(time);
@@ -453,7 +449,6 @@ const formatTime = (time) => {
   });
 };
 
-// 获取状态样式类
 const getStatusClass = (status) => {
   switch (status) {
     case '已报':
@@ -461,14 +456,13 @@ const getStatusClass = (status) => {
       return 'status-pending';
     case '全部成交':
       return 'status-filled';
-    case '已撤销':
+    case '已撤单':
       return 'status-cancelled';
     default:
       return '';
   }
 };
 
-// 行情基础数据
 const currentStock = ref({
   name: '示例股票',
   code: '600000',
@@ -483,7 +477,6 @@ const marketRows = ref(
   }))
 );
 
-// 资金、下单与预览
 const funds = ref({ available: 900000.0 });
 const orderForm = ref({
   account: null,
@@ -495,6 +488,7 @@ const orderForm = ref({
   qty: 100,
   distribution: 'eachFixedQty',
 });
+
 const setPercent = (p) => {
   const price = Number(orderForm.value.price) || 0;
   const buyable = Math.floor(funds.value.available / (price || 1) / 100) * 100;
@@ -504,156 +498,227 @@ const setPercent = (p) => {
 
 const previewRows = ref([]);
 const selectedRows = ref([]);
+const orderRows = ref([]);
+const stockAccounts = ref([]);
+const accountGroups = ref([]);
+
 const onSelectionChange = (rows) => {
   selectedRows.value = rows || [];
 };
 
-const buildPreviewRow = () => {
+const accountsByGroup = computed(() => {
+  const map = new Map();
+  stockAccounts.value.forEach((account) => {
+    const groupId = account.group ?? '';
+    if (!map.has(groupId)) {
+      map.set(groupId, []);
+    }
+    map.get(groupId).push(account);
+  });
+  return map;
+});
+
+const selectedGroupAccounts = computed(() => {
+  const groupId = orderForm.value.account?.toString() ?? '';
+  return accountsByGroup.value.get(groupId) ?? [];
+});
+
+const ensureGroupSelection = () => {
+  const current = orderForm.value.account?.toString() ?? '';
+  if (current && accountsByGroup.value.has(current)) {
+    return;
+  }
+  const firstWithAccounts = accountGroups.value.find((group) => {
+    const list = accountsByGroup.value.get(group.id) ?? [];
+    return list.length > 0;
+  });
+  if (firstWithAccounts) {
+    orderForm.value.account = firstWithAccounts.id;
+    return;
+  }
+  if (accountGroups.value.length) {
+    orderForm.value.account = accountGroups.value[0].id;
+  } else {
+    orderForm.value.account = null;
+  }
+};
+
+const buildPreviewRows = () => {
+  const accounts = selectedGroupAccounts.value;
+  if (!accounts.length) {
+    return [];
+  }
   const qty = Number(orderForm.value.qty) || 0;
   const price = Number(orderForm.value.price) || 0;
   const amount = qty * price;
-  const selectedAccount =
-    orderForm.value.account || accountGroups.value[0]?.id || '未选择账户';
-  return {
-    // 绑定所选账户组（使用组ID；默认选取首个组）
-    account: selectedAccount,
-    symbol: orderForm.value.symbol,
-    side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
-    qty,
-    price: price ? price.toFixed(2) : '-',
-    amount: amount ? amount.toFixed(2) : '-',
-    available: funds.value.available.toFixed(2),
-    position: 0,
-    buyable: Math.floor(funds.value.available / (price || 1) / 100) * 100,
-  };
+  return accounts.map((account) => {
+    const groupId = account.group ?? '';
+    const availableFunds = Number(
+      account.availableFunds ?? account.balance ?? 0
+    );
+    const buyable = Math.floor(availableFunds / (price || 1) / 100) * 100;
+    return {
+      id: undefined,
+      accountId: account.id ?? '',
+      account:
+        account.accountName ||
+        account.accountNumber ||
+        account.id ||
+        '资金账号',
+      groupId,
+      symbol: orderForm.value.symbol,
+      side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
+      qty,
+      price: price ? price.toFixed(2) : '-',
+      amount: amount ? amount.toFixed(2) : '-',
+      available: availableFunds.toFixed(2),
+      position: 0,
+      buyable,
+      rawPrice: price,
+      rawQty: qty,
+      rawAmount: amount,
+    };
+  });
 };
 
 const totalPrice = computed(() => {
-  return previewRows.value.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  return previewRows.value.reduce(
+    (sum, row) => sum + (Number(row.rawAmount ?? row.amount) || 0),
+    0
+  );
 });
 
 const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
 
-// 账户组：从后端加载，展示“账号组名称”
-const accountGroups = ref([]);
 const fetchAccountGroups = async () => {
   try {
-    const { data } = await axios.get(`${jsBase}/accountGroups`);
+    const { data } = await axios.get(jsBase + '/accountGroups');
     if (Array.isArray(data)) {
-      accountGroups.value = data.map((g) => ({
-        id: g.id ?? g.groupId ?? String(g.id || ''),
-        groupId: g.groupId ?? g.id,
-        name: g.name ?? `组${g.groupId ?? g.id}`,
+      accountGroups.value = data.map((group) => ({
+        id:
+          group.id != null
+            ? String(group.id)
+            : group.groupId != null
+              ? String(group.groupId)
+              : '',
+        groupId:
+          group.groupId != null
+            ? String(group.groupId)
+            : group.id != null
+              ? String(group.id)
+              : '',
+        name: group.name ?? 组,
       }));
-      if (!orderForm.value.account && accountGroups.value.length) {
-        orderForm.value.account = accountGroups.value[0].id;
-      }
+    } else {
+      accountGroups.value = [];
     }
-  } catch (e) {
-    console.warn('加载账户组失败: ', e?.message || e);
+  } catch (error) {
+    console.warn('加载账户组失败: ', error?.message || error);
     accountGroups.value = [];
   }
+  ensureGroupSelection();
+};
+
+const fetchStockAccounts = async () => {
+  try {
+    const { data } = await axios.get(jsBase + '/stockAccounts');
+    if (Array.isArray(data)) {
+      stockAccounts.value = data.map((account) => ({
+        ...account,
+        id: account.id != null ? String(account.id) : '',
+        group: account.group != null ? String(account.group) : '',
+      }));
+    } else {
+      stockAccounts.value = [];
+    }
+  } catch (error) {
+    console.warn('加载资金账号失败: ', error?.message || error);
+    stockAccounts.value = [];
+  }
+  ensureGroupSelection();
 };
 
 const mapToPreviewRow = (item) => {
-  const priceNum = Number(item.price) || 0;
-  const qtyNum = Number(item.qty) || 0;
+  const priceNum = Number(item.rawPrice ?? item.price) || 0;
+  const qtyNum = Number(item.rawQty ?? item.qty) || 0;
   const amountNum =
-    item.amount != null ? Number(item.amount) : priceNum * qtyNum;
+    item.rawAmount != null
+      ? Number(item.rawAmount)
+      : item.amount != null
+        ? Number(item.amount)
+        : priceNum * qtyNum;
+  const availableNum =
+    Number(item.available ?? item.availableFunds ?? funds.value.available) || 0;
   return {
     id: item.id,
-    account: item.account || '模拟账户',
+    accountId: item.accountId || item.account || '',
+    account: item.accountName || item.account || item.accountId || '资金账号',
+    groupId: item.groupId || orderForm.value.account?.toString() || '',
     symbol: item.symbol,
     side: item.side === 'SELL' ? '卖出' : '买入',
     qty: qtyNum,
     price: priceNum ? priceNum.toFixed(2) : '-',
     amount: amountNum ? amountNum.toFixed(2) : '-',
-    available: funds.value.available.toFixed(2),
-    position: 0,
-    buyable: Math.floor(funds.value.available / (priceNum || 1) / 100) * 100,
+    available: availableNum.toFixed(2),
+    position: Number(item.position ?? 0),
+    buyable: Math.floor(availableNum / (priceNum || 1) / 100) * 100,
+    rawPrice: priceNum,
+    rawQty: qtyNum,
+    rawAmount: amountNum,
   };
 };
 
 const refreshPreview = async () => {
   try {
-    const { data } = await axios.get(`${jsBase}/normalBuys`);
+    const { data } = await axios.get(jsBase + '/normalBuys');
     if (Array.isArray(data)) {
       previewRows.value = data.map(mapToPreviewRow);
+    } else {
+      previewRows.value = [];
     }
-  } catch (e) {
-    // 不阻塞页面，仅在控制台提示
-    console.warn('加载 normalBuys 失败: ', e?.message || e);
-  }
-};
-
-onMounted(() => {
-  fetchAccountGroups();
-  refreshPreview();
-  refreshOrders();
-});
-
-const placeOrder = async () => {
-  if (!orderForm.value.symbol || !orderForm.value.qty) {
-    ElMessage.warning('请填写完整的下单信息');
-    return;
-  }
-
-  // 将当前下单数据导入预览
-  const row = buildPreviewRow();
-  previewRows.value.push(row);
-
-  // 仅使用 json-server：写入 /normalBuys（由 json-server 写入 db 文件）
-  if (orderForm.value.entrustType === 'BUY') {
-    try {
-      const { data: created } = await axios.post(`${jsBase}/normalBuys`, {
-        timestamp: new Date().toISOString(),
-        account: orderForm.value.account,
-        side: 'BUY',
-        symbol: orderForm.value.symbol,
-        price: Number(orderForm.value.price) || 0,
-        qty: Number(orderForm.value.qty) || 0,
-        amount: Number(row.amount) || 0,
-        priceType: orderForm.value.priceType,
-        strategy: orderForm.value.strategy,
-        distribution: orderForm.value.distribution,
-      });
-      if (created && created.id) {
-        row.id = created.id;
-      }
-      ElMessage.success('买入已导入预览并保存');
-      refreshPreview();
-    } catch (e) {
-      console.error('保存买入失败: ', e);
-      ElMessage.error('保存买入数据失败，请检查 json-server');
-    }
-  } else {
-    ElMessage.success('卖出已导入预览');
+  } catch (error) {
+    console.warn('加载 normalBuys 失败: ', error?.message || error);
   }
 };
 
 const refreshOrders = async () => {
   try {
-    const { data } = await axios.get(`${jsBase}/normalOrders`);
+    const { data } = await axios.get(jsBase + '/normalOrders');
     if (Array.isArray(data)) {
-      orderRows.value = data.map((o) => ({
-        id: o.id || Math.random().toString(36).substr(2, 9),
-        account: o.account || '模拟账户',
-        time: o.time || o.timestamp || new Date().toISOString(),
-        stockCode: o.symbol || o.stockCode,
-        type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
-        price: Number(o.price) || 0,
-        quantity: Number(o.quantity ?? o.qty ?? 0) || 0,
-        dealt: Number(o.dealt ?? 0) || 0,
-        amount: Number(o.amount) || 0,
-        market: o.market || '上交所',
-        orderType: o.orderType || (o.priceType === 'fixed' ? '限价' : '限价'),
-        status: o.status || '已报',
-      }));
+      orderRows.value = data.map((o) => {
+        const priceNum = Number(o.price) || 0;
+        const qtyNum = Number(o.quantity ?? o.qty ?? 0) || 0;
+        const amountNum = Number(o.amount ?? priceNum * qtyNum) || 0;
+        return {
+          id: o.id || Math.random().toString(36).slice(2, 11),
+          accountId: o.accountId || o.account || '',
+          account: o.accountName || o.account || o.accountId || '资金账号',
+          time: o.time || o.timestamp || new Date().toISOString(),
+          stockCode: o.symbol || o.stockCode,
+          type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
+          price: priceNum,
+          quantity: qtyNum,
+          dealt: Number(o.dealt ?? 0) || 0,
+          amount: amountNum,
+          market: o.market || '沪深市场',
+          orderType: o.orderType || (o.priceType === 'fixed' ? '限价' : '限价'),
+          status: o.status || '已报',
+        };
+      });
+      return;
     }
-  } catch (e) {
-    console.warn('加载 normalOrders 失败，生成测试数据: ', e?.message || e);
-    // 生成大量测试数据以演示虚拟滚动效果
-    const testData = [];
+    orderRows.value = [];
+  } catch (error) {
+    console.warn(
+      '加载 normalOrders 失败，生成测试数据: ',
+      error?.message || error
+    );
+    const accounts = stockAccounts.value.length
+      ? stockAccounts.value
+      : [
+          { id: 'ACC01', accountName: '演示账户01' },
+          { id: 'ACC02', accountName: '演示账户02' },
+        ];
     const stockCodes = [
       '600000',
       '000001',
@@ -672,79 +737,137 @@ const refreshOrders = async () => {
       '五粮液',
       '海康威视',
     ];
-    const accounts = ['主账户01', '主账户02', '子账户01', '子账户02'];
     const types = ['买入', '卖出'];
-    const statuses = ['已报', '部分成交', '全部成交', '已撤销'];
-
-    for (let i = 0; i < 1000000; i++) {
-      // 生成10000条数据
+    const statuses = ['已报', '部分成交', '全部成交', '已撤单'];
+    const testData = Array.from({ length: 2000 }).map((_, index) => {
       const stockIndex = Math.floor(Math.random() * stockCodes.length);
-      const type = types[Math.floor(Math.random() * types.length)];
       const price = 10 + Math.random() * 100;
       const quantity = Math.floor(Math.random() * 10000) + 100;
-
-      testData.push({
-        id: `test_${i}`,
-        account: accounts[Math.floor(Math.random() * accounts.length)],
+      const account = accounts[index % accounts.length];
+      return {
+        id: 'test_' + index,
+        accountId: account.id ?? '',
+        account: account.accountName || account.id || '演示账户',
         time: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-        stockCode: `${stockCodes[stockIndex]} ${stockNames[stockIndex]}`,
-        type: type,
-        price: price,
-        quantity: quantity,
+        stockCode: stockCodes[stockIndex] + ' ' + stockNames[stockIndex],
+        type: types[Math.floor(Math.random() * types.length)],
+        price,
+        quantity,
         dealt: Math.floor(quantity * Math.random()),
         amount: price * quantity,
-        market: Math.random() > 0.5 ? '上交所' : '深交所',
+        market: Math.random() > 0.5 ? '沪深市场' : '科创板',
         orderType: Math.random() > 0.3 ? '限价' : '市价',
         status: statuses[Math.floor(Math.random() * statuses.length)],
-      });
-    }
-
+      };
+    });
     orderRows.value = testData;
+  }
+};
+
+const placeOrder = async () => {
+  if (!orderForm.value.symbol || !orderForm.value.qty) {
+    ElMessage.warning('请填写完整的下单信息');
+    return;
+  }
+  if (!orderForm.value.account) {
+    ElMessage.warning('请选择委托账户组');
+    return;
+  }
+  const newRows = buildPreviewRows();
+  if (!newRows.length) {
+    ElMessage.warning('所选账户组暂无资金账号');
+    return;
+  }
+  previewRows.value.push(...newRows);
+  if (orderForm.value.entrustType === 'BUY') {
+    try {
+      const created = await Promise.all(
+        newRows.map((row) =>
+          axios
+            .post(jsBase + '/normalBuys', {
+              timestamp: new Date().toISOString(),
+              accountId: row.accountId,
+              account: row.accountId,
+              accountName: row.account,
+              groupId: row.groupId,
+              side: 'BUY',
+              symbol: row.symbol,
+              price: row.rawPrice || Number(orderForm.value.price) || 0,
+              qty: row.rawQty || Number(orderForm.value.qty) || 0,
+              amount: row.rawAmount || 0,
+              priceType: orderForm.value.priceType,
+              strategy: orderForm.value.strategy,
+              distribution: orderForm.value.distribution,
+            })
+            .then((response) => response.data)
+        )
+      );
+      created.forEach((item, index) => {
+        if (item && item.id) {
+          newRows[index].id = item.id;
+        }
+      });
+      ElMessage.success('买入已导入预览并保存');
+      await refreshPreview();
+    } catch (error) {
+      console.error('保存买入失败: ', error);
+      ElMessage.error('保存买入数据失败，请检查 json-server');
+    }
+  } else {
+    ElMessage.success('卖出已导入预览');
   }
 };
 
 const confirmSelected = async () => {
   if (!selectedRows.value.length) {
-    ElMessage.warning('请先选择要确认的预览行');
+    ElMessage.warning('请先选择要确认的预览数据');
     return;
   }
   try {
     const toConfirm = [...selectedRows.value];
     await Promise.all(
-      toConfirm.map((r) =>
-        axios.post(`${jsBase}/normalOrders`, {
+      toConfirm.map((row) =>
+        axios.post(jsBase + '/normalOrders', {
           time: new Date().toISOString(),
-          account: r.account || '模拟账户',
-          symbol: r.symbol,
-          type: r.side, // '买入'/'卖出'
-          side: r.side === '卖出' ? 'SELL' : 'BUY',
-          price: Number(r.price) || 0,
-          quantity: Number(r.qty) || 0,
-          amount: Number(r.amount) || 0,
-          market: '上交所',
+          accountId: row.accountId || row.account,
+          account: row.accountId || row.account,
+          accountName: row.account,
+          groupId: row.groupId || orderForm.value.account || '',
+          symbol: row.symbol,
+          type: row.side,
+          side: row.side === '卖出' ? 'SELL' : 'BUY',
+          price: Number(row.rawPrice ?? row.price) || 0,
+          quantity: Number(row.rawQty ?? row.qty) || 0,
+          amount: Number(row.rawAmount ?? row.amount) || 0,
+          market: '沪深市场',
           orderType: '限价',
           status: '已报',
           source: 'normal-trade-confirm',
         })
       )
     );
-    // 从 normalBuys 删除对应项
-    const ids = toConfirm.map((r) => r.id).filter(Boolean);
+    const ids = toConfirm.map((row) => row.id).filter(Boolean);
     if (ids.length) {
       await Promise.all(
-        ids.map((id) => axios.delete(`${jsBase}/normalBuys/${id}`))
+        ids.map((id) => axios.delete(jsBase + '/normalBuys/' + id))
       );
     }
-    ElMessage.success('已确认、移出预览并保存到委托');
+    ElMessage.success('已确认并生成委托');
     await refreshOrders();
     await refreshPreview();
-  } catch (e) {
-    console.error('确认失败: ', e);
+  } catch (error) {
+    console.error('确认失败: ', error);
     ElMessage.error('确认失败，请检查 json-server');
   }
 };
 
-// 查询数据（示例）
+onMounted(() => {
+  fetchAccountGroups();
+  fetchStockAccounts();
+  refreshPreview();
+  refreshOrders();
+});
+
 const activeTab = ref('order');
 const fundRows = computed(() => [
   {
@@ -755,7 +878,6 @@ const fundRows = computed(() => [
   },
 ]);
 const positionRows = ref([]);
-const orderRows = ref([]);
 const dealRows = ref([]);
 </script>
 

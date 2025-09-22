@@ -448,7 +448,6 @@ import { ElMessage } from 'element-plus';
 import { QuestionFilled } from '@element-plus/icons-vue';
 import axios from 'axios';
 
-// 行情（示例数据）
 const t0Stock = ref({
   name: '示例股票',
   code: '600000',
@@ -463,223 +462,18 @@ const t0MarketRows = ref(
   }))
 );
 
-// 多账户（T0专用数据，不和算法共用）
-const t0Accounts = ref([
-  { id: 'T01', name: 'T0-账户1', available: 600000.0 },
-  { id: 'T02', name: 'T0-账户2', available: 420000.0 },
-  { id: 'T03', name: 'T0-账户3', available: 300000.0 },
-]);
-
-// T0账户组：从后端加载，展示"账号组名称"
-const t0AccountGroups = ref([]);
-const fetchT0AccountGroups = async () => {
-  try {
-    const { data } = await axios.get(`${jsBase}/accountGroups`);
-    if (Array.isArray(data)) {
-      t0AccountGroups.value = data.map((g) => ({
-        id: g.id ?? g.groupId ?? String(g.id || ''),
-        groupId: g.groupId ?? g.id,
-        name: g.name ?? `组${g.groupId ?? g.id}`,
-      }));
-      if (!t0OrderForm.value.account && t0AccountGroups.value.length) {
-        t0OrderForm.value.account = t0AccountGroups.value[0].id;
-      }
-    }
-  } catch (e) {
-    console.warn('加载T0账户组失败: ', e?.message || e);
-    t0AccountGroups.value = [];
-  }
-};
-
-// 下单表单
 const t0OrderForm = ref({
   account: null,
   entrustMethod: 'stock',
   symbol: '600000',
   algoInstance: 'KT_10',
-  businessHours: ['15:17:44', '17:57:00'],
+  businessHours: ['09:30:00', '14:57:00'],
   buyDirection: 'normal_buy',
   sellDirection: 'normal_sell',
   strategy: 'fixedQty',
   qty: 1000,
   distribution: 'eachFixedQty',
 });
-const t0SelectedAccountIds = computed(() => {
-  const selected = t0OrderForm.value.account;
-  if (!selected) {
-    return t0Accounts.value.map((a) => a.id);
-  }
-  return [selected];
-});
-const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
-
-// 预览
-const t0PreviewRows = ref([]);
-const t0SelectedRows = ref([]);
-const t0OnSelectionChange = (rows) => {
-  t0SelectedRows.value = rows || [];
-};
-
-const t0BuildPreviewRow = (accountId) => {
-  const qty = Number(t0OrderForm.value.qty) || 0;
-  const price = 7.49; // 模拟当前市价
-  const amount = price * qty;
-  const accountInfo = t0Accounts.value.find((a) => a.id === accountId);
-  const available = Number(accountInfo?.available ?? 0);
-  return {
-    account: accountId || accountInfo?.id || '账户',
-    symbol: t0OrderForm.value.symbol,
-    side: '买入', // 根据策略确定
-    qty,
-    price: price ? price.toFixed(2) : '-',
-    amount: amount ? amount.toFixed(2) : '-',
-    available: available.toFixed(2),
-    buyable: Math.floor(available / (price || 1) / 100) * 100,
-  };
-};
-
-const t0RefreshPreview = async () => {
-  try {
-    const { data } = await axios.get(`${jsBase}/t0Buys`);
-    if (Array.isArray(data)) {
-      t0PreviewRows.value = data.map((item) => {
-        const priceNum = Number(item.price) || 0;
-        const qtyNum = Number(item.qty) || 0;
-        const amountNum = Number(item.amount) || 0;
-        return {
-          id: item.id,
-          account: item.account || '账户',
-          symbol: item.symbol,
-          // t0_buys不存side，这里统一展示为买入（或按策略自定）
-          side: '买入',
-          qty: qtyNum,
-          price: priceNum ? priceNum.toFixed(2) : '-',
-          amount: amountNum ? amountNum.toFixed(2) : '-',
-          available: '-',
-          buyable: 0,
-        };
-      });
-    }
-  } catch (e) {
-    console.warn('加载 T0 buys 失败: ', e?.message || e);
-  }
-};
-
-const t0RefreshOrders = async () => {
-  try {
-    const { data } = await axios.get(`${jsBase}/t0Orders`);
-    if (Array.isArray(data)) {
-      t0OrderRows.value = data.map((o) => ({
-        id: o.id,
-        time: o.orderTime,
-        account: o.account || '账户',
-        stockCode: o.symbol,
-        type: o.side === 'SELL' ? '卖出' : '买入',
-        price: Number(o.price) || 0,
-        quantity: Number(o.quantity) || 0,
-        dealt: Number(o.dealt) || 0,
-        amount: Number(o.amount) || 0,
-        market: o.market || '上交所',
-        orderType: o.orderType || '限价',
-        status: o.status || '已报',
-      }));
-    }
-  } catch (e) {
-    console.warn('加载 t0Orders 失败: ', e?.message || e);
-  }
-};
-
-const t0PlaceOrder = async () => {
-  const selectedIds = t0SelectedAccountIds.value;
-  if (
-    !t0OrderForm.value.symbol ||
-    !t0OrderForm.value.qty ||
-    selectedIds.length === 0
-  ) {
-    ElMessage.warning('请完善下单信息与选择账户');
-    return;
-  }
-
-  try {
-    // 为每个选中的账户创建T0买单预览记录
-    const newRows = selectedIds.map((id) => t0BuildPreviewRow(id));
-
-    // 将预览数据保存到t0_buys表（字段对齐后端）
-    await Promise.all(
-      newRows.map((row) =>
-        axios.post(`${jsBase}/t0Buys`, {
-          buyTime: new Date().toISOString(),
-          account: row.account,
-          entrustMethod: t0OrderForm.value.entrustMethod,
-          symbol: row.symbol,
-          price: Number(row.price) || 0,
-          qty: Number(row.qty) || 0,
-          amount: Number(row.amount) || 0,
-          algoInstance: t0OrderForm.value.algoInstance,
-          strategy: t0OrderForm.value.strategy,
-          distribution: t0OrderForm.value.distribution,
-          // T0策略参数
-          basketNo: t0Params.value.basketNo,
-          externalNo: t0Params.value.externalNo,
-          riskExposure: t0Params.value.riskExposure,
-          execAfterExpire: t0Params.value.execAfterExpire,
-          executeImmediately: t0Params.value.executeImmediately,
-          businessStartTime: t0OrderForm.value.businessHours?.[0],
-          businessEndTime: t0OrderForm.value.businessHours?.[1],
-          buyDirection: t0OrderForm.value.buyDirection,
-          sellDirection: t0OrderForm.value.sellDirection,
-        })
-      )
-    );
-
-    ElMessage.success('T0策略已提交到预览，请在预览中确认');
-    await t0RefreshPreview();
-  } catch (e) {
-    console.error('提交T0策略失败: ', e);
-    ElMessage.error('提交T0策略失败，请检查后端服务');
-  }
-};
-
-const t0ConfirmSelected = async () => {
-  if (!t0SelectedRows.value.length) {
-    ElMessage.warning('请先选择要确认的预览行');
-    return;
-  }
-
-  try {
-    // 获取选中的t0_buys记录的ID
-    const selectedIds = t0SelectedRows.value
-      .map((row) => row.id)
-      .filter(Boolean);
-
-    if (selectedIds.length === 0) {
-      ElMessage.warning('没有有效的预览记录ID');
-      return;
-    }
-
-    // 调用批量确认API，将t0_buys记录转移到t0_orders
-    await axios.post(`${jsBase}/t0Orders/confirmFromBuys`, {
-      buyIds: selectedIds,
-    });
-
-    ElMessage.success('T0策略已确认并下达委托');
-
-    // 刷新预览和委托数据
-    await t0RefreshPreview();
-    await t0RefreshOrders();
-
-    // 清空选中状态
-    t0SelectedRows.value = [];
-  } catch (e) {
-    console.error('确认T0策略失败: ', e);
-    ElMessage.error(
-      '确认T0策略失败: ' +
-        (e.response?.data?.detail || e.response?.data?.message || e.message)
-    );
-  }
-};
-
-// 参数设置（T0专用）
 const t0Params = ref({
   basketNo: '',
   externalNo: '',
@@ -688,37 +482,333 @@ const t0Params = ref({
   executeImmediately: false,
 });
 
-const t0PreviewAccountCount = computed(
-  () => new Set(t0PreviewRows.value.map((r) => r.account)).size
-);
-const t0TotalPrice = computed(() =>
-  t0PreviewRows.value.reduce(
-    (sum, r) => sum + (r.amount === '-' ? 0 : Number(r.amount)),
-    0
-  )
-);
-const t0TotalAvailable = computed(() =>
-  t0SelectedAccountIds.value.reduce((sum, id) => {
-    const acc = t0Accounts.value.find((a) => a.id === id);
-    return sum + (acc?.available ?? 0);
-  }, 0)
-);
+const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
 
-// 查询（T0独立数据）
+const t0PreviewRows = ref([]);
+const t0SelectedRows = ref([]);
+const t0OrderRows = ref([]);
+const stockAccounts = ref([]);
+const t0AccountGroups = ref([]);
+
+const t0OnSelectionChange = (rows) => {
+  t0SelectedRows.value = rows || [];
+};
+
+const accountsByGroup = computed(() => {
+  const map = new Map();
+  stockAccounts.value.forEach((account) => {
+    const groupId = account.group ?? '';
+    if (!map.has(groupId)) {
+      map.set(groupId, []);
+    }
+    map.get(groupId).push(account);
+  });
+  return map;
+});
+
+const selectedGroupAccounts = computed(() => {
+  const groupId = t0OrderForm.value.account?.toString() ?? '';
+  return accountsByGroup.value.get(groupId) ?? [];
+});
+
+const ensureGroupSelection = () => {
+  const current = t0OrderForm.value.account?.toString() ?? '';
+  if (current && accountsByGroup.value.has(current)) {
+    return;
+  }
+  const firstWithAccounts = t0AccountGroups.value.find((group) => {
+    const list = accountsByGroup.value.get(group.id) ?? [];
+    return list.length > 0;
+  });
+  if (firstWithAccounts) {
+    t0OrderForm.value.account = firstWithAccounts.id;
+    return;
+  }
+  if (t0AccountGroups.value.length) {
+    t0OrderForm.value.account = t0AccountGroups.value[0].id;
+  } else {
+    t0OrderForm.value.account = null;
+  }
+};
+
+// const t0SelectedAccountIds = computed(() => {
+//   return selectedGroupAccounts.value.map((account) => account.id ?? '');
+// });
+
+const t0BuildPreviewRows = () => {
+  const accounts = selectedGroupAccounts.value;
+  if (!accounts.length) {
+    return [];
+  }
+  const qty = Number(t0OrderForm.value.qty) || 0;
+  const price = Number(t0Stock.value.price) || 0;
+  const amount = price * qty;
+  return accounts.map((account) => {
+    const availableFunds = Number(
+      account.availableFunds ?? account.balance ?? 0
+    );
+    const buyable = Math.floor(availableFunds / (price || 1) / 100) * 100;
+    return {
+      id: undefined,
+      accountId: account.id ?? '',
+      account:
+        account.accountName ||
+        account.accountNumber ||
+        account.id ||
+        '资金账号',
+      groupId: account.group ?? '',
+      symbol: t0OrderForm.value.symbol,
+      side: '买入',
+      qty,
+      price: price ? price.toFixed(2) : '-',
+      amount: amount ? amount.toFixed(2) : '-',
+      available: availableFunds.toFixed(2),
+      buyable,
+      rawPrice: price,
+      rawQty: qty,
+      rawAmount: amount,
+    };
+  });
+};
+
+const t0PreviewAccountCount = computed(() => {
+  const set = new Set(
+    t0PreviewRows.value.map((row) => row.accountId ?? row.account)
+  );
+  return set.size;
+});
+
+const t0TotalPrice = computed(() => {
+  return t0PreviewRows.value.reduce(
+    (sum, row) => sum + (Number(row.rawAmount ?? row.amount) || 0),
+    0
+  );
+});
+
+const t0TotalAvailable = computed(() => {
+  return selectedGroupAccounts.value.reduce((sum, account) => {
+    return sum + Number(account.availableFunds ?? account.balance ?? 0);
+  }, 0);
+});
+
 const t0ActiveTab = ref('order');
 const t0FundRows = computed(() =>
-  t0Accounts.value.map((a) => ({
-    available: a.available.toFixed(2),
-    frozen: (0).toFixed(2),
-    marketValue: (0).toFixed(2),
-    totalAssets: a.available.toFixed(2),
-  }))
+  selectedGroupAccounts.value.map((account) => {
+    const availableFunds = Number(
+      account.availableFunds ?? account.balance ?? 0
+    );
+    return {
+      available: availableFunds.toFixed(2),
+      frozen: (0).toFixed(2),
+      marketValue: (0).toFixed(2),
+      totalAssets: availableFunds.toFixed(2),
+    };
+  })
 );
 const t0PositionRows = ref([]);
-const t0OrderRows = ref([]);
 const t0DealRows = ref([]);
 
-// 虚拟滚动（委托）
+const fetchT0AccountGroups = async () => {
+  try {
+    const { data } = await axios.get(jsBase + '/accountGroups');
+    if (Array.isArray(data)) {
+      t0AccountGroups.value = data.map((group) => ({
+        id:
+          group.id != null
+            ? String(group.id)
+            : group.groupId != null
+              ? String(group.groupId)
+              : '',
+        groupId:
+          group.groupId != null
+            ? String(group.groupId)
+            : group.id != null
+              ? String(group.id)
+              : '',
+        name: group.name ?? 组,
+      }));
+    } else {
+      t0AccountGroups.value = [];
+    }
+  } catch (error) {
+    console.warn('加载T0账户组失败: ', error?.message || error);
+    t0AccountGroups.value = [];
+  }
+  ensureGroupSelection();
+};
+
+const fetchStockAccounts = async () => {
+  try {
+    const { data } = await axios.get(jsBase + '/stockAccounts');
+    if (Array.isArray(data)) {
+      stockAccounts.value = data.map((account) => ({
+        ...account,
+        id: account.id != null ? String(account.id) : '',
+        group: account.group != null ? String(account.group) : '',
+      }));
+    } else {
+      stockAccounts.value = [];
+    }
+  } catch (error) {
+    console.warn('加载资金账号失败: ', error?.message || error);
+    stockAccounts.value = [];
+  }
+  ensureGroupSelection();
+};
+
+const mapToT0PreviewRow = (item) => {
+  const priceNum = Number(item.rawPrice ?? item.price) || 0;
+  const qtyNum = Number(item.rawQty ?? item.qty) || 0;
+  const amountNum =
+    item.rawAmount != null
+      ? Number(item.rawAmount)
+      : item.amount != null
+        ? Number(item.amount)
+        : priceNum * qtyNum;
+  const availableNum = Number(item.available ?? item.availableFunds ?? 0) || 0;
+  return {
+    id: item.id,
+    accountId: item.accountId || item.account || '',
+    account: item.accountName || item.account || item.accountId || '资金账号',
+    groupId: item.groupId || t0OrderForm.value.account?.toString() || '',
+    symbol: item.symbol,
+    side: '买入',
+    qty: qtyNum,
+    price: priceNum ? priceNum.toFixed(2) : '-',
+    amount: amountNum ? amountNum.toFixed(2) : '-',
+    available: availableNum ? availableNum.toFixed(2) : '-',
+    buyable: Math.floor(availableNum / (priceNum || 1) / 100) * 100,
+    rawPrice: priceNum,
+    rawQty: qtyNum,
+    rawAmount: amountNum,
+  };
+};
+
+const t0RefreshPreview = async () => {
+  try {
+    const { data } = await axios.get(jsBase + '/t0Buys');
+    if (Array.isArray(data)) {
+      t0PreviewRows.value = data.map(mapToT0PreviewRow);
+    } else {
+      t0PreviewRows.value = [];
+    }
+  } catch (error) {
+    console.warn('加载 T0 buys 失败: ', error?.message || error);
+  }
+};
+
+const t0RefreshOrders = async () => {
+  try {
+    const { data } = await axios.get(jsBase + '/t0Orders');
+    if (Array.isArray(data)) {
+      t0OrderRows.value = data.map((o) => ({
+        id: o.id,
+        accountId: o.accountId || o.account || '',
+        account: o.accountName || o.account || o.accountId || '资金账号',
+        time: o.time || o.order_time || o.timestamp || new Date().toISOString(),
+        stockCode: o.symbol,
+        type: o.type || (o.side === 'SELL' ? '卖出' : '买入'),
+        price: Number(o.price) || 0,
+        quantity: Number(o.quantity ?? o.qty ?? 0) || 0,
+        dealt: Number(o.dealt ?? 0) || 0,
+        amount: Number(o.amount) || 0,
+        market: o.market || '沪深市场',
+        orderType: o.orderType || '限价',
+        status: o.status || '已报',
+      }));
+    } else {
+      t0OrderRows.value = [];
+    }
+  } catch (error) {
+    console.warn('加载 T0 orders 失败: ', error?.message || error);
+  }
+};
+
+const t0PlaceOrder = async () => {
+  if (
+    !t0OrderForm.value.symbol ||
+    !t0OrderForm.value.qty ||
+    !t0OrderForm.value.account
+  ) {
+    ElMessage.warning('请完善下单信息并选择账户组');
+    return;
+  }
+  const newRows = t0BuildPreviewRows();
+  if (!newRows.length) {
+    ElMessage.warning('所选账户组暂无资金账号');
+    return;
+  }
+  try {
+    await Promise.all(
+      newRows.map((row) =>
+        axios.post(jsBase + '/t0Buys', {
+          buyTime: new Date().toISOString(),
+          accountId: row.accountId,
+          account: row.accountId,
+          accountName: row.account,
+          groupId: row.groupId,
+          entrustMethod: t0OrderForm.value.entrustMethod,
+          symbol: row.symbol,
+          price: row.rawPrice || Number(t0Stock.value.price) || 0,
+          qty: row.rawQty || Number(t0OrderForm.value.qty) || 0,
+          amount: row.rawAmount || 0,
+          algoInstance: t0OrderForm.value.algoInstance,
+          strategy: t0OrderForm.value.strategy,
+          distribution: t0OrderForm.value.distribution,
+          basketNo: t0Params.value.basketNo,
+          externalNo: t0Params.value.externalNo,
+          riskExposure: t0Params.value.riskExposure,
+          execAfterExpire: t0Params.value.execAfterExpire,
+          executeImmediately: t0Params.value.executeImmediately,
+          businessStartTime: t0OrderForm.value.businessHours?.[0] ?? null,
+          businessEndTime: t0OrderForm.value.businessHours?.[1] ?? null,
+          buyDirection: t0OrderForm.value.buyDirection,
+          sellDirection: t0OrderForm.value.sellDirection,
+        })
+      )
+    );
+    ElMessage.success('T0 订单已导入预览，等待确认');
+    await t0RefreshPreview();
+  } catch (error) {
+    console.error('提交 T0 订单失败: ', error);
+    ElMessage.error('提交 T0 订单失败，请检查服务端');
+  }
+};
+
+const t0ConfirmSelected = async () => {
+  if (!t0SelectedRows.value.length) {
+    ElMessage.warning('请先选择要确认的预览数据');
+    return;
+  }
+  try {
+    const selectedIds = t0SelectedRows.value
+      .map((row) => row.id)
+      .filter(Boolean);
+
+    if (!selectedIds.length) {
+      ElMessage.warning('暂无可确认的预览记录');
+      return;
+    }
+
+    await axios.post(jsBase + '/t0Orders/confirmFromBuys', {
+      buyIds: selectedIds,
+    });
+
+    ElMessage.success('T0 订单已确认并转入委托');
+    await t0RefreshPreview();
+    await t0RefreshOrders();
+    t0SelectedRows.value = [];
+  } catch (error) {
+    console.error('确认 T0 订单失败: ', error);
+    ElMessage.error(
+      '确认 T0 订单失败: ' +
+        (error.response?.data?.detail ||
+          error.response?.data?.message ||
+          error.message)
+    );
+  }
+};
+
 const t0VirtualScrollContainer = ref();
 const t0ItemHeight = 35;
 const t0ContainerHeight = 400;
@@ -739,40 +829,36 @@ const t0VisibleItems = computed(() =>
 );
 const t0TotalHeight = computed(() => t0OrderRows.value.length * t0ItemHeight);
 const t0StartOffset = computed(() => t0StartIndex.value * t0ItemHeight);
-const t0HandleScroll = (e) => {
-  t0ScrollTop.value = e.target.scrollTop;
+const t0HandleScroll = (event) => {
+  t0ScrollTop.value = event.target.scrollTop;
 };
+
 const t0FormatTime = (time) => {
   if (!time) return '';
   const date = new Date(time);
-  if (isNaN(date.getTime())) return String(time);
+  if (Number.isNaN(date.getTime())) return String(time);
   return date.toLocaleString('zh-CN', { hour12: false });
 };
+
 const t0GetStatusClass = (status) => {
   switch (status) {
     case '已报':
     case '部分成交':
       return 'status-pending';
     case '全部成交':
-    case '已成':
       return 'status-filled';
-    case '已撤':
-    case '已撤销':
+    case '已撤单':
       return 'status-cancelled';
     default:
       return '';
   }
 };
 
-// 初始化加载T0数据
 onMounted(async () => {
-  try {
-    await t0RefreshPreview();
-    await t0RefreshOrders();
-    await fetchT0AccountGroups();
-  } catch (e) {
-    console.warn('加载 T0 委托失败: ', e?.message || e);
-  }
+  await fetchT0AccountGroups();
+  await fetchStockAccounts();
+  await t0RefreshPreview();
+  await t0RefreshOrders();
 });
 </script>
 
