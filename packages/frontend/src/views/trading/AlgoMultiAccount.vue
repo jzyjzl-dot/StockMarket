@@ -546,7 +546,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
-import axios from 'axios';
+import { accountGroupAPI, stockAccountAPI, tradingAPI } from '@/utils/api';
 
 const currentStock = ref({
   name: '示例股票',
@@ -588,8 +588,6 @@ const algoParams = ref({
   execAfterExpire: false,
   executeImmediately: true,
 });
-
-const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
 
 const previewRows = ref([]);
 const selectedRows = ref([]);
@@ -744,7 +742,7 @@ const dealRows = ref([]);
 
 const fetchAccountGroups = async () => {
   try {
-    const { data } = await axios.get(jsBase + '/accountGroups');
+    const data = await accountGroupAPI.getAccountGroups();
     if (Array.isArray(data)) {
       accountGroups.value = data.map((group) => ({
         id:
@@ -759,7 +757,7 @@ const fetchAccountGroups = async () => {
             : group.id != null
               ? String(group.id)
               : '',
-        name: group.name ?? 组,
+        name: group.name ?? '组',
       }));
     } else {
       accountGroups.value = [];
@@ -773,7 +771,7 @@ const fetchAccountGroups = async () => {
 
 const fetchStockAccounts = async () => {
   try {
-    const { data } = await axios.get(jsBase + '/stockAccounts');
+    const data = await stockAccountAPI.getStockAccounts();
     if (Array.isArray(data)) {
       stockAccounts.value = data.map((account) => ({
         ...account,
@@ -828,7 +826,7 @@ const mapToPreviewRow = (item) => {
 
 const refreshPreview = async () => {
   try {
-    const { data } = await axios.get(jsBase + '/algoBuys');
+    const data = await tradingAPI.getAlgoBuys();
     if (Array.isArray(data)) {
       previewRows.value = data.map(mapToPreviewRow);
     } else {
@@ -894,7 +892,7 @@ const getStatusClass = (status) => {
 
 const refreshOrders = async () => {
   try {
-    const { data } = await axios.get(jsBase + '/algoOrders');
+    const data = await tradingAPI.getAlgoOrders();
     if (Array.isArray(data)) {
       orderRows.value = data
         .map((o) => ({
@@ -942,27 +940,25 @@ const placeOrder = async () => {
     try {
       const created = await Promise.all(
         newRows.map((row) =>
-          axios
-            .post(jsBase + '/algoBuys', {
-              timestamp: new Date().toISOString(),
-              accountId: row.accountId,
-              account: row.accountId,
-              accountName: row.account,
-              groupId: row.groupId,
-              side: 'BUY',
-              symbol: row.symbol,
-              price: row.rawPrice || Number(orderForm.value.price) || 0,
-              qty: row.rawQty || Number(orderForm.value.qty) || 0,
-              amount: row.rawAmount || 0,
-              priceType: row.priceType,
-              strategy: row.strategy,
-              distribution: row.distribution,
-              algoType: row.algoType,
-              algoInstance: row.algoInstance,
-              startTime: row.startTime,
-              endTime: row.endTime,
-            })
-            .then((response) => response.data)
+          tradingAPI.createAlgoBuy({
+            timestamp: new Date().toISOString(),
+            accountId: row.accountId,
+            account: row.accountId,
+            accountName: row.account,
+            groupId: row.groupId,
+            side: 'BUY',
+            symbol: row.symbol,
+            price: row.rawPrice || Number(orderForm.value.price) || 0,
+            qty: row.rawQty || Number(orderForm.value.qty) || 0,
+            amount: row.rawAmount || 0,
+            priceType: row.priceType,
+            strategy: row.strategy,
+            distribution: row.distribution,
+            algoType: row.algoType,
+            algoInstance: row.algoInstance,
+            startTime: row.startTime,
+            endTime: row.endTime,
+          })
         )
       );
       created.forEach((item, index) => {
@@ -990,7 +986,7 @@ const confirmSelected = async () => {
     const toConfirm = [...selectedRows.value];
     await Promise.all(
       toConfirm.map((row) =>
-        axios.post(jsBase + '/algoOrders', {
+        tradingAPI.createAlgoOrder({
           time: new Date().toISOString(),
           accountId: row.accountId || row.account,
           account: row.accountId || row.account,
@@ -1017,9 +1013,7 @@ const confirmSelected = async () => {
     );
     const ids = toConfirm.map((row) => row.id).filter(Boolean);
     if (ids.length) {
-      await Promise.all(
-        ids.map((id) => axios.delete(jsBase + '/algoBuys/' + id))
-      );
+      await tradingAPI.deleteMultipleAlgoBuys(ids);
     }
     ElMessage.success('已确认并生成委托');
     await refreshOrders();
@@ -1039,9 +1033,7 @@ const deleteSelected = async () => {
     const toDelete = [...selectedRows.value];
     const ids = toDelete.map((row) => row.id).filter(Boolean);
     if (ids.length) {
-      await Promise.all(
-        ids.map((id) => axios.delete(jsBase + '/algoBuys/' + id))
-      );
+      await tradingAPI.deleteMultipleAlgoBuys(ids);
     }
     ElMessage.success('已删除选中的预览数据');
     await refreshPreview();

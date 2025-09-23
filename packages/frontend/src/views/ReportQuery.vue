@@ -305,7 +305,7 @@
 <script setup>
 import { ref, reactive, h } from 'vue';
 import { ElMessage, ElTag } from 'element-plus';
-import axios from 'axios';
+import { tradingAPI } from '@/utils/api';
 import * as XLSX from 'xlsx';
 
 const activeTab = ref('funds');
@@ -410,9 +410,6 @@ const resetPositions = () => {
   positionsData.value = [];
 };
 
-// JSON Server base（委托查询）
-const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
-
 // 委托查询，支持过滤并写入虚拟表格数据源
 const queryOrders = async () => {
   try {
@@ -422,7 +419,7 @@ const queryOrders = async () => {
     if (ordersForm.tradeType === 'all' || ordersForm.tradeType === 'normal') {
       // 普通交易订单
       try {
-        const { data: normalData } = await axios.get(`${jsBase}/normalOrders`);
+        const normalData = await tradingAPI.getNormalOrders();
         if (Array.isArray(normalData)) {
           const normalRows = normalData.map((o) => ({
             orderId: o.id,
@@ -446,7 +443,7 @@ const queryOrders = async () => {
     if (ordersForm.tradeType === 'all' || ordersForm.tradeType === 'algo') {
       // 多账号算法交易订单
       try {
-        const { data: algoData } = await axios.get(`${jsBase}/algoOrders`);
+        const algoData = await tradingAPI.getAlgoOrders();
         if (Array.isArray(algoData)) {
           const algoRows = algoData.map((o) => ({
             orderId: o.id,
@@ -472,7 +469,7 @@ const queryOrders = async () => {
     if (ordersForm.tradeType === 'all' || ordersForm.tradeType === 't0') {
       // T0策略交易订单
       try {
-        const { data: t0Data } = await axios.get(`${jsBase}/t0Orders`);
+        const t0Data = await tradingAPI.getT0Orders();
         if (Array.isArray(t0Data)) {
           const t0Rows = t0Data.map((o) => ({
             orderId: o.id,

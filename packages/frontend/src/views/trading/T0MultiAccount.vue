@@ -486,7 +486,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { QuestionFilled } from '@element-plus/icons-vue';
-import axios from 'axios';
+import { accountGroupAPI, stockAccountAPI, tradingAPI } from '@/utils/api';
 
 const t0Stock = ref({
   name: '示例股票',
@@ -521,8 +521,6 @@ const t0Params = ref({
   execAfterExpire: false,
   executeImmediately: false,
 });
-
-const jsBase = import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004';
 
 const t0PreviewRows = ref([]);
 const t0SelectedRows = ref([]);
@@ -670,7 +668,7 @@ const t0DealRows = ref([]);
 
 const fetchT0AccountGroups = async () => {
   try {
-    const { data } = await axios.get(jsBase + '/accountGroups');
+    const data = await accountGroupAPI.getAccountGroups();
     if (Array.isArray(data)) {
       t0AccountGroups.value = data.map((group) => ({
         id:
@@ -699,7 +697,7 @@ const fetchT0AccountGroups = async () => {
 
 const fetchStockAccounts = async () => {
   try {
-    const { data } = await axios.get(jsBase + '/stockAccounts');
+    const data = await stockAccountAPI.getStockAccounts();
     if (Array.isArray(data)) {
       stockAccounts.value = data.map((account) => ({
         ...account,
@@ -746,7 +744,7 @@ const mapToT0PreviewRow = (item) => {
 
 const t0RefreshPreview = async () => {
   try {
-    const { data } = await axios.get(jsBase + '/t0Buys');
+    const data = await tradingAPI.getT0Buys();
     if (Array.isArray(data)) {
       t0PreviewRows.value = data.map(mapToT0PreviewRow);
     } else {
@@ -759,7 +757,7 @@ const t0RefreshPreview = async () => {
 
 const t0RefreshOrders = async () => {
   try {
-    const { data } = await axios.get(jsBase + '/t0Orders');
+    const data = await tradingAPI.getT0Orders();
     if (Array.isArray(data)) {
       t0OrderRows.value = data
         .map((o) => ({
@@ -805,7 +803,7 @@ const t0PlaceOrder = async () => {
   try {
     await Promise.all(
       newRows.map((row) =>
-        axios.post(jsBase + '/t0Buys', {
+        tradingAPI.createT0Buy({
           buyTime: new Date().toISOString(),
           accountId: row.accountId,
           account: row.accountId,
@@ -854,7 +852,7 @@ const t0ConfirmSelected = async () => {
       return;
     }
 
-    await axios.post(jsBase + '/t0Orders/confirmFromBuys', {
+    await tradingAPI.confirmT0BuysToOrders({
       buyIds: selectedIds,
     });
 
@@ -882,9 +880,7 @@ const t0DeleteSelected = async () => {
     const toDelete = [...t0SelectedRows.value];
     const ids = toDelete.map((row) => row.id).filter(Boolean);
     if (ids.length) {
-      await Promise.all(
-        ids.map((id) => axios.delete(jsBase + '/t0Buys/' + id))
-      );
+      await tradingAPI.deleteMultipleT0Buys(ids);
     }
     ElMessage.success('已删除选中的预览数据');
     await t0RefreshPreview();

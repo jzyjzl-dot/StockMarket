@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: 'http://localhost:3004',
+  baseURL: import.meta.env.VITE_JSON_SERVER_BASE || 'http://localhost:3004',
   timeout: 10000,
 });
 
@@ -389,6 +389,207 @@ export const stockAccountAPI = {
         return false;
       }
       return false;
+    }
+  },
+};
+
+// 交易订单API
+export const tradingAPI = {
+  // 获取普通交易订单
+  async getNormalOrders() {
+    try {
+      const response = await api.get('/normalOrders');
+      return response.data;
+    } catch (error) {
+      console.error('获取普通交易订单失败:', error);
+      throw error;
+    }
+  },
+
+  // 获取普通交易买入记录
+  async getNormalBuys() {
+    try {
+      const response = await api.get('/normalBuys');
+      return response.data;
+    } catch (error) {
+      console.error('获取普通交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 创建普通交易买入记录
+  async createNormalBuy(buyData) {
+    try {
+      const response = await api.post('/normalBuys', buyData);
+      return response.data;
+    } catch (error) {
+      console.error('创建普通交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 创建普通交易订单
+  async createNormalOrder(orderData) {
+    try {
+      const response = await api.post('/normalOrders', orderData);
+      return response.data;
+    } catch (error) {
+      console.error('创建普通交易订单失败:', error);
+      throw error;
+    }
+  },
+
+  // 删除普通交易买入记录
+  async deleteNormalBuy(id) {
+    try {
+      await api.delete(`/normalBuys/${id}`);
+      return true;
+    } catch (error) {
+      console.error('删除普通交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 批量删除普通交易买入记录
+  async deleteMultipleNormalBuys(ids) {
+    try {
+      await Promise.all(ids.map((id) => this.deleteNormalBuy(id)));
+      return true;
+    } catch (error) {
+      console.error('批量删除普通交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 获取算法交易订单
+  async getAlgoOrders() {
+    try {
+      const response = await api.get('/algoOrders');
+      return response.data;
+    } catch (error) {
+      console.error('获取算法交易订单失败:', error);
+      throw error;
+    }
+  },
+
+  // 获取算法交易买入记录
+  async getAlgoBuys() {
+    try {
+      const response = await api.get('/algoBuys');
+      return response.data;
+    } catch (error) {
+      console.error('获取算法交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 创建算法交易买入记录
+  async createAlgoBuy(buyData) {
+    try {
+      const response = await api.post('/algoBuys', buyData);
+      return response.data;
+    } catch (error) {
+      console.error('创建算法交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 创建算法交易订单
+  async createAlgoOrder(orderData) {
+    try {
+      const response = await api.post('/algoOrders', orderData);
+      return response.data;
+    } catch (error) {
+      console.error('创建算法交易订单失败:', error);
+      throw error;
+    }
+  },
+
+  // 删除算法交易买入记录
+  async deleteAlgoBuy(id) {
+    try {
+      await api.delete(`/algoBuys/${id}`);
+      return true;
+    } catch (error) {
+      console.error('删除算法交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 批量删除算法交易买入记录
+  async deleteMultipleAlgoBuys(ids) {
+    try {
+      await Promise.all(ids.map((id) => this.deleteAlgoBuy(id)));
+      return true;
+    } catch (error) {
+      console.error('批量删除算法交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 获取T0交易订单
+  async getT0Orders() {
+    try {
+      const response = await api.get('/t0Orders');
+      return response.data;
+    } catch (error) {
+      console.error('获取T0交易订单失败:', error);
+      throw error;
+    }
+  },
+
+  // 获取T0交易买入记录
+  async getT0Buys() {
+    try {
+      const response = await api.get('/t0Buys');
+      return response.data;
+    } catch (error) {
+      console.error('获取T0交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 创建T0交易买入记录
+  async createT0Buy(buyData) {
+    try {
+      const response = await api.post('/t0Buys', buyData);
+      return response.data;
+    } catch (error) {
+      console.error('创建T0交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 确认T0买入记录转为订单
+  async confirmT0BuysToOrders(confirmData) {
+    try {
+      const response = await api.post('/t0Orders/confirmFromBuys', confirmData);
+      return response.data;
+    } catch (error) {
+      console.error('确认T0买入记录转为订单失败:', error);
+      throw error;
+    }
+  },
+
+  // 删除T0交易买入记录
+  async deleteT0Buy(id) {
+    try {
+      await api.delete(`/t0Buys/${id}`);
+      return true;
+    } catch (error) {
+      console.error('删除T0交易买入记录失败:', error);
+      throw error;
+    }
+  },
+
+  // 批量删除T0交易买入记录
+  async deleteMultipleT0Buys(ids) {
+    try {
+      await Promise.all(ids.map((id) => this.deleteT0Buy(id)));
+      return true;
+    } catch (error) {
+      console.error('批量删除T0交易买入记录失败:', error);
+      throw error;
     }
   },
 };
