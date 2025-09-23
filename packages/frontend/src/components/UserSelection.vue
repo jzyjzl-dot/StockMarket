@@ -55,7 +55,6 @@
       </div>
     </el-card>
   </div>
-  
 </template>
 
 <script setup>
@@ -238,4 +237,3 @@ onMounted(() => {
   }
 }
 </style>
-

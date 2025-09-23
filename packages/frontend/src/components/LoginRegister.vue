@@ -118,4 +118,3 @@ const handleSubmit = async () => {
   justify-content: center;
 }
 </style>
-

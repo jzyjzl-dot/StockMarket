@@ -233,31 +233,6 @@
         <!-- 合仓监控 -->
         <el-tab-pane label="仓位监控" name="position">
           <div class="monitoring-section">
-            <!-- 二级按钮 -->
-            <div class="sub-tabs">
-              <el-button
-                :class="{ 'active-sub-tab': activeSubTab === 'task' }"
-                class="sub-tab-button"
-                @click="handleSubTabClick('task')"
-              >
-                任务监控
-              </el-button>
-              <el-button
-                :class="{ 'active-sub-tab': activeSubTab === 'basket' }"
-                class="sub-tab-button"
-                @click="handleSubTabClick('basket')"
-              >
-                篮子监控
-              </el-button>
-              <el-button
-                :class="{ 'active-sub-tab': activeSubTab === '废单' }"
-                class="sub-tab-button"
-                @click="handleSubTabClick('废单')"
-              >
-                废单监控
-              </el-button>
-            </div>
-
             <el-form :inline="true" :model="queryForm" class="query-form">
               <el-form-item label="请选择账户组合">
                 <el-select
@@ -334,31 +309,6 @@
         <!-- 资金监控 -->
         <el-tab-pane label="资金监控" name="fund">
           <div class="monitoring-section">
-            <!-- 二级按钮 -->
-            <div class="sub-tabs">
-              <el-button
-                :class="{ 'active-sub-tab': activeSubTab === 'task' }"
-                class="sub-tab-button"
-                @click="handleSubTabClick('task')"
-              >
-                任务监控
-              </el-button>
-              <el-button
-                :class="{ 'active-sub-tab': activeSubTab === 'basket' }"
-                class="sub-tab-button"
-                @click="handleSubTabClick('basket')"
-              >
-                篮子监控
-              </el-button>
-              <el-button
-                :class="{ 'active-sub-tab': activeSubTab === '废单' }"
-                class="sub-tab-button"
-                @click="handleSubTabClick('废单')"
-              >
-                废单监控
-              </el-button>
-            </div>
-
             <el-form :inline="true" :model="queryForm" class="query-form">
               <el-form-item label="请选择账户组合">
                 <el-select
@@ -457,6 +407,22 @@ const showTables = ref(false);
 
 // 根据当前选中的标签页和子标签页获取对应数据
 const getCurrentData = () => {
+  // 对于仓位监控和资金监控，直接返回合并的数据，不依赖二级菜单
+  if (activeTab.value === 'position') {
+    return [
+      ...monitoringDataMap.value.position_task,
+      ...monitoringDataMap.value.position_basket,
+    ];
+  }
+
+  if (activeTab.value === 'fund') {
+    return [
+      ...monitoringDataMap.value.fund_task,
+      ...monitoringDataMap.value.fund_basket,
+    ];
+  }
+
+  // 对于其他有二级菜单的标签页，使用原来的逻辑
   const key = `${activeTab.value}_${activeSubTab.value}`;
   return monitoringDataMap.value[key] || [];
 };

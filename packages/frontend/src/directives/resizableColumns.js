@@ -8,7 +8,9 @@ function applyResizers(el) {
   const headerTable = headerWrapper.querySelector('table');
   const headerCols = headerWrapper.querySelectorAll('colgroup col');
   const bodyWrapper = el.querySelector('.el-table__body-wrapper');
-  const bodyCols = bodyWrapper ? bodyWrapper.querySelectorAll('colgroup col') : null;
+  const bodyCols = bodyWrapper
+    ? bodyWrapper.querySelectorAll('colgroup col')
+    : null;
   const bodyTable = bodyWrapper ? bodyWrapper.querySelector('table') : null;
 
   const syncTableWidth = (clampToContainer = false) => {
@@ -21,7 +23,10 @@ function applyResizers(el) {
     });
     if (total > 0) {
       if (clampToContainer) {
-        const container = el.clientWidth || (el.parentElement && el.parentElement.clientWidth) || total;
+        const container =
+          el.clientWidth ||
+          (el.parentElement && el.parentElement.clientWidth) ||
+          total;
         total = Math.min(total, container);
       }
       const px = total + 'px';
@@ -43,7 +48,8 @@ function applyResizers(el) {
 
     // Record default width once
     if (!th.dataset.defaultWidth) {
-      const initialWidth = th.offsetWidth || parseFloat(getComputedStyle(th).width) || 100;
+      const initialWidth =
+        th.offsetWidth || parseFloat(getComputedStyle(th).width) || 100;
       th.dataset.defaultWidth = String(Math.max(50, Math.round(initialWidth)));
     }
 
