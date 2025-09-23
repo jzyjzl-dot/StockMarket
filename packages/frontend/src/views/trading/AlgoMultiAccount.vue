@@ -67,7 +67,15 @@
                   :key="g.id"
                   :label="g.name"
                   :value="g.id"
-                />
+                >
+                  <div
+                    style="width: 100%; height: 100%"
+                    @mouseenter="(e) => showGroupAccounts(e, g)"
+                    @mouseleave="hideGroupAccounts"
+                  >
+                    {{ g.name }}
+                  </div>
+                </el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="证券代码">
@@ -507,6 +515,31 @@
         </el-tabs>
       </div>
     </section>
+
+    <!-- 组账户悬浮显示面板 -->
+    <div
+      v-if="showAccountPanel"
+      ref="accountPanel"
+      class="account-hover-panel"
+      :style="{ left: panelPosition.x + 'px', top: panelPosition.y + 'px' }"
+    >
+      <div class="panel-header">
+        <span>{{ currentGroupName }} - 股票账户</span>
+      </div>
+      <div class="panel-content">
+        <div
+          v-for="account in currentGroupAccounts"
+          :key="account.id"
+          class="account-item"
+        >
+          <span class="account-id">{{ account.id }}</span>
+          <span class="account-name">{{ account.accountName }}</span>
+        </div>
+        <div v-if="!currentGroupAccounts.length" class="no-accounts">
+          暂无股票账户
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -563,6 +596,10 @@ const selectedRows = ref([]);
 const orderRows = ref([]);
 const stockAccounts = ref([]);
 const accountGroups = ref([]);
+const showAccountPanel = ref(false);
+const currentGroupAccounts = ref([]);
+const currentGroupName = ref('');
+const panelPosition = ref({ x: 0, y: 0 });
 
 const isToday = (value) => {
   if (!value) {
@@ -1015,6 +1052,33 @@ const deleteSelected = async () => {
   }
 };
 
+// 显示组账户信息
+const showGroupAccounts = (event, group) => {
+  const groupId = String(group.id);
+  const filteredAccounts = stockAccounts.value.filter(
+    (account) => String(account.group) === groupId
+  );
+
+  currentGroupAccounts.value = filteredAccounts;
+  currentGroupName.value = group.groupName || group.name || `组${group.id}`;
+
+  // 设置面板位置
+  const rect = event.target.getBoundingClientRect();
+  panelPosition.value = {
+    x: rect.right + 40,
+    y: rect.top,
+  };
+
+  showAccountPanel.value = true;
+};
+
+// 隐藏组账户信息
+const hideGroupAccounts = () => {
+  showAccountPanel.value = false;
+  currentGroupAccounts.value = [];
+  currentGroupName.value = '';
+};
+
 onMounted(() => {
   fetchAccountGroups();
   fetchStockAccounts();
@@ -1342,6 +1406,73 @@ onMounted(() => {
   align-items: center;
   flex-shrink: 0;
   border-right: 1px solid #ebeef5;
+}
+
+.virtual-table-cell:last-child {
+  border-right: none;
+}
+
+/* 账户悬浮面板样式 */
+.account-hover-panel {
+  position: fixed;
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  min-width: 200px;
+  max-width: 300px;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.panel-header {
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #e4e7ed;
+  font-weight: bold;
+  font-size: 12px;
+  color: #303133;
+}
+
+.panel-content {
+  padding: 4px 0;
+}
+
+.account-item {
+  display: flex;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #606266;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.account-item:hover {
+  background: #f5f7fa;
+}
+
+.account-item:last-child {
+  border-bottom: none;
+}
+
+.account-id {
+  font-weight: bold;
+  margin-right: 8px;
+  color: #409eff;
+}
+
+.account-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-accounts {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #909399;
+  text-align: center;
 }
 
 .virtual-table-cell:last-child {
