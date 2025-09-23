@@ -231,7 +231,7 @@
         </el-tab-pane>
 
         <!-- 合仓监控 -->
-        <el-tab-pane label="合仓监控" name="position">
+        <el-tab-pane label="仓位监控" name="position">
           <div class="monitoring-section">
             <!-- 二级按钮 -->
             <div class="sub-tabs">
