@@ -82,10 +82,16 @@
               </el-select>
             </el-form-item>
             <el-form-item label="算法实例">
-              <el-input
+              <el-select
                 v-model="orderForm.algoInstance"
-                placeholder="如kf_twap_plus"
-              />
+                style="width: 100%"
+                placeholder="选择算法实例"
+              >
+                <el-option label="kf_twap_plus" value="kf_twap_plus" />
+                <el-option label="kf_vwap_plus" value="kf_vwap_plus" />
+                <el-option label="algorithm_001" value="algorithm_001" />
+                <el-option label="algorithm_002" value="algorithm_002" />
+              </el-select>
             </el-form-item>
             <el-form-item label="委托时间">
               <div class="time-row">
@@ -167,19 +173,31 @@
       </section>
 
       <!-- 算法参数设置 -->
-      <section class="pane pane-algo-params">
+      <section v-if="false" class="pane pane-algo-params">
         <header class="pane-header">
           <div class="title">算法参数设置</div>
         </header>
         <div class="pane-body scroll-y">
           <el-form :model="algoParams" label-width="80px" size="small">
-            <el-form-item label="盒子编号">
+            <el-form-item label="算法编号">
+              <el-select
+                v-model="orderForm.algoInstance"
+                style="width: 100%"
+                placeholder="选择算法编号"
+              >
+                <el-option label="kf_twap_plus" value="kf_twap_plus" />
+                <el-option label="kf_vwap_plus" value="kf_vwap_plus" />
+                <el-option label="algorithm_001" value="algorithm_001" />
+                <el-option label="algorithm_002" value="algorithm_002" />
+              </el-select>
+            </el-form-item>
+            <el-form-item v-if="false" label="盒子编号">
               <el-input v-model="algoParams.boxNo" placeholder="请输入" />
             </el-form-item>
-            <el-form-item label="外部编号">
+            <el-form-item v-if="false" label="外部编号">
               <el-input v-model="algoParams.externalNo" placeholder="请输入" />
             </el-form-item>
-            <el-form-item label="母单限价">
+            <el-form-item v-if="false" label="母单限价">
               <el-input-number
                 v-model="algoParams.parentLimitPrice"
                 :min="0"
@@ -188,7 +206,7 @@
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item label="涨幅限制(%)">
+            <el-form-item v-if="false" label="涨幅限制(%)">
               <el-input-number
                 v-model="algoParams.riseLimitPct"
                 :min="0"
@@ -196,7 +214,7 @@
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item label="跌幅限制(%)">
+            <el-form-item v-if="false" label="跌幅限制(%)">
               <el-input-number
                 v-model="algoParams.fallLimitPct"
                 :min="0"
@@ -204,7 +222,7 @@
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item label="滑点基点">
+            <el-form-item v-if="false" label="滑点基点">
               <el-input-number
                 v-model="algoParams.slippageBps"
                 :min="0"
@@ -212,13 +230,13 @@
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item label="涨跌停设置">
+            <el-form-item v-if="false" label="涨跌停设置">
               <el-select v-model="algoParams.limitRule" style="width: 100%">
                 <el-option label="涨停不卖跌停不买" value="strict" />
                 <el-option label="不限制" value="none" />
               </el-select>
             </el-form-item>
-            <el-form-item label="盘口限制(元)">
+            <el-form-item v-if="false" label="盘口限制(元)">
               <el-input-number
                 v-model="algoParams.orderbookLimit"
                 :min="0"
@@ -226,12 +244,12 @@
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item>
+            <el-form-item v-if="false">
               <el-checkbox v-model="algoParams.execAfterExpire"
                 >过期后执行</el-checkbox
               >
             </el-form-item>
-            <el-form-item>
+            <el-form-item v-if="false">
               <el-checkbox v-model="algoParams.executeImmediately"
                 >立即交易</el-checkbox
               >
@@ -987,7 +1005,7 @@ onMounted(() => {
 }
 .nt-top {
   display: grid;
-  grid-template-columns: 1fr 1fr 3fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   align-items: stretch;
   /* min-height: 220px; */
@@ -1154,7 +1172,7 @@ onMounted(() => {
 
 /* 本页：四列布局 - 行情、算法交易、算法参数设置、预览 */
 .nt-page .nt-top {
-  grid-template-columns: 1fr 1fr 3fr;
+  grid-template-columns: 1.5fr 3fr;
 }
 
 /* 预览表格占满剩余宽度 */
