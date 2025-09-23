@@ -129,6 +129,8 @@
                   v-model="ordersForm.tradeType"
                   placeholder="选择交易方式"
                   clearable
+                  style="width: 180px"
+                  popper-class="wide-dropdown"
                 >
                   <el-option label="全部" value="all" />
                   <el-option label="普通交易" value="normal" />
@@ -141,6 +143,7 @@
                   v-model="ordersForm.stockCode"
                   placeholder="输入股票代码"
                   clearable
+                  style="width: 150px"
                 />
               </el-form-item>
               <el-form-item label="委托类型">
@@ -148,6 +151,8 @@
                   v-model="ordersForm.orderType"
                   placeholder="选择委托类型"
                   clearable
+                  style="width: 150px"
+                  popper-class="wide-dropdown"
                 >
                   <el-option label="买入" value="buy" />
                   <el-option label="卖出" value="sell" />
@@ -158,6 +163,8 @@
                   v-model="ordersForm.status"
                   placeholder="选择状态"
                   clearable
+                  style="width: 150px"
+                  popper-class="wide-dropdown"
                 >
                   <el-option label="已报" value="pending" />
                   <el-option label="部分成交" value="partial" />
@@ -166,7 +173,7 @@
                   <el-option label="已完成" value="completed" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="日期范围">
+              <el-form-item v-if="showHistoryQuery" label="日期范围">
                 <el-date-picker
                   v-model="ordersForm.dateRange"
                   type="daterange"
@@ -180,6 +187,27 @@
               <el-form-item>
                 <el-button type="primary" @click="queryOrders">查询</el-button>
                 <el-button @click="resetOrders">重置</el-button>
+                <el-button
+                  type="success"
+                  :disabled="ordersData.length === 0"
+                  @click="exportOrders"
+                >
+                  委托导出
+                </el-button>
+                <el-button
+                  v-if="!showHistoryQuery"
+                  type="info"
+                  @click="toggleHistoryQuery"
+                >
+                  历史报表
+                </el-button>
+                <el-button
+                  v-if="showHistoryQuery"
+                  type="warning"
+                  @click="toggleHistoryQuery"
+                >
+                  当日报表
+                </el-button>
               </el-form-item>
             </el-form>
 
@@ -278,6 +306,7 @@
 import { ref, reactive, h } from 'vue';
 import { ElMessage, ElTag } from 'element-plus';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 
 const activeTab = ref('funds');
 
@@ -309,6 +338,7 @@ const ordersForm = reactive({
   dateRange: [],
 });
 const ordersData = ref([]);
+const showHistoryQuery = ref(false); // 控制历史报表查询的显示
 
 // 成交查询
 const dealsForm = reactive({
@@ -493,13 +523,20 @@ const queryOrders = async () => {
       const zh = statusMap[ordersForm.status] || ordersForm.status;
       filteredRows = filteredRows.filter((r) => r.status === zh);
     }
-    if (
-      Array.isArray(ordersForm.dateRange) &&
-      ordersForm.dateRange.length === 2
-    ) {
-      const [start, end] = ordersForm.dateRange;
+
+    // 日期过滤逻辑
+    let dateRangeToUse = ordersForm.dateRange;
+    if (!showHistoryQuery.value) {
+      // 当日报表模式：使用当日日期范围
+      const today = new Date().toISOString().split('T')[0];
+      dateRangeToUse = [today, today];
+    }
+
+    if (Array.isArray(dateRangeToUse) && dateRangeToUse.length === 2) {
+      const [start, end] = dateRangeToUse;
       const s = new Date(start);
       const e = new Date(end);
+      e.setHours(23, 59, 59, 999); // 设置为当天的最后一刻
       filteredRows = filteredRows.filter((r) => {
         const t = new Date(r.time);
         return !isNaN(t) && t >= s && t <= e;
@@ -521,6 +558,57 @@ const resetOrders = () => {
   ordersForm.status = '';
   ordersForm.dateRange = [];
   ordersData.value = [];
+};
+
+// 切换历史报表查询
+const toggleHistoryQuery = () => {
+  showHistoryQuery.value = !showHistoryQuery.value;
+  // 如果切换到当日报表，清空日期范围并自动查询当日数据
+  if (!showHistoryQuery.value) {
+    ordersForm.dateRange = [];
+    queryOrders();
+  }
+};
+
+// 导出委托数据为Excel
+const exportOrders = () => {
+  if (ordersData.value.length === 0) {
+    ElMessage.warning('没有数据可导出');
+    return;
+  }
+
+  try {
+    // 准备导出数据
+    const exportData = ordersData.value.map((row) => ({
+      委托编号: row.orderId,
+      股票代码: row.stockCode,
+      股票名称: row.stockName,
+      交易方式: row.tradeType,
+      委托类型: row.orderType,
+      委托数量: row.quantity,
+      委托价格: row.price,
+      状态: row.status,
+      委托时间: row.time,
+    }));
+
+    // 创建工作表
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '委托查询');
+
+    // 生成文件名
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+    const filename = `委托查询_${dateStr}_${timeStr}.xlsx`;
+
+    // 下载文件
+    XLSX.writeFile(wb, filename);
+    ElMessage.success('导出成功');
+  } catch (error) {
+    console.error('导出失败:', error);
+    ElMessage.error('导出失败，请重试');
+  }
 };
 
 // 成交查询示例
@@ -655,5 +743,16 @@ const ordersTableHeight = ref(480);
 .profit-negative {
   color: #f56c6c;
   font-weight: bold;
+}
+</style>
+
+<style>
+/* 全局样式，用于下拉菜单弹出层 */
+.wide-dropdown {
+  min-width: 180px !important;
+}
+.wide-dropdown .el-select-dropdown__item {
+  padding: 0 20px !important;
+  white-space: nowrap !important;
 }
 </style>

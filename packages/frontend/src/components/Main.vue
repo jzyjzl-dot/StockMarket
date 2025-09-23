@@ -206,13 +206,13 @@ const toggleSidebar = () => {
             <el-menu-item index="/management/role-management"
               >角色管理</el-menu-item
             >
-            <el-menu-item index="/management/process-management"
+            <el-menu-item v-if="false" index="/management/process-management"
               >流程管理</el-menu-item
             >
-            <el-menu-item index="/management/approval-function"
+            <el-menu-item v-if="false" index="/management/approval-function"
               >审批功能</el-menu-item
             >
-            <el-menu-item index="/management/device-info"
+            <el-menu-item v-if="false" index="/management/device-info"
               >设备信息采集</el-menu-item
             >
             <el-menu-item index="/management/trading-system"

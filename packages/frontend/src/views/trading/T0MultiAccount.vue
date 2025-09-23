@@ -240,6 +240,13 @@
             <span class="mono">{{ t0TotalAvailable.toFixed(2) }}</span>
             <span class="mono">0</span>
             <el-button
+              type="danger"
+              size="small"
+              :disabled="t0SelectedRows.length === 0"
+              @click="t0DeleteSelected"
+              >删除</el-button
+            >
+            <el-button
               type="primary"
               size="small"
               :disabled="t0SelectedRows.length === 0"
@@ -826,6 +833,28 @@ const t0ConfirmSelected = async () => {
           error.response?.data?.message ||
           error.message)
     );
+  }
+};
+
+const t0DeleteSelected = async () => {
+  if (!t0SelectedRows.value.length) {
+    ElMessage.warning('请先选择要删除的预览数据');
+    return;
+  }
+  try {
+    const toDelete = [...t0SelectedRows.value];
+    const ids = toDelete.map((row) => row.id).filter(Boolean);
+    if (ids.length) {
+      await Promise.all(
+        ids.map((id) => axios.delete(jsBase + '/t0Buys/' + id))
+      );
+    }
+    ElMessage.success('已删除选中的预览数据');
+    await t0RefreshPreview();
+    t0SelectedRows.value = [];
+  } catch (error) {
+    console.error('删除失败: ', error);
+    ElMessage.error('删除失败，请检查 json-server');
   }
 };
 

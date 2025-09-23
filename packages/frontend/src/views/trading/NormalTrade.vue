@@ -193,6 +193,13 @@
           <span class="mono">{{ funds.available.toFixed(2) }}</span>
           <span class="mono">0</span>
           <el-button
+            type="danger"
+            size="small"
+            :disabled="selectedRows.length === 0"
+            @click="deleteSelected"
+            >删除</el-button
+          >
+          <el-button
             type="primary"
             size="small"
             :disabled="selectedRows.length === 0"
@@ -882,6 +889,28 @@ const confirmSelected = async () => {
   } catch (error) {
     console.error('确认失败: ', error);
     ElMessage.error('确认失败，请检查 json-server');
+  }
+};
+
+const deleteSelected = async () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先选择要删除的预览数据');
+    return;
+  }
+  try {
+    const toDelete = [...selectedRows.value];
+    const ids = toDelete.map((row) => row.id).filter(Boolean);
+    if (ids.length) {
+      await Promise.all(
+        ids.map((id) => axios.delete(jsBase + '/normalBuys/' + id))
+      );
+    }
+    ElMessage.success('已删除选中的预览数据');
+    await refreshPreview();
+    selectedRows.value = [];
+  } catch (error) {
+    console.error('删除失败: ', error);
+    ElMessage.error('删除失败，请检查 json-server');
   }
 };
 
