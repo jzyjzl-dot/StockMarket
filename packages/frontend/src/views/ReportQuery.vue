@@ -184,31 +184,35 @@
                   value-format="YYYY-MM-DD"
                 />
               </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="queryOrders">查询</el-button>
-                <el-button @click="resetOrders">重置</el-button>
-                <el-button
-                  type="success"
-                  :disabled="ordersData.length === 0"
-                  @click="exportOrders"
-                >
-                  委托导出
-                </el-button>
-                <el-button
-                  v-if="!showHistoryQuery"
-                  type="info"
-                  @click="toggleHistoryQuery"
-                >
-                  历史报表
-                </el-button>
-                <el-button
-                  v-if="showHistoryQuery"
-                  type="warning"
-                  @click="toggleHistoryQuery"
-                >
-                  当日报表
-                </el-button>
-              </el-form-item>
+              <div style="display: flex; justify-content: flex-end">
+                <el-form-item>
+                  <el-button type="primary" @click="queryOrders"
+                    >查询</el-button
+                  >
+                  <el-button @click="resetOrders">重置</el-button>
+                  <el-button
+                    type="success"
+                    :disabled="ordersData.length === 0"
+                    @click="exportOrders"
+                  >
+                    委托导出
+                  </el-button>
+                  <el-button
+                    v-if="!showHistoryQuery"
+                    type="info"
+                    @click="toggleHistoryQuery"
+                  >
+                    历史报表
+                  </el-button>
+                  <el-button
+                    v-if="showHistoryQuery"
+                    type="warning"
+                    @click="toggleHistoryQuery"
+                  >
+                    当日报表
+                  </el-button>
+                </el-form-item>
+              </div>
             </el-form>
 
             <div class="orders-table-wrap">

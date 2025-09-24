@@ -251,6 +251,7 @@
               type="danger"
               size="small"
               :disabled="t0SelectedRows.length === 0"
+              style="width: fit-content; margin-right: 0px; margin-left: auto"
               @click="t0DeleteSelected"
               >删除</el-button
             >
