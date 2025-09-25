@@ -70,6 +70,19 @@ async function initPool() {
 }
 
 async function initTables() {
+  const tablesToDrop = [
+    't0_orders',
+    't0_buys',
+    'algo_orders',
+    'algo_buys',
+    'normal_orders',
+    'normal_buys',
+  ];
+
+  for (const table of tablesToDrop) {
+    await pool.query(`DROP TABLE IF EXISTS \`${table}\``);
+  }
+
   const tableStatements = [
     `CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(64) PRIMARY KEY,
@@ -149,6 +162,10 @@ async function initTables() {
       id VARCHAR(64) PRIMARY KEY,
       buy_time DATETIME,
       account VARCHAR(128),
+      account_name VARCHAR(255),
+      group_id VARCHAR(64),
+      group_name VARCHAR(255),
+      terminal_id INT DEFAULT 1,
       side VARCHAR(16),
       symbol VARCHAR(64),
       price DECIMAL(18,2) DEFAULT 0,
@@ -163,6 +180,10 @@ async function initTables() {
       id VARCHAR(64) PRIMARY KEY,
       order_time DATETIME,
       account VARCHAR(128),
+      account_name VARCHAR(255),
+      group_id VARCHAR(64),
+      group_name VARCHAR(255),
+      terminal_id INT DEFAULT 1,
       symbol VARCHAR(64),
       type VARCHAR(32),
       side VARCHAR(16),
@@ -180,6 +201,10 @@ async function initTables() {
       id VARCHAR(64) PRIMARY KEY,
       buy_time DATETIME,
       account VARCHAR(128),
+      account_name VARCHAR(255),
+      group_id VARCHAR(64),
+      group_name VARCHAR(255),
+      terminal_id INT DEFAULT 1,
       side VARCHAR(16),
       symbol VARCHAR(64),
       price DECIMAL(18,2) DEFAULT 0,
@@ -198,6 +223,10 @@ async function initTables() {
       id VARCHAR(64) PRIMARY KEY,
       order_time DATETIME,
       account VARCHAR(128),
+      account_name VARCHAR(255),
+      group_id VARCHAR(64),
+      group_name VARCHAR(255),
+      terminal_id INT DEFAULT 1,
       symbol VARCHAR(64),
       type VARCHAR(32),
       side VARCHAR(16),
@@ -221,6 +250,10 @@ async function initTables() {
       id VARCHAR(64) PRIMARY KEY,
       buy_time DATETIME,
       account VARCHAR(128),
+      account_name VARCHAR(255),
+      group_id VARCHAR(64),
+      group_name VARCHAR(255),
+      terminal_id INT DEFAULT 1,
       entrust_method VARCHAR(32),
       symbol VARCHAR(64),
       algo_instance VARCHAR(128),
@@ -244,6 +277,10 @@ async function initTables() {
       id VARCHAR(64) PRIMARY KEY,
       order_time DATETIME,
       account VARCHAR(128),
+      account_name VARCHAR(255),
+      group_id VARCHAR(64),
+      group_name VARCHAR(255),
+      terminal_id INT DEFAULT 1,
       symbol VARCHAR(64),
       type VARCHAR(32),
       side VARCHAR(16),
@@ -304,6 +341,10 @@ async function migrateSchema() {
     ['risk_exposure', 'ADD COLUMN `risk_exposure` VARCHAR(32) NULL AFTER `external_no`'],
     ['exec_after_expire', 'ADD COLUMN `exec_after_expire` BOOLEAN DEFAULT FALSE AFTER `risk_exposure`'],
     ['execute_immediately', 'ADD COLUMN `execute_immediately` BOOLEAN DEFAULT FALSE AFTER `exec_after_expire`'],
+    ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
+    ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
+    ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
+    ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
   ];
 
   for (const [column, ddl] of t0OrderColumnEnsures) {
@@ -324,10 +365,58 @@ async function migrateSchema() {
     ['risk_exposure', 'ADD COLUMN `risk_exposure` VARCHAR(32) NULL AFTER `external_no`'],
     ['exec_after_expire', 'ADD COLUMN `exec_after_expire` BOOLEAN DEFAULT FALSE AFTER `risk_exposure`'],
     ['execute_immediately', 'ADD COLUMN `execute_immediately` BOOLEAN DEFAULT FALSE AFTER `exec_after_expire`'],
+    ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
+    ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
+    ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
+    ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
   ];
 
   for (const [column, ddl] of t0BuyColumnEnsures) {
     await ensureColumn('t0_buys', column, ddl);
+  }
+
+  const normalBuyColumnEnsures = [
+    ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
+    ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
+    ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
+    ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ];
+
+  for (const [column, ddl] of normalBuyColumnEnsures) {
+    await ensureColumn('normal_buys', column, ddl);
+  }
+
+  const normalOrderColumnEnsures = [
+    ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
+    ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
+    ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
+    ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ];
+
+  for (const [column, ddl] of normalOrderColumnEnsures) {
+    await ensureColumn('normal_orders', column, ddl);
+  }
+
+  const algoBuyColumnEnsures = [
+    ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
+    ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
+    ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
+    ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ];
+
+  for (const [column, ddl] of algoBuyColumnEnsures) {
+    await ensureColumn('algo_buys', column, ddl);
+  }
+
+  const algoOrderColumnEnsures = [
+    ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
+    ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
+    ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
+    ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ];
+
+  for (const [column, ddl] of algoOrderColumnEnsures) {
+    await ensureColumn('algo_orders', column, ddl);
   }
 }
 
@@ -501,6 +590,10 @@ async function seedNormalBuys() {
     buy.id?.toString() || crypto.randomUUID(),
     toDate(buy.timestamp) || new Date(),
     buy.account || null,
+    buy.accountName || null,
+    buy.groupId || buy.group?.toString() || null,
+    buy.groupName || null,
+    buy.terminalId != null ? Number(buy.terminalId) : 1,
     buy.side || null,
     buy.symbol || null,
     numeric(buy.price) ?? 0,
@@ -512,7 +605,8 @@ async function seedNormalBuys() {
   ]);
   await pool.query(
     `INSERT INTO normal_buys (
-      id, buy_time, account, side, symbol, price, qty, amount,
+      id, buy_time, account, account_name, group_id, group_name, terminal_id,
+      side, symbol, price, qty, amount,
       price_type, strategy, distribution
     ) VALUES ?`,
     [values]
@@ -528,6 +622,10 @@ async function seedNormalOrders() {
     order.id?.toString() || crypto.randomUUID(),
     toDate(order.time || order.timestamp) || new Date(),
     order.account || null,
+    order.accountName || null,
+    order.groupId || order.group?.toString() || null,
+    order.groupName || null,
+    order.terminalId != null ? Number(order.terminalId) : 1,
     order.symbol || null,
     order.type || null,
     order.side || null,
@@ -542,7 +640,8 @@ async function seedNormalOrders() {
   ]);
   await pool.query(
     `INSERT INTO normal_orders (
-      id, order_time, account, symbol, type, side, price, quantity,
+      id, order_time, account, account_name, group_id, group_name, terminal_id,
+      symbol, type, side, price, quantity,
       dealt, amount, market, order_type, status, source
     ) VALUES ?`,
     [values]
@@ -632,6 +731,10 @@ const mapNormalBuyRow = (row) => ({
   id: row.id,
   timestamp: toISOString(row.buy_time),
   account: row.account,
+  accountName: row.account_name,
+  groupId: row.group_id,
+  groupName: row.group_name,
+  terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
   side: row.side,
   symbol: row.symbol,
   price: numeric(row.price) ?? 0,
@@ -646,6 +749,10 @@ const mapNormalOrderRow = (row) => ({
   id: row.id,
   time: toISOString(row.order_time),
   account: row.account,
+  accountName: row.account_name,
+  groupId: row.group_id,
+  groupName: row.group_name,
+  terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
   symbol: row.symbol,
   type: row.type,
   side: row.side,
@@ -663,6 +770,10 @@ const mapAlgoBuyRow = (row) => ({
   id: row.id,
   timestamp: toISOString(row.buy_time),
   account: row.account,
+  accountName: row.account_name,
+  groupId: row.group_id,
+  groupName: row.group_name,
+  terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
   side: row.side,
   symbol: row.symbol,
   price: numeric(row.price) ?? 0,
@@ -681,6 +792,10 @@ const mapAlgoOrderRow = (row) => ({
   id: row.id,
   time: toISOString(row.order_time),
   account: row.account,
+  accountName: row.account_name,
+  groupId: row.group_id,
+  groupName: row.group_name,
+  terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
   symbol: row.symbol,
   type: row.type,
   side: row.side,
@@ -1130,13 +1245,17 @@ app.post('/normalBuys', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO normal_buys (
-      id, buy_time, account, side, symbol, price, qty, amount,
-      price_type, strategy, distribution
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, buy_time, account, account_name, group_id, group_name, terminal_id,
+      side, symbol, price, qty, amount, price_type, strategy, distribution
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       buyTime,
       buy.account || null,
+      buy.accountName || null,
+      buy.groupId != null ? buy.groupId.toString() : null,
+      buy.groupName || null,
+      buy.terminalId != null ? Number(buy.terminalId) : 1,
       buy.side || null,
       buy.symbol || null,
       numeric(buy.price) ?? 0,
@@ -1172,13 +1291,18 @@ app.post('/normalOrders', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO normal_orders (
-      id, order_time, account, symbol, type, side, price, quantity,
-      dealt, amount, market, order_type, status, source
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, order_time, account, account_name, group_id, group_name, terminal_id,
+      symbol, type, side, price, quantity, dealt, amount, market,
+      order_type, status, source
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       orderTime,
       order.account || null,
+      order.accountName || null,
+      order.groupId != null ? order.groupId.toString() : null,
+      order.groupName || null,
+      order.terminalId != null ? Number(order.terminalId) : 1,
       order.symbol || null,
       order.type || null,
       order.side || null,
@@ -1218,14 +1342,19 @@ app.post('/algoBuys', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO algo_buys (
-      id, buy_time, account, side, symbol, price, qty, amount,
+      id, buy_time, account, account_name, group_id, group_name, terminal_id,
+      side, symbol, price, qty, amount,
       price_type, strategy, distribution, algo_type, algo_instance,
       start_time, end_time
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       buyTime,
       buy.account || null,
+      buy.accountName || null,
+      buy.groupId != null ? buy.groupId.toString() : null,
+      buy.groupName || null,
+      buy.terminalId != null ? Number(buy.terminalId) : 1,
       buy.side || null,
       buy.symbol || null,
       numeric(buy.price) ?? 0,
@@ -1265,14 +1394,19 @@ app.post('/algoOrders', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO algo_orders (
-      id, order_time, account, symbol, type, side, price, quantity,
-      dealt, amount, market, order_type, status, source,
+      id, order_time, account, account_name, group_id, group_name, terminal_id,
+      symbol, type, side, price, quantity, dealt, amount, market, order_type,
+      status, source,
       algo_type, algo_instance, start_time, end_time, strategy, distribution
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       orderTime,
       order.account || null,
+      order.accountName || null,
+      order.groupId != null ? order.groupId.toString() : null,
+      order.groupName || null,
+      order.terminalId != null ? Number(order.terminalId) : 1,
       order.symbol || null,
       order.type || null,
       order.side || null,
@@ -1311,6 +1445,10 @@ function mapT0BuyRow(row) {
     id: row.id,
     buyTime: toISOString(row.buy_time),
     account: row.account,
+    accountName: row.account_name,
+    groupId: row.group_id,
+    groupName: row.group_name,
+    terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
     entrustMethod: row.entrust_method,
     symbol: row.symbol,
     algoInstance: row.algo_instance,
@@ -1338,6 +1476,10 @@ function mapT0OrderRow(row) {
     id: row.id,
     orderTime: toISOString(row.order_time),
     account: row.account,
+    accountName: row.account_name,
+    groupId: row.group_id,
+    groupName: row.group_name,
+    terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
     symbol: row.symbol,
     type: row.type,
     side: row.side,
@@ -1377,15 +1519,20 @@ app.post('/t0Buys', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO t0_buys (
-      id, buy_time, account, entrust_method, symbol, algo_instance,
+      id, buy_time, account, account_name, group_id, group_name, terminal_id,
+      entrust_method, symbol, algo_instance,
       business_start_time, business_end_time, buy_direction, sell_direction,
       strategy, qty, price, amount, distribution, basket_no, external_no, 
       risk_exposure, exec_after_expire, execute_immediately
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       buyTime,
       buy.account || null,
+      buy.accountName || null,
+      buy.groupId != null ? buy.groupId.toString() : null,
+      buy.groupName || null,
+      buy.terminalId != null ? Number(buy.terminalId) : 1,
       buy.entrustMethod || null,
       buy.symbol || null,
       buy.algoInstance || null,
@@ -1430,15 +1577,20 @@ app.post('/t0Orders', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO t0_orders (
-      id, order_time, account, symbol, \`type\`, side, price, quantity, dealt, amount,
+      id, order_time, account, account_name, group_id, group_name, terminal_id,
+      symbol, \`type\`, side, price, quantity, dealt, amount,
       market, order_type, status, source, algo_instance, business_start_time,
       business_end_time, buy_direction, sell_direction, strategy, distribution,
       basket_no, external_no, risk_exposure, exec_after_expire, execute_immediately
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       orderTime,
       order.account || null,
+      order.accountName || null,
+      order.groupId != null ? order.groupId.toString() : null,
+      order.groupName || null,
+      order.terminalId != null ? Number(order.terminalId) : 1,
       order.symbol || null,
       order.type || null,
       order.side || null,
@@ -1494,15 +1646,20 @@ app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
 
     await pool.query(
       `INSERT INTO t0_orders (
-        id, order_time, account, symbol, \`type\`, side, price, quantity, dealt, amount,
+        id, order_time, account, account_name, group_id, group_name, terminal_id,
+        symbol, \`type\`, side, price, quantity, dealt, amount,
         market, order_type, status, source, algo_instance, business_start_time,
         business_end_time, buy_direction, sell_direction, strategy, distribution,
         basket_no, external_no, risk_exposure, exec_after_expire, execute_immediately
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         orderTime,
         buy.account,
+        buy.account_name,
+        buy.group_id,
+        buy.group_name,
+        buy.terminal_id != null ? Number(buy.terminal_id) : 1,
         buy.symbol,
         'T0策略',
         'BUY', // 默认值，表示买入

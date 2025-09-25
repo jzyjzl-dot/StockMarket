@@ -496,6 +496,7 @@ const t0Stock = ref({
   change: 0.01,
   changePct: 0.0013,
 });
+const DEFAULT_TERMINAL_ID = 1;
 const t0MarketRows = ref(
   Array.from({ length: 10 }).map((_, i) => ({
     ask: { price: 7.6 - i * 0.01, vol: 2000 + i * 100 },
@@ -570,6 +571,19 @@ const selectedGroupAccounts = computed(() => {
   return accountsByGroup.value.get(groupId) ?? [];
 });
 
+const getT0GroupName = (groupId) => {
+  const normalized = groupId?.toString() ?? '';
+  if (!normalized) {
+    return '';
+  }
+  const target = t0AccountGroups.value.find((group) => {
+    const byId = group.id != null ? group.id.toString() : '';
+    const byGroup = group.groupId != null ? group.groupId.toString() : '';
+    return byId === normalized || byGroup === normalized;
+  });
+  return target?.name ?? '';
+};
+
 const ensureGroupSelection = () => {
   const current = t0OrderForm.value.account?.toString() ?? '';
   if (current && accountsByGroup.value.has(current)) {
@@ -602,22 +616,27 @@ const t0BuildPreviewRows = () => {
   const qty = Number(t0OrderForm.value.qty) || 0;
   const price = Number(t0Stock.value.price) || 0;
   const amount = price * qty;
+  const sideCode = 'BUY';
   return accounts.map((account) => {
     const availableFunds = Number(
       account.availableFunds ?? account.balance ?? 0
     );
     const buyable = Math.floor(availableFunds / (price || 1) / 100) * 100;
+    const groupId = account.group ?? '';
+    const groupName = getT0GroupName(groupId);
+    const accountName =
+      account.accountName || account.accountNumber || account.id || '资金账号';
     return {
       id: undefined,
       accountId: account.id ?? '',
-      account:
-        account.accountName ||
-        account.accountNumber ||
-        account.id ||
-        '资金账号',
-      groupId: account.group ?? '',
+      accountName,
+      account: accountName,
+      groupId,
+      groupName,
+      terminalId: DEFAULT_TERMINAL_ID,
       symbol: t0OrderForm.value.symbol,
       side: '买入',
+      sideCode,
       qty,
       price: price ? price.toFixed(2) : '-',
       amount: amount ? amount.toFixed(2) : '-',
@@ -725,13 +744,27 @@ const mapToT0PreviewRow = (item) => {
         ? Number(item.amount)
         : priceNum * qtyNum;
   const availableNum = Number(item.available ?? item.availableFunds ?? 0) || 0;
+  const groupId = (item.groupId ?? t0OrderForm.value.account)?.toString() ?? '';
+  const groupName = item.groupName || getT0GroupName(groupId);
+  const accountId = item.accountId || item.account || '';
+  const accountName =
+    item.accountName || item.account || accountId || '资金账号';
+  const terminalId =
+    item.terminalId != null ? Number(item.terminalId) : DEFAULT_TERMINAL_ID;
+  const sideCode = (item.sideCode || item.side || 'BUY')
+    .toString()
+    .toUpperCase();
   return {
     id: item.id,
-    accountId: item.accountId || item.account || '',
-    account: item.accountName || item.account || item.accountId || '资金账号',
-    groupId: item.groupId || t0OrderForm.value.account?.toString() || '',
+    accountId,
+    accountName,
+    account: accountName,
+    groupId,
+    groupName,
+    terminalId,
     symbol: item.symbol,
-    side: '买入',
+    side: sideCode === 'SELL' ? '卖出' : '买入',
+    sideCode,
     qty: qtyNum,
     price: priceNum ? priceNum.toFixed(2) : '-',
     amount: amountNum ? amountNum.toFixed(2) : '-',
@@ -813,8 +846,10 @@ const t0PlaceOrder = async () => {
           buyTime: new Date().toISOString(),
           accountId: row.accountId,
           account: row.accountId,
-          accountName: row.account,
+          accountName: row.accountName || row.account,
           groupId: row.groupId,
+          groupName: row.groupName,
+          terminalId: row.terminalId ?? DEFAULT_TERMINAL_ID,
           entrustMethod: t0OrderForm.value.entrustMethod,
           symbol: row.symbol,
           price: row.rawPrice || Number(t0Stock.value.price) || 0,

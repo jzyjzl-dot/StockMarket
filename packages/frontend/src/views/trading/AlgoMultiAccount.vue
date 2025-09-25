@@ -577,6 +577,7 @@ const orderForm = ref({
   qty: 1000,
   distribution: 'eachFixedQty',
 });
+const DEFAULT_TERMINAL_ID = 1;
 const algoParams = ref({
   boxNo: '',
   externalNo: '',
@@ -637,6 +638,19 @@ const selectedGroupAccounts = computed(() => {
   return accountsByGroup.value.get(groupId) ?? [];
 });
 
+const getGroupName = (groupId) => {
+  const normalized = groupId?.toString() ?? '';
+  if (!normalized) {
+    return '';
+  }
+  const target = accountGroups.value.find((group) => {
+    const byId = group.id != null ? group.id.toString() : '';
+    const byGroup = group.groupId != null ? group.groupId.toString() : '';
+    return byId === normalized || byGroup === normalized;
+  });
+  return target?.name ?? '';
+};
+
 const ensureGroupSelection = () => {
   const current = orderForm.value.account?.toString() ?? '';
   if (current && accountsByGroup.value.has(current)) {
@@ -669,22 +683,27 @@ const buildPreviewRows = () => {
   const qty = Number(orderForm.value.qty) || 0;
   const price = Number(orderForm.value.price) || 0;
   const amount = price * qty;
+  const sideCode = orderForm.value.entrustType === 'SELL' ? 'SELL' : 'BUY';
   return accounts.map((account) => {
     const availableFunds = Number(
       account.availableFunds ?? account.balance ?? 0
     );
     const buyable = Math.floor(availableFunds / (price || 1) / 100) * 100;
+    const groupId = account.group ?? '';
+    const groupName = getGroupName(groupId);
+    const accountName =
+      account.accountName || account.accountNumber || account.id || '资金账号';
     return {
       id: undefined,
       accountId: account.id ?? '',
-      account:
-        account.accountName ||
-        account.accountNumber ||
-        account.id ||
-        '资金账号',
-      groupId: account.group ?? '',
+      accountName,
+      account: accountName,
+      groupId,
+      groupName,
+      terminalId: DEFAULT_TERMINAL_ID,
       symbol: orderForm.value.symbol,
-      side: orderForm.value.entrustType === 'BUY' ? '买入' : '卖出',
+      side: sideCode === 'SELL' ? '卖出' : '买入',
+      sideCode,
       qty,
       price: price ? price.toFixed(2) : '-',
       amount: amount ? amount.toFixed(2) : '-',
@@ -799,13 +818,26 @@ const mapToPreviewRow = (item) => {
         ? Number(item.amount)
         : priceNum * qtyNum;
   const availableNum = Number(item.available ?? item.availableFunds ?? 0) || 0;
+  const groupId = (item.groupId ?? orderForm.value.account)?.toString() ?? '';
+  const groupName = item.groupName || getGroupName(groupId);
+  const accountId = item.accountId || item.account || '';
+  const accountName =
+    item.accountName || item.account || accountId || '资金账号';
+  const sideCode = (item.sideCode || item.side || 'BUY')
+    .toString()
+    .toUpperCase();
   return {
     id: item.id,
-    accountId: item.accountId || item.account || '',
-    account: item.accountName || item.account || item.accountId || '资金账号',
-    groupId: item.groupId || orderForm.value.account?.toString() || '',
+    accountId,
+    accountName,
+    account: accountName,
+    groupId,
+    groupName,
+    terminalId:
+      item.terminalId != null ? Number(item.terminalId) : DEFAULT_TERMINAL_ID,
     symbol: item.symbol,
-    side: item.side === 'SELL' ? '卖出' : '买入',
+    side: sideCode === 'SELL' ? '卖出' : '买入',
+    sideCode,
     qty: qtyNum,
     price: priceNum ? priceNum.toFixed(2) : '-',
     amount: amountNum ? amountNum.toFixed(2) : '-',
@@ -936,45 +968,57 @@ const placeOrder = async () => {
     ElMessage.warning('所选账户组暂无资金账号');
     return;
   }
+  const sideCode = orderForm.value.entrustType === 'SELL' ? 'SELL' : 'BUY';
+  const sideLabel = sideCode === 'SELL' ? '卖出' : '买入';
+  const previous = [...previewRows.value];
   previewRows.value.push(...newRows);
-  if (orderForm.value.entrustType === 'BUY') {
-    try {
-      const created = await Promise.all(
-        newRows.map((row) =>
-          tradingAPI.createAlgoBuy({
-            timestamp: new Date().toISOString(),
-            accountId: row.accountId,
-            account: row.accountId,
-            accountName: row.account,
-            groupId: row.groupId,
-            side: 'BUY',
-            symbol: row.symbol,
-            price: row.rawPrice || Number(orderForm.value.price) || 0,
-            qty: row.rawQty || Number(orderForm.value.qty) || 0,
-            amount: row.rawAmount || 0,
-            priceType: row.priceType,
-            strategy: row.strategy,
-            distribution: row.distribution,
-            algoType: row.algoType,
-            algoInstance: row.algoInstance,
-            startTime: row.startTime,
-            endTime: row.endTime,
-          })
-        )
-      );
-      created.forEach((item, index) => {
-        if (item && item.id) {
-          newRows[index].id = item.id;
-        }
-      });
-      ElMessage.success('买入已导入预览并保存');
-      await refreshPreview();
-    } catch (error) {
-      console.error('保存买入失败: ', error);
-      ElMessage.error('保存买入数据失败，请检查 json-server');
-    }
-  } else {
-    ElMessage.success('卖出已导入预览');
+  try {
+    const created = await Promise.all(
+      newRows.map((row) => {
+        const price =
+          row.rawPrice != null
+            ? Number(row.rawPrice)
+            : Number(orderForm.value.price) || 0;
+        const qty =
+          row.rawQty != null
+            ? Number(row.rawQty)
+            : Number(orderForm.value.qty) || 0;
+        const amount =
+          row.rawAmount != null ? Number(row.rawAmount) : price * qty;
+        return tradingAPI.createAlgoBuy({
+          timestamp: new Date().toISOString(),
+          accountId: row.accountId,
+          account: row.accountId,
+          accountName: row.accountName || row.account,
+          groupId: row.groupId,
+          groupName: row.groupName,
+          terminalId: row.terminalId ?? DEFAULT_TERMINAL_ID,
+          side: sideCode,
+          symbol: row.symbol,
+          price,
+          qty,
+          amount,
+          priceType: row.priceType,
+          strategy: row.strategy,
+          distribution: row.distribution,
+          algoType: row.algoType,
+          algoInstance: row.algoInstance,
+          startTime: row.startTime,
+          endTime: row.endTime,
+        });
+      })
+    );
+    created.forEach((item, index) => {
+      if (item && item.id) {
+        newRows[index].id = item.id;
+      }
+    });
+    ElMessage.success(`${sideLabel}已导入预览并保存`);
+    await refreshPreview();
+  } catch (error) {
+    previewRows.value = previous;
+    console.error('保存算法下单失败: ', error);
+    ElMessage.error('保存算法下单数据失败，请检查服务端');
   }
 };
 
@@ -986,16 +1030,23 @@ const confirmSelected = async () => {
   try {
     const toConfirm = [...selectedRows.value];
     await Promise.all(
-      toConfirm.map((row) =>
-        tradingAPI.createAlgoOrder({
+      toConfirm.map((row) => {
+        const groupId = row.groupId || orderForm.value.account || '';
+        const side =
+          (row.sideCode || (row.side === '卖出' ? 'SELL' : 'BUY')) === 'SELL'
+            ? 'SELL'
+            : 'BUY';
+        return tradingAPI.createAlgoOrder({
           time: new Date().toISOString(),
           accountId: row.accountId || row.account,
           account: row.accountId || row.account,
-          accountName: row.account,
-          groupId: row.groupId || orderForm.value.account || '',
+          accountName: row.accountName || row.account,
+          groupId,
+          groupName: row.groupName || getGroupName(groupId),
+          terminalId: row.terminalId ?? DEFAULT_TERMINAL_ID,
           symbol: row.symbol,
-          type: row.side,
-          side: row.side === '卖出' ? 'SELL' : 'BUY',
+          type: row.side || (side === 'SELL' ? '卖出' : '买入'),
+          side,
           price: Number(row.rawPrice ?? row.price) || 0,
           quantity: Number(row.rawQty ?? row.qty) || 0,
           amount: Number(row.rawAmount ?? row.amount) || 0,
@@ -1009,8 +1060,8 @@ const confirmSelected = async () => {
           endTime: row.endTime,
           strategy: row.strategy,
           distribution: row.distribution,
-        })
-      )
+        });
+      })
     );
     const ids = toConfirm.map((row) => row.id).filter(Boolean);
     if (ids.length) {
