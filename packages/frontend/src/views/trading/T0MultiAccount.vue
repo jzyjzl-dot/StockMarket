@@ -488,6 +488,7 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { QuestionFilled } from '@element-plus/icons-vue';
 import { accountGroupAPI, stockAccountAPI, tradingAPI } from '@/utils/api';
+import { useUserStore } from '@/stores/userStore';
 
 const t0Stock = ref({
   name: '示例股票',
@@ -497,6 +498,10 @@ const t0Stock = ref({
   changePct: 0.0013,
 });
 const DEFAULT_TERMINAL_ID = 1;
+const userStore = useUserStore();
+const currentUserId = computed(
+  () => userStore.userInfo?.id?.toString() ?? 'admin'
+);
 const t0MarketRows = ref(
   Array.from({ length: 10 }).map((_, i) => ({
     ask: { price: 7.6 - i * 0.01, vol: 2000 + i * 100 },
@@ -633,7 +638,8 @@ const t0BuildPreviewRows = () => {
       account: accountName,
       groupId,
       groupName,
-      terminalId: DEFAULT_TERMINAL_ID,
+      systemUserId: currentUserId.value,
+      terminalId: account.terminalId ?? DEFAULT_TERMINAL_ID,
       symbol: t0OrderForm.value.symbol,
       side: '买入',
       sideCode,
@@ -761,6 +767,8 @@ const mapToT0PreviewRow = (item) => {
     account: accountName,
     groupId,
     groupName,
+    systemUserId:
+      item.systemUserId || item.system_user_id || currentUserId.value,
     terminalId,
     symbol: item.symbol,
     side: sideCode === 'SELL' ? '卖出' : '买入',
@@ -850,6 +858,7 @@ const t0PlaceOrder = async () => {
           groupId: row.groupId,
           groupName: row.groupName,
           terminalId: row.terminalId ?? DEFAULT_TERMINAL_ID,
+          systemUserId: row.systemUserId || currentUserId.value,
           entrustMethod: t0OrderForm.value.entrustMethod,
           symbol: row.symbol,
           price: row.rawPrice || Number(t0Stock.value.price) || 0,

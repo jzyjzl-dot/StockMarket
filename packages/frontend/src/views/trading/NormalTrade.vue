@@ -442,6 +442,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { accountGroupAPI, stockAccountAPI, tradingAPI } from '@/utils/api';
+import { useUserStore } from '@/stores/userStore';
 
 const virtualScrollContainer = ref();
 const itemHeight = 35;
@@ -520,6 +521,10 @@ const marketRows = ref(
 
 const funds = ref({ available: 900000.0 });
 const DEFAULT_TERMINAL_ID = 1;
+const userStore = useUserStore();
+const currentUserId = computed(
+  () => userStore.userInfo?.id?.toString() ?? 'admin'
+);
 const orderForm = ref({
   account: null,
   entrustType: 'BUY',
@@ -643,7 +648,8 @@ const buildPreviewRows = () => {
       account: accountName,
       groupId,
       groupName,
-      terminalId: DEFAULT_TERMINAL_ID,
+      systemUserId: currentUserId.value,
+      terminalId: account.terminalId ?? DEFAULT_TERMINAL_ID,
       symbol: orderForm.value.symbol,
       side: sideCode === 'SELL' ? '卖出' : '买入',
       sideCode,
@@ -741,6 +747,8 @@ const mapToPreviewRow = (item) => {
     account: accountName,
     groupId,
     groupName,
+    systemUserId:
+      item.systemUserId || item.system_user_id || currentUserId.value,
     terminalId:
       item.terminalId != null ? Number(item.terminalId) : DEFAULT_TERMINAL_ID,
     symbol: item.symbol,
@@ -901,6 +909,7 @@ const placeOrder = async () => {
           groupId: row.groupId,
           groupName: row.groupName,
           terminalId: row.terminalId ?? DEFAULT_TERMINAL_ID,
+          systemUserId: row.systemUserId || currentUserId.value,
           side: sideCode,
           symbol: row.symbol,
           price,
@@ -948,6 +957,7 @@ const confirmSelected = async () => {
           groupId,
           groupName: row.groupName || getGroupName(groupId),
           terminalId: row.terminalId ?? DEFAULT_TERMINAL_ID,
+          systemUserId: row.systemUserId || currentUserId.value,
           symbol: row.symbol,
           type: row.side || (sideCode === 'SELL' ? '卖出' : '买入'),
           side: sideCode,

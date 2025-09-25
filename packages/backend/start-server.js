@@ -165,7 +165,8 @@ async function initTables() {
       account_name VARCHAR(255),
       group_id VARCHAR(64),
       group_name VARCHAR(255),
-      terminal_id INT DEFAULT 1,
+  terminal_id INT DEFAULT 1,
+  system_user_id VARCHAR(64) NOT NULL DEFAULT 'admin',
       side VARCHAR(16),
       symbol VARCHAR(64),
       price DECIMAL(18,2) DEFAULT 0,
@@ -183,7 +184,8 @@ async function initTables() {
       account_name VARCHAR(255),
       group_id VARCHAR(64),
       group_name VARCHAR(255),
-      terminal_id INT DEFAULT 1,
+  terminal_id INT DEFAULT 1,
+  system_user_id VARCHAR(64) NOT NULL DEFAULT 'admin',
       symbol VARCHAR(64),
       type VARCHAR(32),
       side VARCHAR(16),
@@ -204,7 +206,8 @@ async function initTables() {
       account_name VARCHAR(255),
       group_id VARCHAR(64),
       group_name VARCHAR(255),
-      terminal_id INT DEFAULT 1,
+  terminal_id INT DEFAULT 1,
+  system_user_id VARCHAR(64) NOT NULL DEFAULT 'admin',
       side VARCHAR(16),
       symbol VARCHAR(64),
       price DECIMAL(18,2) DEFAULT 0,
@@ -226,7 +229,8 @@ async function initTables() {
       account_name VARCHAR(255),
       group_id VARCHAR(64),
       group_name VARCHAR(255),
-      terminal_id INT DEFAULT 1,
+  terminal_id INT DEFAULT 1,
+  system_user_id VARCHAR(64) NOT NULL DEFAULT 'admin',
       symbol VARCHAR(64),
       type VARCHAR(32),
       side VARCHAR(16),
@@ -253,7 +257,8 @@ async function initTables() {
       account_name VARCHAR(255),
       group_id VARCHAR(64),
       group_name VARCHAR(255),
-      terminal_id INT DEFAULT 1,
+  terminal_id INT DEFAULT 1,
+  system_user_id VARCHAR(64) NOT NULL DEFAULT 'admin',
       entrust_method VARCHAR(32),
       symbol VARCHAR(64),
       algo_instance VARCHAR(128),
@@ -280,7 +285,8 @@ async function initTables() {
       account_name VARCHAR(255),
       group_id VARCHAR(64),
       group_name VARCHAR(255),
-      terminal_id INT DEFAULT 1,
+  terminal_id INT DEFAULT 1,
+  system_user_id VARCHAR(64) NOT NULL DEFAULT 'admin',
       symbol VARCHAR(64),
       type VARCHAR(32),
       side VARCHAR(16),
@@ -325,6 +331,18 @@ async function ensureColumn(tableName, columnName, addColumnDDL) {
 }
 
 async function migrateSchema() {
+  const enforceSystemUserDefaults = async (tableName) => {
+    try {
+      await pool.query(
+        `ALTER TABLE \`${tableName}\` MODIFY COLUMN \`system_user_id\` VARCHAR(64) NOT NULL DEFAULT 'admin'`
+      );
+    } catch (error) {
+      console.warn(
+        `Could not enforce system_user_id default on ${tableName}:`,
+        error.message
+      );
+    }
+  };
   // Keep legacy databases in sync with the latest T0 schema
   const t0OrderColumnEnsures = [
     ['type', 'ADD COLUMN `type` VARCHAR(32) NULL AFTER `symbol`'],
@@ -345,11 +363,13 @@ async function migrateSchema() {
     ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
     ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
     ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ['system_user_id', "ADD COLUMN `system_user_id` VARCHAR(64) NOT NULL DEFAULT 'admin' AFTER `terminal_id`"],
   ];
 
   for (const [column, ddl] of t0OrderColumnEnsures) {
     await ensureColumn('t0_orders', column, ddl);
   }
+  await enforceSystemUserDefaults('t0_orders');
 
   const t0BuyColumnEnsures = [
     ['entrust_method', 'ADD COLUMN `entrust_method` VARCHAR(32) NULL AFTER `account`'],
@@ -369,55 +389,65 @@ async function migrateSchema() {
     ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
     ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
     ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ['system_user_id', "ADD COLUMN `system_user_id` VARCHAR(64) NOT NULL DEFAULT 'admin' AFTER `terminal_id`"],
   ];
 
   for (const [column, ddl] of t0BuyColumnEnsures) {
     await ensureColumn('t0_buys', column, ddl);
   }
+  await enforceSystemUserDefaults('t0_buys');
 
   const normalBuyColumnEnsures = [
     ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
     ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
     ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
     ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ['system_user_id', "ADD COLUMN `system_user_id` VARCHAR(64) NOT NULL DEFAULT 'admin' AFTER `terminal_id`"],
   ];
 
   for (const [column, ddl] of normalBuyColumnEnsures) {
     await ensureColumn('normal_buys', column, ddl);
   }
+  await enforceSystemUserDefaults('normal_buys');
 
   const normalOrderColumnEnsures = [
     ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
     ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
     ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
     ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ['system_user_id', "ADD COLUMN `system_user_id` VARCHAR(64) NOT NULL DEFAULT 'admin' AFTER `terminal_id`"],
   ];
 
   for (const [column, ddl] of normalOrderColumnEnsures) {
     await ensureColumn('normal_orders', column, ddl);
   }
+  await enforceSystemUserDefaults('normal_orders');
 
   const algoBuyColumnEnsures = [
     ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
     ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
     ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
     ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+  ['system_user_id', "ADD COLUMN `system_user_id` VARCHAR(64) NOT NULL DEFAULT 'admin' AFTER `terminal_id`"],
   ];
 
   for (const [column, ddl] of algoBuyColumnEnsures) {
     await ensureColumn('algo_buys', column, ddl);
   }
+  await enforceSystemUserDefaults('algo_buys');
 
   const algoOrderColumnEnsures = [
     ['account_name', 'ADD COLUMN `account_name` VARCHAR(255) NULL AFTER `account`'],
     ['group_id', 'ADD COLUMN `group_id` VARCHAR(64) NULL AFTER `account_name`'],
     ['group_name', 'ADD COLUMN `group_name` VARCHAR(255) NULL AFTER `group_id`'],
     ['terminal_id', 'ADD COLUMN `terminal_id` INT DEFAULT 1 AFTER `group_name`'],
+    ['system_user_id', 'ADD COLUMN `system_user_id` VARCHAR(64) NULL AFTER `terminal_id`'],
   ];
 
   for (const [column, ddl] of algoOrderColumnEnsures) {
     await ensureColumn('algo_orders', column, ddl);
   }
+  await enforceSystemUserDefaults('algo_orders');
 }
 
 function readSeedArray(fileName, key) {
@@ -594,6 +624,7 @@ async function seedNormalBuys() {
     buy.groupId || buy.group?.toString() || null,
     buy.groupName || null,
     buy.terminalId != null ? Number(buy.terminalId) : 1,
+  buy.systemUserId ?? buy.system_user_id ?? 'admin',
     buy.side || null,
     buy.symbol || null,
     numeric(buy.price) ?? 0,
@@ -605,7 +636,7 @@ async function seedNormalBuys() {
   ]);
   await pool.query(
     `INSERT INTO normal_buys (
-      id, buy_time, account, account_name, group_id, group_name, terminal_id,
+      id, buy_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
       side, symbol, price, qty, amount,
       price_type, strategy, distribution
     ) VALUES ?`,
@@ -626,6 +657,7 @@ async function seedNormalOrders() {
     order.groupId || order.group?.toString() || null,
     order.groupName || null,
     order.terminalId != null ? Number(order.terminalId) : 1,
+  order.systemUserId ?? order.system_user_id ?? 'admin',
     order.symbol || null,
     order.type || null,
     order.side || null,
@@ -640,7 +672,7 @@ async function seedNormalOrders() {
   ]);
   await pool.query(
     `INSERT INTO normal_orders (
-      id, order_time, account, account_name, group_id, group_name, terminal_id,
+      id, order_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
       symbol, type, side, price, quantity,
       dealt, amount, market, order_type, status, source
     ) VALUES ?`,
@@ -735,6 +767,7 @@ const mapNormalBuyRow = (row) => ({
   groupId: row.group_id,
   groupName: row.group_name,
   terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
+  systemUserId: row.system_user_id,
   side: row.side,
   symbol: row.symbol,
   price: numeric(row.price) ?? 0,
@@ -753,6 +786,7 @@ const mapNormalOrderRow = (row) => ({
   groupId: row.group_id,
   groupName: row.group_name,
   terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
+  systemUserId: row.system_user_id,
   symbol: row.symbol,
   type: row.type,
   side: row.side,
@@ -774,6 +808,7 @@ const mapAlgoBuyRow = (row) => ({
   groupId: row.group_id,
   groupName: row.group_name,
   terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
+  systemUserId: row.system_user_id,
   side: row.side,
   symbol: row.symbol,
   price: numeric(row.price) ?? 0,
@@ -796,6 +831,7 @@ const mapAlgoOrderRow = (row) => ({
   groupId: row.group_id,
   groupName: row.group_name,
   terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
+  systemUserId: row.system_user_id,
   symbol: row.symbol,
   type: row.type,
   side: row.side,
@@ -1245,9 +1281,9 @@ app.post('/normalBuys', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO normal_buys (
-      id, buy_time, account, account_name, group_id, group_name, terminal_id,
+      id, buy_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
       side, symbol, price, qty, amount, price_type, strategy, distribution
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       buyTime,
@@ -1256,6 +1292,7 @@ app.post('/normalBuys', asyncHandler(async (req, res) => {
       buy.groupId != null ? buy.groupId.toString() : null,
       buy.groupName || null,
       buy.terminalId != null ? Number(buy.terminalId) : 1,
+  buy.systemUserId ?? buy.system_user_id ?? 'admin',
       buy.side || null,
       buy.symbol || null,
       numeric(buy.price) ?? 0,
@@ -1291,10 +1328,10 @@ app.post('/normalOrders', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO normal_orders (
-      id, order_time, account, account_name, group_id, group_name, terminal_id,
+      id, order_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
       symbol, type, side, price, quantity, dealt, amount, market,
       order_type, status, source
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       orderTime,
@@ -1303,6 +1340,7 @@ app.post('/normalOrders', asyncHandler(async (req, res) => {
       order.groupId != null ? order.groupId.toString() : null,
       order.groupName || null,
       order.terminalId != null ? Number(order.terminalId) : 1,
+  order.systemUserId ?? order.system_user_id ?? 'admin',
       order.symbol || null,
       order.type || null,
       order.side || null,
@@ -1342,11 +1380,11 @@ app.post('/algoBuys', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO algo_buys (
-      id, buy_time, account, account_name, group_id, group_name, terminal_id,
+      id, buy_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
       side, symbol, price, qty, amount,
       price_type, strategy, distribution, algo_type, algo_instance,
       start_time, end_time
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       buyTime,
@@ -1355,6 +1393,7 @@ app.post('/algoBuys', asyncHandler(async (req, res) => {
       buy.groupId != null ? buy.groupId.toString() : null,
       buy.groupName || null,
       buy.terminalId != null ? Number(buy.terminalId) : 1,
+  buy.systemUserId ?? buy.system_user_id ?? 'admin',
       buy.side || null,
       buy.symbol || null,
       numeric(buy.price) ?? 0,
@@ -1394,11 +1433,11 @@ app.post('/algoOrders', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO algo_orders (
-      id, order_time, account, account_name, group_id, group_name, terminal_id,
+      id, order_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
       symbol, type, side, price, quantity, dealt, amount, market, order_type,
       status, source,
       algo_type, algo_instance, start_time, end_time, strategy, distribution
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       orderTime,
@@ -1407,6 +1446,7 @@ app.post('/algoOrders', asyncHandler(async (req, res) => {
       order.groupId != null ? order.groupId.toString() : null,
       order.groupName || null,
       order.terminalId != null ? Number(order.terminalId) : 1,
+  order.systemUserId ?? order.system_user_id ?? 'admin',
       order.symbol || null,
       order.type || null,
       order.side || null,
@@ -1449,6 +1489,7 @@ function mapT0BuyRow(row) {
     groupId: row.group_id,
     groupName: row.group_name,
     terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
+    systemUserId: row.system_user_id,
     entrustMethod: row.entrust_method,
     symbol: row.symbol,
     algoInstance: row.algo_instance,
@@ -1480,6 +1521,7 @@ function mapT0OrderRow(row) {
     groupId: row.group_id,
     groupName: row.group_name,
     terminalId: row.terminal_id != null ? Number(row.terminal_id) : 1,
+    systemUserId: row.system_user_id,
     symbol: row.symbol,
     type: row.type,
     side: row.side,
@@ -1519,12 +1561,12 @@ app.post('/t0Buys', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO t0_buys (
-      id, buy_time, account, account_name, group_id, group_name, terminal_id,
+      id, buy_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
       entrust_method, symbol, algo_instance,
       business_start_time, business_end_time, buy_direction, sell_direction,
       strategy, qty, price, amount, distribution, basket_no, external_no, 
       risk_exposure, exec_after_expire, execute_immediately
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       buyTime,
@@ -1533,6 +1575,7 @@ app.post('/t0Buys', asyncHandler(async (req, res) => {
       buy.groupId != null ? buy.groupId.toString() : null,
       buy.groupName || null,
       buy.terminalId != null ? Number(buy.terminalId) : 1,
+  buy.systemUserId ?? buy.system_user_id ?? 'admin',
       buy.entrustMethod || null,
       buy.symbol || null,
       buy.algoInstance || null,
@@ -1577,12 +1620,12 @@ app.post('/t0Orders', asyncHandler(async (req, res) => {
 
   await pool.query(
     `INSERT INTO t0_orders (
-      id, order_time, account, account_name, group_id, group_name, terminal_id,
+      id, order_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
       symbol, \`type\`, side, price, quantity, dealt, amount,
       market, order_type, status, source, algo_instance, business_start_time,
       business_end_time, buy_direction, sell_direction, strategy, distribution,
       basket_no, external_no, risk_exposure, exec_after_expire, execute_immediately
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       orderTime,
@@ -1591,6 +1634,7 @@ app.post('/t0Orders', asyncHandler(async (req, res) => {
       order.groupId != null ? order.groupId.toString() : null,
       order.groupName || null,
       order.terminalId != null ? Number(order.terminalId) : 1,
+  order.systemUserId ?? order.system_user_id ?? 'admin',
       order.symbol || null,
       order.type || null,
       order.side || null,
@@ -1646,12 +1690,12 @@ app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
 
     await pool.query(
       `INSERT INTO t0_orders (
-        id, order_time, account, account_name, group_id, group_name, terminal_id,
+        id, order_time, account, account_name, group_id, group_name, terminal_id, system_user_id,
         symbol, \`type\`, side, price, quantity, dealt, amount,
         market, order_type, status, source, algo_instance, business_start_time,
         business_end_time, buy_direction, sell_direction, strategy, distribution,
         basket_no, external_no, risk_exposure, exec_after_expire, execute_immediately
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         orderTime,
@@ -1660,6 +1704,7 @@ app.post('/t0Orders/confirmFromBuys', asyncHandler(async (req, res) => {
         buy.group_id,
         buy.group_name,
         buy.terminal_id != null ? Number(buy.terminal_id) : 1,
+  buy.system_user_id ?? 'admin',
         buy.symbol,
         'T0策略',
         'BUY', // 默认值，表示买入
