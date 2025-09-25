@@ -1205,7 +1205,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 10px; /* 给栅格留一些外边距 */
+  padding: 0px; /* 给栅格留一些外边距 */
 }
 .quick-ops {
   display: flex;
@@ -1243,7 +1243,7 @@ onMounted(() => {
   overflow-x: auto;
   overflow-y: auto;
   scrollbar-gutter: stable;
-  max-height: 350px;
+  max-height: 400px;
 }
 
 /* 确保虚拟滚动表格容器有独立的滚动 */

@@ -1162,8 +1162,8 @@ const dealRows = ref([]);
 }
 
 /* 限制普通表格的高度 */
-.scroll-x .el-table {
-  max-height: 300px;
+.scroll-x {
+  max-height: 400px;
 }
 
 /* 行情合计样式（顶部行情面板底部的小计条） */

@@ -766,7 +766,12 @@ const t0RefreshOrders = async () => {
           accountId: o.accountId || o.account || '',
           account: o.accountName || o.account || o.accountId || '????',
           time:
-            o.time || o.order_time || o.timestamp || new Date().toISOString(),
+            o.orderTime ||
+            o.time ||
+            o.order_time ||
+            o.timestamp ||
+            o.createdAt ||
+            new Date().toISOString(),
           stockCode: o.symbol,
           type: o.type || (o.side === 'SELL' ? '??' : '??'),
           price: Number(o.price) || 0,
@@ -1097,7 +1102,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 10px; /* 给栅格留一些外边距 */
+  padding: 0px; /* 给栅格留一些外边距 */
 }
 .quick-ops {
   display: flex;
@@ -1144,8 +1149,8 @@ onMounted(async () => {
 }
 
 /* 限制普通表格的高度 */
-.scroll-x .el-table {
-  max-height: 300px;
+.scroll-x {
+  max-height: 400px;
 }
 
 /* 本页：四列布局 - 行情、算法交易、算法参数设置、预览 */
