@@ -13,10 +13,18 @@ const {
   MYSQL_PASSWORD = '',
   MYSQL_DATABASE = 'stock_app',
   PORT = '3004',
+  RESET_DB_ON_STARTUP = 'false',
 } = process.env;
 
 const dataDir = path.join(__dirname, 'data');
 let pool;
+
+const parseBoolean = (value) => {
+  if (value === true || value === false) return Boolean(value);
+  if (value == null) return false;
+  const normalized = String(value).trim().toLowerCase();
+  return ['1', 'true', 'yes', 'y', 'on'].includes(normalized);
+};
 
 const numeric = (value) => {
   if (value === null || value === undefined || value === '') return null;
@@ -70,17 +78,23 @@ async function initPool() {
 }
 
 async function initTables() {
-  const tablesToDrop = [
-    't0_orders',
-    't0_buys',
-    'algo_orders',
-    'algo_buys',
-    'normal_orders',
-    'normal_buys',
-  ];
+  const shouldResetTables = parseBoolean(RESET_DB_ON_STARTUP);
+  if (shouldResetTables) {
+    const tablesToDrop = [
+      't0_orders',
+      't0_buys',
+      'algo_orders',
+      'algo_buys',
+      'normal_orders',
+      'normal_buys',
+    ];
 
-  for (const table of tablesToDrop) {
-    await pool.query(`DROP TABLE IF EXISTS \`${table}\``);
+    for (const table of tablesToDrop) {
+      await pool.query(`DROP TABLE IF EXISTS \`${table}\``);
+    }
+    console.warn(
+      '[DB] All trading tables were reset because RESET_DB_ON_STARTUP is enabled.'
+    );
   }
 
   const tableStatements = [
