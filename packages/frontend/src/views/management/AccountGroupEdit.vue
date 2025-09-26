@@ -1,202 +1,222 @@
 <template>
-  <div class="account-group-edit">
-    <div class="editor-layout">
-      <section class="panel panel-groups">
-        <header class="panel-header">
-          <span class="panel-title">账户组管理</span>
-          <el-tooltip content="新增账户组" placement="top">
-            <el-button
-              circle
-              size="small"
-              type="primary"
-              @click="toggleCreateMode"
-            >
-              <el-icon><Plus /></el-icon>
-            </el-button>
-          </el-tooltip>
-        </header>
-
-        <transition name="fade">
-          <div v-if="showCreate" class="new-group-block">
-            <el-input
-              v-model="newGroupName"
-              placeholder="输入新增账户组名称"
-              size="small"
-              @keyup.enter="createGroup"
-            />
-            <div class="new-group-actions">
-              <el-button size="small" type="primary" @click="createGroup"
-                >保存</el-button
-              >
-              <el-button size="small" text @click="cancelCreate"
-                >取消</el-button
-              >
-            </div>
+  <div class="account-group-page">
+    <el-card class="management-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <div>
+            <h2>账户组管理</h2>
+            <p>维护账户组并调整组内账号的权重分配</p>
           </div>
-        </transition>
-
-        <el-scrollbar class="group-list">
-          <div
-            v-for="group in groupsWithStats"
-            :key="group.groupId"
-            :class="['group-item', { active: group.groupId === activeGroupId }]"
-            @click="selectGroup(group.groupId)"
-          >
-            <div class="group-info">
-              <div class="group-name">{{ group.displayName }}</div>
-              <div class="group-meta">{{ group.accountCount }} 个账号</div>
-            </div>
-            <div class="group-actions" @click.stop>
-              <el-popconfirm
-                v-if="group.groupId !== '0'"
-                title="确定删除该账户组？"
-                confirm-button-text="删除"
-                cancel-button-text="取消"
-                confirm-button-type="danger"
-                @confirm="deleteGroup(group)"
-              >
-                <template #reference>
-                  <el-button text size="small">
-                    <el-icon><Delete /></el-icon>
-                  </el-button>
-                </template>
-              </el-popconfirm>
-            </div>
-          </div>
-        </el-scrollbar>
-      </section>
-
-      <section class="panel panel-selected">
-        <header class="panel-header">
-          <span class="panel-title">已选账号</span>
-          <span class="weight-total" :class="{ warning: totalWeight > 100 }">
-            权重合计 {{ totalWeight.toFixed(2) }}%
-          </span>
-        </header>
-
-        <el-table
-          :data="selectedAccounts"
-          row-key="id"
-          height="420"
-          stripe
-          :empty-text="activeGroupId ? '暂无已选账号' : '请先选择左侧账户组'"
-          @selection-change="handleSelectedSelect"
-        >
-          <el-table-column type="selection" width="48" />
-          <el-table-column
-            prop="accountName"
-            label="账户名称"
-            min-width="160"
-          />
-          <el-table-column
-            prop="accountNumber"
-            label="资金账号"
-            min-width="150"
-          />
-          <el-table-column label="账户权重%" width="160">
-            <template #default="{ row }">
-              <el-input-number
-                v-model="row.weightPercent"
-                :min="0"
-                :max="100"
-                :step="1"
-                size="small"
-                controls-position="right"
-                @change="() => normalizeRowWeight(row)"
-              />
-            </template>
-          </el-table-column>
-        </el-table>
-
-        <div class="panel-footer">
-          <el-button
-            type="danger"
-            plain
-            size="small"
-            :disabled="!selectedSelection.length"
-            @click="removeSelectedAccounts"
-          >
-            移出选中账号
+          <el-button type="primary" @click="toggleCreateMode">
+            <el-icon class="button-icon"><Plus /></el-icon>
+            {{ showCreate ? '取消新增' : '新增账户组' }}
           </el-button>
         </div>
-      </section>
+      </template>
 
-      <div class="transfer-controls">
-        <el-button
-          circle
-          type="primary"
-          :disabled="!availableSelection.length || !activeGroupId"
-          @click="addAccountsToGroup"
-        >
-          <el-icon><ArrowLeftBold /></el-icon>
-        </el-button>
-        <el-button
-          circle
-          type="info"
-          :disabled="!selectedSelection.length"
-          @click="removeSelectedAccounts"
-        >
-          <el-icon><ArrowRightBold /></el-icon>
-        </el-button>
-      </div>
+      <div class="content">
+        <div class="editor-layout">
+          <section class="panel panel-groups">
+            <header class="panel-header">
+              <span class="panel-title">账户组</span>
+              <span class="panel-subtitle">
+                共 {{ groupsWithStats.length }} 组
+              </span>
+            </header>
 
-      <section class="panel panel-available">
-        <header class="panel-header">
-          <span class="panel-title">待选账号</span>
-          <el-input
-            v-model="availableSearch"
-            size="small"
-            placeholder="搜索账户名称或资金账号"
-            clearable
+            <transition name="fade">
+              <div v-if="showCreate" class="new-group-block">
+                <el-input
+                  v-model="newGroupName"
+                  placeholder="输入新增账户组名称"
+                  size="small"
+                  @keyup.enter="createGroup"
+                />
+                <div class="new-group-actions">
+                  <el-button size="small" type="primary" @click="createGroup">
+                    保存
+                  </el-button>
+                  <el-button size="small" text @click="cancelCreate">
+                    取消
+                  </el-button>
+                </div>
+              </div>
+            </transition>
+
+            <el-scrollbar class="group-list">
+              <div
+                v-for="group in groupsWithStats"
+                :key="group.groupId"
+                :class="[
+                  'group-item',
+                  {
+                    active: group.groupId === activeGroupId,
+                  },
+                ]"
+                @click="selectGroup(group.groupId)"
+              >
+                <div class="group-info">
+                  <div class="group-name">{{ group.displayName }}</div>
+                  <div class="group-meta">{{ group.accountCount }} 个账号</div>
+                </div>
+                <div class="group-actions" @click.stop>
+                  <el-popconfirm
+                    v-if="group.groupId !== '0'"
+                    title="确定删除该账户组？"
+                    confirm-button-text="删除"
+                    cancel-button-text="取消"
+                    confirm-button-type="danger"
+                    @confirm="deleteGroup(group)"
+                  >
+                    <template #reference>
+                      <el-button text size="small">
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </template>
+                  </el-popconfirm>
+                </div>
+              </div>
+            </el-scrollbar>
+          </section>
+
+          <section class="panel panel-selected">
+            <header class="panel-header">
+              <span class="panel-title">已选账号</span>
+              <span
+                class="weight-total"
+                :class="{ warning: totalWeight > 100 }"
+              >
+                权重合计 {{ totalWeight.toFixed(2) }}%
+              </span>
+            </header>
+
+            <el-table
+              :data="selectedAccounts"
+              row-key="id"
+              height="420"
+              stripe
+              :empty-text="
+                activeGroupId ? '暂无已选账号' : '请先选择左侧账户组'
+              "
+              @selection-change="handleSelectedSelect"
+            >
+              <el-table-column type="selection" width="48" />
+              <el-table-column
+                prop="accountName"
+                label="账户名称"
+                min-width="160"
+              />
+              <el-table-column
+                prop="accountNumber"
+                label="资金账号"
+                min-width="150"
+              />
+              <el-table-column label="账户权重%" width="160">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.weightPercent"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                    size="small"
+                    controls-position="right"
+                    @change="() => normalizeRowWeight(row)"
+                  />
+                </template>
+              </el-table-column>
+            </el-table>
+
+            <div class="panel-footer">
+              <el-button
+                type="danger"
+                plain
+                size="small"
+                :disabled="!selectedSelection.length"
+                @click="removeSelectedAccounts"
+              >
+                移出选中账号
+              </el-button>
+            </div>
+          </section>
+
+          <div class="transfer-controls">
+            <el-button
+              circle
+              type="primary"
+              :disabled="!availableSelection.length || !activeGroupId"
+              @click="addAccountsToGroup"
+            >
+              <el-icon><ArrowLeftBold /></el-icon>
+            </el-button>
+            <el-button
+              circle
+              type="info"
+              :disabled="!selectedSelection.length"
+              @click="removeSelectedAccounts"
+            >
+              <el-icon><ArrowRightBold /></el-icon>
+            </el-button>
+          </div>
+
+          <section class="panel panel-available">
+            <header class="panel-header">
+              <span class="panel-title">待选账号</span>
+              <el-input
+                v-model="availableSearch"
+                size="small"
+                placeholder="搜索账户名称或资金账号"
+                clearable
+              >
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
+              </el-input>
+            </header>
+
+            <el-table
+              :data="filteredAvailableAccounts"
+              row-key="id"
+              height="420"
+              stripe
+              :empty-text="availableEmptyText"
+              @selection-change="handleAvailableSelect"
+            >
+              <el-table-column type="selection" width="48" />
+              <el-table-column
+                prop="accountName"
+                label="账户名称"
+                min-width="160"
+              />
+              <el-table-column
+                prop="accountNumber"
+                label="资金账号"
+                min-width="150"
+              />
+              <el-table-column label="当前所属组" min-width="140">
+                <template #default="{ row }">
+                  <el-tag size="small" effect="light">{{
+                    groupLabel(row.group)
+                  }}</el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </section>
+        </div>
+
+        <footer class="action-bar">
+          <el-button :disabled="!activeGroupId" @click="resetCurrentGroup"
+            >取消</el-button
           >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-        </header>
-
-        <el-table
-          :data="filteredAvailableAccounts"
-          row-key="id"
-          height="420"
-          stripe
-          :empty-text="availableEmptyText"
-          @selection-change="handleAvailableSelect"
-        >
-          <el-table-column type="selection" width="48" />
-          <el-table-column
-            prop="accountName"
-            label="账户名称"
-            min-width="160"
-          />
-          <el-table-column
-            prop="accountNumber"
-            label="资金账号"
-            min-width="150"
-          />
-          <el-table-column label="当前所属组" min-width="140">
-            <template #default="{ row }">
-              <el-tag size="small" effect="dark">{{
-                groupLabel(row.group)
-              }}</el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-      </section>
-    </div>
-
-    <footer class="action-bar">
-      <el-button :disabled="!activeGroupId" @click="resetCurrentGroup"
-        >取消</el-button
-      >
-      <el-button
-        type="primary"
-        :loading="saving"
-        :disabled="!activeGroupId"
-        @click="saveChanges"
-        >确认</el-button
-      >
-    </footer>
+          <el-button
+            type="primary"
+            :loading="saving"
+            :disabled="!activeGroupId"
+            @click="saveChanges"
+            >确认</el-button
+          >
+        </footer>
+      </div>
+    </el-card>
   </div>
 </template>
 
@@ -586,41 +606,83 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.account-group-edit {
-  padding: 24px;
-  background: #0f172a;
-  min-height: calc(100vh - 120px);
-  color: #e2e8f0;
+.account-group-page {
+  padding: 20px;
+}
+
+.management-card {
+  width: 100%;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.card-header h2 {
+  margin: 0;
+  color: #303133;
+}
+
+.card-header p {
+  margin: 4px 0 0;
+  color: #909399;
+  font-size: 14px;
+}
+
+.card-header .el-button {
+  display: inline-flex;
+  align-items: center;
+}
+
+.button-icon {
+  margin-right: 6px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .editor-layout {
   display: grid;
-  grid-template-columns: 240px 1fr 64px 1fr;
+  grid-template-columns: 260px 1fr 60px 1fr;
   gap: 16px;
+  align-items: stretch;
 }
 
 .panel {
-  background: rgba(15, 23, 42, 0.92);
-  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  min-height: 520px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
+  min-height: 480px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #f8fafc;
   margin-bottom: 12px;
+  gap: 12px;
 }
 
 .panel-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  color: #303133;
+}
+
+.panel-subtitle {
+  font-size: 12px;
+  color: #909399;
 }
 
 .panel-groups {
@@ -629,6 +691,7 @@ onMounted(async () => {
 
 .group-list {
   flex: 1;
+  overflow: hidden;
 }
 
 .group-item {
@@ -637,9 +700,9 @@ onMounted(async () => {
   justify-content: space-between;
   padding: 10px 12px;
   border-radius: 8px;
+  border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #e2e8f0;
 }
 
 .group-item + .group-item {
@@ -647,25 +710,24 @@ onMounted(async () => {
 }
 
 .group-item:hover {
-  background: rgba(59, 130, 246, 0.22);
+  background: #f5f7fa;
+  border-color: #dcdfe6;
 }
 
 .group-item.active {
-  background: linear-gradient(
-    90deg,
-    rgba(59, 130, 246, 0.6),
-    rgba(59, 130, 246, 0.28)
-  );
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+  background: #ecf5ff;
+  border-color: #409eff;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.18);
 }
 
 .group-name {
   font-weight: 600;
+  color: #303133;
 }
 
 .group-meta {
   font-size: 12px;
-  color: #94a3b8;
+  color: #909399;
 }
 
 .group-actions {
@@ -673,14 +735,15 @@ onMounted(async () => {
   transition: opacity 0.2s ease;
 }
 
-.group-item:hover .group-actions {
+.group-item:hover .group-actions,
+.group-item.active .group-actions {
   opacity: 1;
 }
 
 .new-group-block {
-  background: rgba(59, 130, 246, 0.16);
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  border-radius: 10px;
+  background: #f5f7fa;
+  border: 1px dashed #409eff;
+  border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
 }
@@ -703,12 +766,12 @@ onMounted(async () => {
 }
 
 .weight-total {
-  font-size: 12px;
-  color: #a5b4fc;
+  font-size: 13px;
+  color: #909399;
 }
 
 .weight-total.warning {
-  color: #f97316;
+  color: #f56c6c;
 }
 
 .transfer-controls {
@@ -716,24 +779,18 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 16px;
 }
 
 .transfer-controls .el-button {
   width: 48px;
   height: 48px;
-  border: none;
-  background: rgba(59, 130, 246, 0.25);
-  color: #e0f2fe;
-}
-
-.transfer-controls .el-button.is-disabled {
-  background: rgba(100, 116, 139, 0.25);
-  color: rgba(226, 232, 240, 0.45);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(64, 158, 255, 0.18);
 }
 
 .panel-available .panel-header {
-  gap: 10px;
+  align-items: flex-start;
 }
 
 .panel-available .panel-header .el-input {
@@ -741,10 +798,10 @@ onMounted(async () => {
 }
 
 .action-bar {
-  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  margin-top: 8px;
 }
 
 .fade-enter-active,
@@ -759,36 +816,11 @@ onMounted(async () => {
 }
 
 :deep(.el-table) {
-  background: transparent;
-  color: #e2e8f0;
-}
-
-:deep(.el-table th),
-:deep(.el-table tr) {
-  background: transparent;
-}
-
-:deep(.el-table__body tr:hover > td) {
-  background-color: rgba(59, 130, 246, 0.18) !important;
+  flex: 1;
 }
 
 :deep(.el-table__empty-text) {
-  color: #64748b;
-}
-
-:deep(.el-input__inner),
-:deep(.el-input-number .el-input__inner) {
-  background: rgba(15, 23, 42, 0.82);
-  color: #e2e8f0;
-  border-color: rgba(59, 130, 246, 0.35);
-}
-
-:deep(.el-input__wrapper) {
-  background: rgba(15, 23, 42, 0.82);
-}
-
-:deep(.el-button.is-text) {
-  color: #94a3b8;
+  color: #909399;
 }
 
 @media (max-width: 1200px) {
@@ -799,6 +831,16 @@ onMounted(async () => {
   .transfer-controls {
     flex-direction: row;
     justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    align-items: flex-start;
+  }
+
+  .transfer-controls {
+    flex-direction: row;
   }
 }
 </style>
