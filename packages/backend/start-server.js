@@ -144,6 +144,7 @@ async function initTables() {
       account_number VARCHAR(128),
       balance DECIMAL(18,2) DEFAULT 0,
       available_funds DECIMAL(18,2) DEFAULT 0,
+      weight_percent DECIMAL(5,2) DEFAULT 0,
       status VARCHAR(32),
       group_id VARCHAR(64),
       created_date DATETIME,
@@ -551,6 +552,7 @@ async function seedStockAccounts() {
     account.accountNumber || null,
     numeric(account.balance) ?? 0,
     numeric(account.availableFunds) ?? 0,
+    numeric(account.weightPercent) ?? 0,
     account.status || null,
     account.group || null,
     toDate(account.createdDate) || new Date(),
@@ -559,7 +561,7 @@ async function seedStockAccounts() {
   await pool.query(
     `INSERT INTO stock_accounts (
       id, account_name, account_type, broker, account_number,
-      balance, available_funds, status, group_id, created_date, last_updated
+      balance, available_funds, weight_percent, status, group_id, created_date, last_updated
     ) VALUES ?`,
     [values]
   );
@@ -742,6 +744,7 @@ const mapStockAccountRow = (row) => ({
   accountNumber: row.account_number,
   balance: numeric(row.balance) ?? 0,
   availableFunds: numeric(row.available_funds) ?? 0,
+  weightPercent: numeric(row.weight_percent) ?? 0,
   status: row.status,
   group: row.group_id,
   createdDate: toISOString(row.created_date),
@@ -1226,7 +1229,7 @@ app.post('/stockAccounts', asyncHandler(async (req, res) => {
   await pool.query(
     `INSERT INTO stock_accounts (
       id, account_name, account_type, broker, account_number,
-      balance, available_funds, status, group_id, created_date, last_updated
+      balance, available_funds, weight_percent, status, group_id, created_date, last_updated
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
@@ -1236,6 +1239,7 @@ app.post('/stockAccounts', asyncHandler(async (req, res) => {
       account.accountNumber || null,
       numeric(account.balance) ?? 0,
       numeric(account.availableFunds) ?? 0,
+      numeric(account.weightPercent) ?? 0,
       account.status || null,
       account.group || null,
       createdDate,
@@ -1259,6 +1263,7 @@ app.put('/stockAccounts/:id', asyncHandler(async (req, res) => {
       account_number = ?,
       balance = ?,
       available_funds = ?,
+      weight_percent = ?,
       status = ?,
       group_id = ?,
       created_date = ?,
@@ -1271,6 +1276,7 @@ app.put('/stockAccounts/:id', asyncHandler(async (req, res) => {
       account.accountNumber || null,
       numeric(account.balance) ?? 0,
       numeric(account.availableFunds) ?? 0,
+      numeric(account.weightPercent) ?? 0,
       account.status || null,
       account.group || null,
       toDate(account.createdDate) || new Date(),

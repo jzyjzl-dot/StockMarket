@@ -1,977 +1,804 @@
 <template>
   <div class="account-group-edit">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <h2>账户组管理</h2>
-          <p>管理系统中的股票账户分组信息</p>
-        </div>
-      </template>
+    <div class="editor-layout">
+      <section class="panel panel-groups">
+        <header class="panel-header">
+          <span class="panel-title">账户组管理</span>
+          <el-tooltip content="新增账户组" placement="top">
+            <el-button
+              circle
+              size="small"
+              type="primary"
+              @click="toggleCreateMode"
+            >
+              <el-icon><Plus /></el-icon>
+            </el-button>
+          </el-tooltip>
+        </header>
 
-      <div class="content">
-        <!-- 搜索栏 -->
-        <div class="search-bar" style="margin-bottom: 20px">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-input
-                v-model="searchForm.groupId"
-                placeholder="搜索组ID"
-                clearable
-                @input="handleSearch"
+        <transition name="fade">
+          <div v-if="showCreate" class="new-group-block">
+            <el-input
+              v-model="newGroupName"
+              placeholder="输入新增账户组名称"
+              size="small"
+              @keyup.enter="createGroup"
+            />
+            <div class="new-group-actions">
+              <el-button size="small" type="primary" @click="createGroup"
+                >保存</el-button
               >
-                <template #prefix>
-                  <el-icon><Search /></el-icon>
+              <el-button size="small" text @click="cancelCreate"
+                >取消</el-button
+              >
+            </div>
+          </div>
+        </transition>
+
+        <el-scrollbar class="group-list">
+          <div
+            v-for="group in groupsWithStats"
+            :key="group.groupId"
+            :class="['group-item', { active: group.groupId === activeGroupId }]"
+            @click="selectGroup(group.groupId)"
+          >
+            <div class="group-info">
+              <div class="group-name">{{ group.displayName }}</div>
+              <div class="group-meta">{{ group.accountCount }} 个账号</div>
+            </div>
+            <div class="group-actions" @click.stop>
+              <el-popconfirm
+                v-if="group.groupId !== '0'"
+                title="确定删除该账户组？"
+                confirm-button-text="删除"
+                cancel-button-text="取消"
+                confirm-button-type="danger"
+                @confirm="deleteGroup(group)"
+              >
+                <template #reference>
+                  <el-button text size="small">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
                 </template>
-              </el-input>
-            </el-col>
-            <el-col :span="4">
-              <el-button
-                type="primary"
-                style="width: 100%"
-                @click="resetSearch"
-              >
-                <el-icon><RefreshRight /></el-icon>
-                重置
-              </el-button>
-            </el-col>
-            <el-col :span="4">
-              <el-button
-                type="success"
-                style="width: 100%"
-                @click="showAddDialog = true"
-              >
-                <el-icon><Plus /></el-icon>
-                添加组
-              </el-button>
-            </el-col>
-            <el-col :span="4">
-              <el-button
-                type="info"
-                style="width: 100%"
-                @click="showGroupStats"
-              >
-                <el-icon><DataAnalysis /></el-icon>
-                统计
-              </el-button>
-            </el-col>
-          </el-row>
-        </div>
+              </el-popconfirm>
+            </div>
+          </div>
+        </el-scrollbar>
+      </section>
+
+      <section class="panel panel-selected">
+        <header class="panel-header">
+          <span class="panel-title">已选账号</span>
+          <span class="weight-total" :class="{ warning: totalWeight > 100 }">
+            权重合计 {{ totalWeight.toFixed(2) }}%
+          </span>
+        </header>
 
         <el-table
-          v-resizable-columns
-          :data="paginatedGroups"
-          style="width: 100%"
-          height="57vh"
+          :data="selectedAccounts"
+          row-key="id"
+          height="420"
           stripe
+          :empty-text="activeGroupId ? '暂无已选账号' : '请先选择左侧账户组'"
+          @selection-change="handleSelectedSelect"
         >
-          <el-table-column prop="groupId" label="组ID" width="150">
-            <template #default="scope">
-              <el-tag :type="getGroupColor(scope.row.groupId)">
-                {{ scope.row.groupId }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="accountCount" label="账户数量" width="120">
-            <template #default="scope">
-              {{ scope.row.accountCount }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="totalBalance" label="总余额" width="120">
-            <template #default="scope">
-              ${{ scope.row.totalBalance.toLocaleString() }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdDate" label="创建日期" width="150">
-            <template #default="scope">
-              {{ formatDate(scope.row.createdDate) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" min-width="10%">
-            <template #default="scope">
-              <el-button size="small" @click="viewGroupAccounts(scope.row)"
-                >查看账户</el-button
-              >
-              <el-button size="small" @click="editGroup(scope.row)"
-                >编辑</el-button
-              >
-              <el-button
+          <el-table-column type="selection" width="48" />
+          <el-table-column
+            prop="accountName"
+            label="账户名称"
+            min-width="160"
+          />
+          <el-table-column
+            prop="accountNumber"
+            label="资金账号"
+            min-width="150"
+          />
+          <el-table-column label="账户权重%" width="160">
+            <template #default="{ row }">
+              <el-input-number
+                v-model="row.weightPercent"
+                :min="0"
+                :max="100"
+                :step="1"
                 size="small"
-                type="danger"
-                @click="deleteGroup(scope.row)"
-                >删除</el-button
-              >
+                controls-position="right"
+                @change="() => normalizeRowWeight(row)"
+              />
             </template>
           </el-table-column>
         </el-table>
 
-        <!-- 分页组件 -->
-        <div
-          class="pagination-container"
-          style="margin-top: 20px; text-align: center"
-        >
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="filteredGroups.length"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
+        <div class="panel-footer">
+          <el-button
+            type="danger"
+            plain
+            size="small"
+            :disabled="!selectedSelection.length"
+            @click="removeSelectedAccounts"
+          >
+            移出选中账号
+          </el-button>
         </div>
-      </div>
-    </el-card>
+      </section>
 
-    <!-- 编辑组对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑账户组" width="600px">
-      <el-form :model="editForm" label-width="100px">
-        <el-form-item label="组ID">
-          <el-input-number
-            v-model="editForm.groupId"
-            :min="1"
-            :precision="0"
-            style="width: 100%"
-          ></el-input-number>
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input
-            v-model="editForm.description"
-            type="textarea"
-            :rows="3"
-          ></el-input>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showEditDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveGroup">保存</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 添加组对话框 -->
-    <el-dialog v-model="showAddDialog" title="添加账户组" width="600px">
-      <el-form :model="addForm" label-width="100px">
-        <el-form-item label="组ID">
-          <el-input-number
-            v-model="addForm.groupId"
-            :min="1"
-            :precision="0"
-            style="width: 100%"
-          ></el-input-number>
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input
-            v-model="addForm.description"
-            type="textarea"
-            :rows="3"
-          ></el-input>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showAddDialog = false">取消</el-button>
-        <el-button type="primary" @click="addGroup">添加</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 查看账户对话框 -->
-    <el-dialog
-      v-model="showAccountsDialog"
-      :title="`查看账户 - 组 ${selectedGroup?.groupId}`"
-      width="80%"
-    >
-      <div style="margin-bottom: 20px">
-        <el-button type="success" @click="showAddAccountDialog = true">
-          <el-icon><Plus /></el-icon>
-          添加账户
-        </el-button>
-      </div>
-      <el-table
-        v-resizable-columns
-        :data="groupAccounts"
-        style="width: 100%"
-        max-height="400px"
-        stripe
-      >
-        <el-table-column
-          prop="accountName"
-          label="账户名称"
-          min-width="150"
-        ></el-table-column>
-        <el-table-column prop="accountType" label="账户类型" width="120">
-          <template #default="scope">
-            <el-tag :type="getAccountTypeColor(scope.row.accountType)">
-              {{ scope.row.accountType }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="broker"
-          label="经纪商"
-          min-width="120"
-        ></el-table-column>
-        <el-table-column prop="balance" label="账户余额" width="120">
-          <template #default="scope">
-            ${{ scope.row.balance.toLocaleString() }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="scope">
-            <el-tag :type="getStatusColor(scope.row.status)">
-              {{ getStatusText(scope.row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120">
-          <template #default="scope">
-            <el-button
-              size="small"
-              type="danger"
-              @click="removeAccountFromGroup(scope.row)"
-              >移除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <el-button @click="showAccountsDialog = false">关闭</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 添加账户到组对话框 -->
-    <el-dialog
-      v-model="showAddAccountDialog"
-      :title="`添加账户到组 ${selectedGroup?.groupId}`"
-      width="600px"
-    >
-      <div style="margin-bottom: 20px">
-        <el-input
-          v-model="accountSearchQuery"
-          placeholder="搜索账户名称或账户号"
-          clearable
-          @input="filterAvailableAccounts"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
-      <el-table
-        v-resizable-columns
-        :data="filteredAvailableAccounts"
-        style="width: 100%"
-        max-height="300px"
-        stripe
-        @selection-change="handleAccountSelection"
-      >
-        <el-table-column type="selection" width="55"></el-table-column>
-        <el-table-column
-          prop="accountName"
-          label="账户名称"
-          min-width="150"
-        ></el-table-column>
-        <el-table-column prop="accountType" label="账户类型" width="120">
-          <template #default="scope">
-            <el-tag :type="getAccountTypeColor(scope.row.accountType)">
-              {{ scope.row.accountType }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="broker"
-          label="经纪商"
-          min-width="120"
-        ></el-table-column>
-        <el-table-column prop="balance" label="账户余额" width="120">
-          <template #default="scope">
-            ${{ scope.row.balance.toLocaleString() }}
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <el-button @click="showAddAccountDialog = false">取消</el-button>
+      <div class="transfer-controls">
         <el-button
+          circle
           type="primary"
-          :disabled="selectedAccounts.length === 0"
+          :disabled="!availableSelection.length || !activeGroupId"
           @click="addAccountsToGroup"
         >
-          添加选中账户 ({{ selectedAccounts.length }})
+          <el-icon><ArrowLeftBold /></el-icon>
         </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 统计对话框 -->
-    <el-dialog v-model="showStatsDialog" title="账户组统计" width="600px">
-      <div class="stats-content">
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-card>
-              <template #header>
-                <div class="stat-header">
-                  <el-icon><DataAnalysis /></el-icon>
-                  <span>总组数</span>
-                </div>
-              </template>
-              <div class="stat-value">{{ processedGroups.length }}</div>
-            </el-card>
-          </el-col>
-          <el-col :span="12">
-            <el-card>
-              <template #header>
-                <div class="stat-header">
-                  <el-icon><Money /></el-icon>
-                  <span>总资产</span>
-                </div>
-              </template>
-              <div class="stat-value">${{ totalAssets.toLocaleString() }}</div>
-            </el-card>
-          </el-col>
-        </el-row>
-        <el-divider>各组详情</el-divider>
-        <div class="group-stats">
-          <div
-            v-for="group in processedGroups"
-            :key="group.id"
-            class="group-stat-item"
-          >
-            <div class="group-info">
-              <span class="group-name">组 {{ group.groupId }}</span>
-              <span class="group-count">{{ group.accountCount }} 个账户</span>
-            </div>
-            <div class="group-balance">
-              ${{ group.totalBalance.toLocaleString() }}
-            </div>
-          </div>
-        </div>
+        <el-button
+          circle
+          type="info"
+          :disabled="!selectedSelection.length"
+          @click="removeSelectedAccounts"
+        >
+          <el-icon><ArrowRightBold /></el-icon>
+        </el-button>
       </div>
-      <template #footer>
-        <el-button @click="showStatsDialog = false">关闭</el-button>
-      </template>
-    </el-dialog>
+
+      <section class="panel panel-available">
+        <header class="panel-header">
+          <span class="panel-title">待选账号</span>
+          <el-input
+            v-model="availableSearch"
+            size="small"
+            placeholder="搜索账户名称或资金账号"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </header>
+
+        <el-table
+          :data="filteredAvailableAccounts"
+          row-key="id"
+          height="420"
+          stripe
+          :empty-text="availableEmptyText"
+          @selection-change="handleAvailableSelect"
+        >
+          <el-table-column type="selection" width="48" />
+          <el-table-column
+            prop="accountName"
+            label="账户名称"
+            min-width="160"
+          />
+          <el-table-column
+            prop="accountNumber"
+            label="资金账号"
+            min-width="150"
+          />
+          <el-table-column label="当前所属组" min-width="140">
+            <template #default="{ row }">
+              <el-tag size="small" effect="dark">{{
+                groupLabel(row.group)
+              }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </section>
+    </div>
+
+    <footer class="action-bar">
+      <el-button :disabled="!activeGroupId" @click="resetCurrentGroup"
+        >取消</el-button
+      >
+      <el-button
+        type="primary"
+        :loading="saving"
+        :disabled="!activeGroupId"
+        @click="saveChanges"
+        >确认</el-button
+      >
+    </footer>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
-  Search,
-  RefreshRight,
   Plus,
-  DataAnalysis,
-  Money,
+  ArrowLeftBold,
+  ArrowRightBold,
+  Search,
+  Delete,
 } from '@element-plus/icons-vue';
 import { accountGroupAPI, stockAccountAPI } from '../../utils/api.js';
 
-const accountGroups = ref([]);
+const groups = ref([]);
 const allAccounts = ref([]);
-const showEditDialog = ref(false);
-const showAddDialog = ref(false);
-const showAccountsDialog = ref(false);
-const showStatsDialog = ref(false);
-const showAddAccountDialog = ref(false);
-const selectedGroup = ref(null);
-const groupAccounts = ref([]);
+const activeGroupId = ref('');
 const selectedAccounts = ref([]);
-const accountSearchQuery = ref('');
+const selectedSelection = ref([]);
+const availableSelection = ref([]);
+const availableSearch = ref('');
+const showCreate = ref(false);
+const newGroupName = ref('');
+const saving = ref(false);
 
-// 搜索表单
-const searchForm = ref({
-  groupId: '',
+const normalizeWeight = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  return Math.min(100, Math.max(0, Number(num.toFixed(2))));
+};
+
+const cloneAccount = (account) => ({
+  ...account,
+  group: account.group != null ? account.group.toString() : '0',
+  weightPercent: normalizeWeight(account.weightPercent ?? 0),
 });
 
-// 分页相关
-const currentPage = ref(1);
-const pageSize = ref(10);
+const groupsWithStats = computed(() => {
+  const stats = allAccounts.value.reduce((acc, account) => {
+    const key = account.group != null ? account.group.toString() : '0';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
 
-const editForm = ref({
-  id: '',
-  groupId: null,
-  description: '',
-  createdDate: '',
-  lastUpdated: '',
-  name: '',
-});
-
-const addForm = ref({
-  groupId: null,
-  description: '',
-});
-
-// 组颜色映射
-const getGroupColor = (groupId) => {
-  const colors = ['success', 'warning', 'info', 'primary', 'danger'];
-  const numericId = Number(groupId);
-  if (!Number.isNaN(numericId)) {
-    return colors[Math.abs(numericId) % colors.length] || 'info';
-  }
-  return 'info';
-};
-
-// 账户类型颜色映射
-const getAccountTypeColor = (accountType) => {
-  const typeColors = {
-    现金账户: 'success',
-    保证金账户: 'warning',
-    IRA账户: 'info',
-    'Roth IRA账户': 'primary',
-  };
-  return typeColors[accountType] || 'info';
-};
-
-// 状态颜色映射
-const getStatusColor = (status) => {
-  const statusColors = {
-    active: 'success',
-    frozen: 'warning',
-    closed: 'danger',
-  };
-  return statusColors[status] || 'info';
-};
-
-// 状态文本映射
-const getStatusText = (status) => {
-  const statusTexts = {
-    active: '活跃',
-    frozen: '冻结',
-    closed: '关闭',
-  };
-  return statusTexts[status] || status;
-};
-
-// 格式化日期
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString('zh-CN');
-};
-
-// 计算账户组统计信息
-const processedGroups = computed(() => {
-  const statsMap = new Map();
-
-  allAccounts.value.forEach((account) => {
-    const groupId = account.group?.toString() ?? '';
-    const stats = statsMap.get(groupId) || {
-      accountCount: 0,
-      totalBalance: 0,
-    };
-    stats.accountCount += 1;
-    const balance = Number(account.balance);
-    if (!Number.isNaN(balance)) {
-      stats.totalBalance += balance;
-    }
-    statsMap.set(groupId, stats);
-  });
-
-  const groups = accountGroups.value.map((group) => {
-    const key = group.groupId?.toString() ?? '';
-    const stats = statsMap.get(key) || { accountCount: 0, totalBalance: 0 };
-
-    return {
-      ...group,
-      groupId: key,
-      accountCount: stats.accountCount,
-      totalBalance: stats.totalBalance,
-    };
-  });
-
-  statsMap.forEach((stats, key) => {
-    const exists = groups.some(
-      (group) => (group.groupId ?? '').toString() === key
-    );
-    if (!exists && key !== '') {
-      groups.push({
-        id: `unregistered-${key}`,
-        groupId: key,
-        name: `未注册组 ${key}`,
-        description: getGroupDescription(key),
-        createdDate: '',
-        lastUpdated: '',
-        accountCount: stats.accountCount,
-        totalBalance: stats.totalBalance,
-      });
-    }
-  });
-
-  return groups.sort((a, b) => {
-    const asNumber = Number(a.groupId);
-    const bsNumber = Number(b.groupId);
-    const aIsNumber = !Number.isNaN(asNumber);
-    const bIsNumber = !Number.isNaN(bsNumber);
-
-    if (aIsNumber && bIsNumber) {
-      return asNumber - bsNumber;
-    }
-
-    return (a.groupId ?? '')
-      .toString()
-      .localeCompare((b.groupId ?? '').toString());
-  });
-});
-// 获取组描述
-const getGroupDescription = (groupId) => {
-  const descriptions = {
-    1: '交易账户 - 用于股票、期权、外汇等交易的账户组',
-    2: '退休账户 - IRA、Roth IRA等退休投资账户',
-    3: '个人投资 - 个人长期投资组合',
-    4: '外汇交易 - 外汇交易专用账户',
-    5: '机构投资 - 机构投资者和创业投资账户',
-  };
-  return descriptions[groupId] || `组 ${groupId} 的账户集合`;
-};
-
-// 过滤后的组列表
-const filteredGroups = computed(() => {
-  let filtered = processedGroups.value;
-
-  if (searchForm.value.groupId) {
-    filtered = filtered.filter((group) =>
-      group.groupId.toString().includes(searchForm.value.groupId.toString())
-    );
-  }
-
-  return filtered;
-});
-
-// 分页后的组列表
-const paginatedGroups = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredGroups.value.slice(start, end);
-});
-
-// 可用的账户列表（不在当前组中的账户）
-const availableAccounts = computed(() => {
-  if (!selectedGroup.value) return [];
-  return allAccounts.value.filter(
-    (account) => account.group !== selectedGroup.value.groupId.toString()
-  );
-});
-
-// 过滤后的可用账户列表
-const filteredAvailableAccounts = computed(() => {
-  let filtered = availableAccounts.value;
-
-  if (accountSearchQuery.value) {
-    const query = accountSearchQuery.value.toLowerCase();
-    filtered = filtered.filter(
-      (account) =>
-        account.accountName.toLowerCase().includes(query) ||
-        account.accountNumber.toLowerCase().includes(query)
-    );
-  }
-
-  return filtered;
-});
-
-// 总资产
-const totalAssets = computed(() => {
-  return processedGroups.value.reduce(
-    (sum, group) => sum + (Number(group.totalBalance) || 0),
-    0
-  );
-});
-
-// 处理搜索
-const handleSearch = () => {
-  currentPage.value = 1; // 搜索时重置到第一页
-};
-
-// 重置搜索
-const resetSearch = () => {
-  searchForm.value = {
-    groupId: '',
-  };
-  currentPage.value = 1; // 重置搜索时回到第一页
-};
-
-// 处理每页大小变化
-const handleSizeChange = (newSize) => {
-  pageSize.value = newSize;
-  currentPage.value = 1;
-};
-
-// 处理页码变化
-const handleCurrentChange = (newPage) => {
-  currentPage.value = newPage;
-};
-
-// 获取账户组列表
-const fetchAccountGroups = async () => {
-  try {
-    const groups = await accountGroupAPI.getAccountGroups();
-    accountGroups.value = groups.map((group) => ({
-      ...group,
-      groupId: group?.groupId?.toString() ?? '',
-    }));
-  } catch (error) {
-    console.error('获取账户组列表失败:', error);
-    ElMessage.error('获取账户组列表失败');
-  }
-};
-
-// 获取股票账户列表
-const fetchStockAccounts = async () => {
-  try {
-    const accountList = await stockAccountAPI.getStockAccounts();
-    allAccounts.value = accountList;
-  } catch (error) {
-    console.error('获取股票账户列表失败:', error);
-    ElMessage.error('获取股票账户列表失败');
-  }
-};
-
-// 查看组内账户
-const viewGroupAccounts = (group) => {
-  selectedGroup.value = group;
-  groupAccounts.value = allAccounts.value.filter(
-    (account) => account.group === group.groupId.toString()
-  );
-  showAccountsDialog.value = true;
-};
-
-// 移除账户从组
-const removeAccountFromGroup = async (account) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要将账户 "${account.accountName}" 移除出组 ${selectedGroup.value.groupId} 吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    );
-
-    await stockAccountAPI.updateStockAccount(account.id, {
-      ...account,
-      group: '0',
-      lastUpdated: new Date().toISOString(),
-    });
-
-    ElMessage.success('账户已移除出组');
-    await fetchStockAccounts();
-    // 重新加载当前组的账户列表
-    groupAccounts.value = allAccounts.value.filter(
-      (acc) => acc.group === selectedGroup.value.groupId.toString()
-    );
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('移除账户失败:', error);
-      ElMessage.error('移除账户失败');
-    }
-  }
-};
-
-// 处理账户选择
-const handleAccountSelection = (selection) => {
-  selectedAccounts.value = selection;
-};
-
-// 添加账户到组
-const addAccountsToGroup = async () => {
-  try {
-    for (const account of selectedAccounts.value) {
-      await stockAccountAPI.updateStockAccount(account.id, {
-        ...account,
-        group: selectedGroup.value.groupId.toString(),
-        lastUpdated: new Date().toISOString(),
-      });
-    }
-
-    ElMessage.success(
-      `已添加 ${selectedAccounts.value.length} 个账户到组 ${selectedGroup.value.groupId}`
-    );
-    selectedAccounts.value = [];
-    showAddAccountDialog.value = false;
-    await fetchStockAccounts();
-    // 重新加载当前组的账户列表
-    groupAccounts.value = allAccounts.value.filter(
-      (acc) => acc.group === selectedGroup.value.groupId.toString()
-    );
-  } catch (error) {
-    console.error('添加账户失败:', error);
-    ElMessage.error('添加账户失败');
-  }
-};
-
-// 过滤可用账户
-const filterAvailableAccounts = () => {
-  // 计算属性会自动更新，这里不需要额外逻辑
-};
-
-// 编辑组
-const editGroup = (group) => {
-  const parsedGroupId = Number(group.groupId);
-  editForm.value = {
-    id: group.id,
-    groupId: Number.isNaN(parsedGroupId) ? null : parsedGroupId,
-    description: group.description ?? '',
-    createdDate: group.createdDate ?? '',
-    lastUpdated: group.lastUpdated ?? '',
-    name: group.name ?? '',
-  };
-  showEditDialog.value = true;
-};
-
-// 保存组
-const saveGroup = async () => {
-  if (!editForm.value.id) {
-    ElMessage.error('缺少组标识，无法保存');
-    return;
-  }
-
-  const groupIdValue =
-    editForm.value.groupId !== null ? editForm.value.groupId.toString() : '';
-  if (!groupIdValue) {
-    ElMessage.warning('请输入有效的组ID');
-    return;
-  }
-
-  try {
-    const payload = {
-      groupId: groupIdValue,
-      description: editForm.value.description?.trim() || '',
-    };
-    payload.name =
-      editForm.value.name?.trim() ||
-      payload.description ||
-      '组 ' + groupIdValue;
-
-    const updatedGroup = await accountGroupAPI.updateAccountGroup(
-      editForm.value.id,
-      payload
-    );
-
-    const index = accountGroups.value.findIndex(
-      (group) => group.id === updatedGroup.id
-    );
-    if (index !== -1) {
-      accountGroups.value[index] = {
-        ...updatedGroup,
-        groupId: updatedGroup.groupId?.toString() ?? payload.groupId,
+  return groups.value
+    .map((group) => {
+      const id = group.groupId != null ? group.groupId.toString() : '';
+      return {
+        ...group,
+        groupId: id,
+        displayName: group.name || (id === '0' ? '未分配' : '组 ' + id),
+        accountCount: stats[id] || 0,
       };
-    }
-
-    ElMessage.success('组信息更新成功');
-    showEditDialog.value = false;
-  } catch (error) {
-    console.error('更新组信息失败:', error);
-    ElMessage.error('更新组信息失败');
-  }
-};
-
-// 删除组
-const deleteGroup = async (group) => {
-  if (!group?.id || group.id.toString().startsWith('unregistered-')) {
-    ElMessage.warning('该组未注册，无法删除');
-    return;
-  }
-
-  try {
-    await ElMessageBox.confirm(
-      '确定要删除组 ' +
-        group.groupId +
-        ' 吗？此操作将影响 ' +
-        group.accountCount +
-        ' 个账户。',
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    );
-
-    const accountsToUpdate = allAccounts.value.filter(
-      (account) => account.group === group.groupId.toString()
-    );
-    for (const account of accountsToUpdate) {
-      await stockAccountAPI.updateStockAccount(account.id, {
-        ...account,
-        group: '0',
-        lastUpdated: new Date().toISOString(),
+    })
+    .sort((a, b) => {
+      if (a.groupId === b.groupId) return 0;
+      if (a.groupId === '0') return 1;
+      if (b.groupId === '0') return -1;
+      return a.groupId.localeCompare(b.groupId, 'zh-Hans-CN', {
+        numeric: true,
       });
-    }
+    });
+});
 
-    await accountGroupAPI.deleteAccountGroup(group.id);
-    await Promise.all([fetchStockAccounts(), fetchAccountGroups()]);
+const groupLabel = (groupId) => {
+  const id = groupId != null ? groupId.toString() : '0';
+  if (id === '0' || !id) return '未分配';
+  const found = groups.value.find((group) => group.groupId === id);
+  return found?.name || '组 ' + id;
+};
 
-    currentPage.value = 1;
-    ElMessage.success('组删除成功，相关账户已移至未分组');
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除组失败:', error);
-      ElMessage.error('删除组失败');
-    }
+const selectedIds = computed(
+  () => new Set(selectedAccounts.value.map((item) => item.id))
+);
+
+const availableAccounts = computed(() =>
+  allAccounts.value.filter((account) => !selectedIds.value.has(account.id))
+);
+
+const filteredAvailableAccounts = computed(() => {
+  const keyword = availableSearch.value.trim().toLowerCase();
+  if (!keyword) return availableAccounts.value;
+  return availableAccounts.value.filter((account) => {
+    const name = account.accountName?.toLowerCase?.() || '';
+    const number = account.accountNumber?.toLowerCase?.() || '';
+    return name.includes(keyword) || number.includes(keyword);
+  });
+});
+
+const availableEmptyText = computed(() =>
+  activeGroupId.value ? '暂无可选账号' : '请先选择左侧账户组'
+);
+
+const totalWeight = computed(() =>
+  selectedAccounts.value.reduce(
+    (sum, account) => sum + (Number(account.weightPercent) || 0),
+    0
+  )
+);
+
+const toggleCreateMode = () => {
+  showCreate.value = !showCreate.value;
+  if (!showCreate.value) {
+    newGroupName.value = '';
   }
 };
 
-// 添加组
-const addGroup = async () => {
-  const groupIdValue =
-    addForm.value.groupId !== null
-      ? addForm.value.groupId.toString().trim()
-      : '';
-  if (!groupIdValue) {
-    ElMessage.warning('请输入有效的组ID');
+const cancelCreate = () => {
+  showCreate.value = false;
+  newGroupName.value = '';
+};
+
+const createGroup = async () => {
+  const name = newGroupName.value.trim();
+  if (!name) {
+    ElMessage.warning('请输入账户组名称');
     return;
   }
-
-  const exists = accountGroups.value.some(
-    (group) => (group.groupId ?? '').toString() === groupIdValue
-  );
+  const exists = groups.value.some((group) => group.groupId === name);
   if (exists) {
-    ElMessage.warning('组ID已存在');
+    ElMessage.warning('该账户组已存在');
     return;
   }
-
   try {
     const now = new Date().toISOString();
-    const payload = {
-      groupId: groupIdValue,
-      description: addForm.value.description?.trim() || '',
-      name: addForm.value.description?.trim() || '组 ' + groupIdValue,
+    await accountGroupAPI.createAccountGroup({
+      groupId: name,
+      name,
+      description: '',
       createdDate: now,
       lastUpdated: now,
-    };
-    const createdGroup = await accountGroupAPI.createAccountGroup(payload);
-    accountGroups.value.push({
-      ...createdGroup,
-      groupId: createdGroup.groupId?.toString() ?? groupIdValue,
     });
-
-    ElMessage.success('组添加成功');
-    showAddDialog.value = false;
-    addForm.value = {
-      groupId: null,
-      description: '',
-    };
+    ElMessage.success('账户组创建成功');
+    cancelCreate();
+    await fetchAccountGroups();
+    selectGroup(name);
   } catch (error) {
-    console.error('添加组失败:', error);
-    ElMessage.error('添加组失败');
+    console.error('创建账户组失败:', error);
+    ElMessage.error('创建账户组失败');
   }
 };
 
-// 显示统计对话框
-const showGroupStats = () => {
-  showStatsDialog.value = true;
+const selectGroup = (groupId) => {
+  const id = groupId != null ? groupId.toString() : '';
+  activeGroupId.value = id;
+  availableSearch.value = '';
+  populateSelection();
 };
 
-onMounted(() => {
-  fetchAccountGroups();
-  fetchStockAccounts();
+const populateSelection = () => {
+  if (!activeGroupId.value) {
+    selectedAccounts.value = [];
+    selectedSelection.value = [];
+    availableSelection.value = [];
+    return;
+  }
+  const id = activeGroupId.value.toString();
+  selectedAccounts.value = allAccounts.value
+    .filter((account) => (account.group ?? '0').toString() === id)
+    .map(cloneAccount);
+  selectedSelection.value = [];
+  availableSelection.value = [];
+};
+
+const handleSelectedSelect = (rows) => {
+  selectedSelection.value = rows.map((row) => row.id);
+};
+
+const handleAvailableSelect = (rows) => {
+  availableSelection.value = rows.map((row) => row.id);
+};
+
+const addAccountsToGroup = () => {
+  if (!activeGroupId.value) {
+    ElMessage.warning('请先选择账户组');
+    return;
+  }
+  if (!availableSelection.value.length) return;
+  const current = new Set(selectedAccounts.value.map((account) => account.id));
+  const additions = allAccounts.value
+    .filter((account) => availableSelection.value.includes(account.id))
+    .filter((account) => !current.has(account.id))
+    .map((account) => ({ ...cloneAccount(account), weightPercent: 0 }));
+  if (!additions.length) {
+    availableSelection.value = [];
+    return;
+  }
+  selectedAccounts.value = selectedAccounts.value.concat(additions);
+  availableSelection.value = [];
+};
+
+const removeSelectedAccounts = () => {
+  if (!selectedSelection.value.length) return;
+  const removeIds = new Set(selectedSelection.value);
+  selectedAccounts.value = selectedAccounts.value.filter(
+    (account) => !removeIds.has(account.id)
+  );
+  selectedSelection.value = [];
+};
+
+const resetCurrentGroup = () => {
+  populateSelection();
+};
+
+const normalizeRowWeight = (row) => {
+  row.weightPercent = normalizeWeight(row.weightPercent ?? 0);
+};
+
+const saveChanges = async () => {
+  if (!activeGroupId.value) {
+    ElMessage.warning('请先选择账户组');
+    return;
+  }
+  if (totalWeight.value > 100.001) {
+    ElMessage.warning('权重合计不能超过 100%');
+    return;
+  }
+
+  const targetGroup = activeGroupId.value.toString();
+  const desiredMap = new Map(
+    selectedAccounts.value.map((account) => [
+      account.id,
+      {
+        group: targetGroup,
+        weightPercent: normalizeWeight(account.weightPercent ?? 0),
+      },
+    ])
+  );
+
+  const updates = [];
+  const now = new Date().toISOString();
+
+  allAccounts.value.forEach((account) => {
+    const id = account.id;
+    const desired = desiredMap.get(id);
+    const currentGroup = account.group != null ? account.group.toString() : '0';
+    const nextGroup = desired ? desired.group : '0';
+    const nextWeight = desired ? desired.weightPercent : 0;
+    const groupChanged = currentGroup !== nextGroup;
+    const weightChanged =
+      normalizeWeight(account.weightPercent ?? 0) !== nextWeight;
+
+    if (groupChanged || weightChanged) {
+      updates.push({
+        ...account,
+        group: nextGroup,
+        weightPercent: nextWeight,
+        lastUpdated: now,
+      });
+    }
+  });
+
+  if (!updates.length) {
+    ElMessage.info('没有需要保存的更改');
+    return;
+  }
+
+  saving.value = true;
+  try {
+    await Promise.all(
+      updates.map((account) =>
+        stockAccountAPI.updateStockAccount(account.id, {
+          accountName: account.accountName,
+          accountType: account.accountType,
+          broker: account.broker,
+          accountNumber: account.accountNumber,
+          balance: account.balance,
+          availableFunds: account.availableFunds,
+          status: account.status,
+          group: account.group,
+          createdDate: account.createdDate,
+          weightPercent: account.weightPercent,
+          lastUpdated: account.lastUpdated,
+        })
+      )
+    );
+    ElMessage.success('账户组设置已保存');
+    await fetchStockAccounts();
+    populateSelection();
+  } catch (error) {
+    console.error('保存账户组失败:', error);
+    ElMessage.error('保存失败，请重试');
+  } finally {
+    saving.value = false;
+  }
+};
+
+const fetchAccountGroups = async () => {
+  try {
+    const data = await accountGroupAPI.getAccountGroups();
+    groups.value = (data || []).map((group) => ({
+      ...group,
+      groupId: group.groupId != null ? group.groupId.toString() : '0',
+    }));
+  } catch (error) {
+    console.error('获取账户组失败:', error);
+    ElMessage.error('获取账户组失败');
+  }
+};
+
+const fetchStockAccounts = async () => {
+  try {
+    const data = await stockAccountAPI.getStockAccounts();
+    allAccounts.value = (data || []).map(cloneAccount);
+  } catch (error) {
+    console.error('获取资金账户失败:', error);
+    ElMessage.error('获取资金账户失败');
+  }
+};
+
+const ensureActiveGroup = () => {
+  if (!groups.value.length) {
+    activeGroupId.value = '';
+    selectedAccounts.value = [];
+    return;
+  }
+  if (activeGroupId.value) {
+    populateSelection();
+    return;
+  }
+  const first =
+    groups.value.find((group) => group.groupId !== '0') || groups.value[0];
+  if (first) {
+    activeGroupId.value = first.groupId;
+    populateSelection();
+  }
+};
+
+const deleteGroup = async (group) => {
+  if (!group || group.groupId === '0') return;
+  try {
+    await ElMessageBox.confirm(
+      '删除后该组内账号将回到未分配状态，是否继续？',
+      '提示',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+  } catch {
+    return;
+  }
+
+  try {
+    const resetAccounts = allAccounts.value.filter(
+      (account) => (account.group ?? '0').toString() === group.groupId
+    );
+    const now = new Date().toISOString();
+    await Promise.all(
+      resetAccounts.map((account) =>
+        stockAccountAPI.updateStockAccount(account.id, {
+          accountName: account.accountName,
+          accountType: account.accountType,
+          broker: account.broker,
+          accountNumber: account.accountNumber,
+          balance: account.balance,
+          availableFunds: account.availableFunds,
+          status: account.status,
+          group: '0',
+          weightPercent: 0,
+          createdDate: account.createdDate,
+          lastUpdated: now,
+        })
+      )
+    );
+
+    await accountGroupAPI.deleteAccountGroup(group.id);
+    ElMessage.success('账户组已删除');
+    if (activeGroupId.value === group.groupId) {
+      activeGroupId.value = '';
+    }
+    await Promise.all([fetchAccountGroups(), fetchStockAccounts()]);
+    ensureActiveGroup();
+  } catch (error) {
+    console.error('删除账户组失败:', error);
+    ElMessage.error('删除账户组失败');
+  }
+};
+
+onMounted(async () => {
+  await fetchAccountGroups();
+  await fetchStockAccounts();
+  ensureActiveGroup();
 });
 </script>
 
 <style scoped>
 .account-group-edit {
-  padding: 20px;
+  padding: 24px;
+  background: #0f172a;
+  min-height: calc(100vh - 120px);
+  color: #e2e8f0;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.editor-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr 64px 1fr;
+  gap: 16px;
 }
 
-.card-header h2 {
-  margin: 0;
-  color: #333;
-}
-
-.card-header p {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
-}
-
-.content {
-  margin-top: 20px;
-}
-
-.search-bar {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
-
-.search-bar .el-row {
-  align-items: center;
-}
-
-.search-bar .el-col {
-  margin-bottom: 0;
-}
-
-.search-bar .el-button {
-  height: 40px;
-  font-weight: 500;
-}
-
-.search-bar .el-button .el-icon {
-  margin-right: 5px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.pagination-container .el-pagination {
-  margin: 0;
-}
-
-.stats-content {
-  padding: 20px 0;
-}
-
-.stat-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #409eff;
-  text-align: center;
-}
-
-.group-stats {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.group-stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  background: #fafafa;
-}
-
-.group-info {
+.panel {
+  background: rgba(15, 23, 42, 0.92);
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  min-height: 520px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #f8fafc;
+  margin-bottom: 12px;
+}
+
+.panel-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.panel-groups {
+  padding-right: 8px;
+}
+
+.group-list {
+  flex: 1;
+}
+
+.group-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #e2e8f0;
+}
+
+.group-item + .group-item {
+  margin-top: 8px;
+}
+
+.group-item:hover {
+  background: rgba(59, 130, 246, 0.22);
+}
+
+.group-item.active {
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.6),
+    rgba(59, 130, 246, 0.28)
+  );
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
 }
 
 .group-name {
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
 }
 
-.group-count {
+.group-meta {
   font-size: 12px;
-  color: #666;
+  color: #94a3b8;
 }
 
-.group-balance {
-  font-weight: 500;
-  color: #409eff;
+.group-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.group-item:hover .group-actions {
+  opacity: 1;
+}
+
+.new-group-block {
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.new-group-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.panel-selected,
+.panel-available {
+  position: relative;
+}
+
+.panel-footer {
+  margin-top: 12px;
+  text-align: right;
+}
+
+.weight-total {
+  font-size: 12px;
+  color: #a5b4fc;
+}
+
+.weight-total.warning {
+  color: #f97316;
+}
+
+.transfer-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.transfer-controls .el-button {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: rgba(59, 130, 246, 0.25);
+  color: #e0f2fe;
+}
+
+.transfer-controls .el-button.is-disabled {
+  background: rgba(100, 116, 139, 0.25);
+  color: rgba(226, 232, 240, 0.45);
+}
+
+.panel-available .panel-header {
+  gap: 10px;
+}
+
+.panel-available .panel-header .el-input {
+  flex: 1;
+}
+
+.action-bar {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+:deep(.el-table) {
+  background: transparent;
+  color: #e2e8f0;
+}
+
+:deep(.el-table th),
+:deep(.el-table tr) {
+  background: transparent;
+}
+
+:deep(.el-table__body tr:hover > td) {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+}
+
+:deep(.el-table__empty-text) {
+  color: #64748b;
+}
+
+:deep(.el-input__inner),
+:deep(.el-input-number .el-input__inner) {
+  background: rgba(15, 23, 42, 0.82);
+  color: #e2e8f0;
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+:deep(.el-input__wrapper) {
+  background: rgba(15, 23, 42, 0.82);
+}
+
+:deep(.el-button.is-text) {
+  color: #94a3b8;
+}
+
+@media (max-width: 1200px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .transfer-controls {
+    flex-direction: row;
+    justify-content: center;
+  }
 }
 </style>
