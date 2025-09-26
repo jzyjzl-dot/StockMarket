@@ -11,44 +11,119 @@
         <!-- 资金查询 -->
         <el-tab-pane label="资金查询" name="funds">
           <div class="query-section">
-            <el-form :inline="true" :model="fundsForm" class="query-form">
-              <el-form-item label="账户">
-                <el-select
-                  v-model="fundsForm.account"
-                  placeholder="选择账户"
-                  clearable
-                >
-                  <el-option
-                    v-for="account in accounts"
-                    :key="account.id"
-                    :label="account.name"
-                    :value="account.id"
-                  />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="日期范围">
-                <el-date-picker
-                  v-model="fundsForm.dateRange"
-                  type="daterange"
-                  range-separator="至"
-                  start-placeholder="开始日期"
-                  end-placeholder="结束日期"
-                  format="YYYY-MM-DD"
-                  value-format="YYYY-MM-DD"
-                />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="queryFunds">查询</el-button>
-                <el-button @click="resetFunds">重置</el-button>
-              </el-form-item>
-            </el-form>
+            <div class="funds-toolbar">
+              <el-form :inline="true" :model="fundsForm" class="query-form">
+                <el-form-item label="资金账号">
+                  <el-select
+                    v-model="fundsForm.fundAccount"
+                    placeholder="选择资金账号"
+                    clearable
+                    filterable
+                    style="width: 180px"
+                  >
+                    <el-option
+                      v-for="item in fundAccountOptions"
+                      :key="item"
+                      :label="item"
+                      :value="item"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="账户名称">
+                  <el-select
+                    v-model="fundsForm.accountName"
+                    placeholder="选择账户名称"
+                    clearable
+                    filterable
+                    style="width: 180px"
+                  >
+                    <el-option
+                      v-for="item in accountNameOptions"
+                      :key="item"
+                      :label="item"
+                      :value="item"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button
+                    type="primary"
+                    :loading="fundsLoading"
+                    @click="queryFunds"
+                  >
+                    查询
+                  </el-button>
+                  <el-button :disabled="fundsLoading" @click="resetFunds">
+                    重置
+                  </el-button>
+                </el-form-item>
+              </el-form>
+              <el-button
+                type="success"
+                :disabled="fundsData.length === 0"
+                :loading="fundsExporting"
+                @click="exportFunds"
+              >
+                导出数据
+              </el-button>
+            </div>
 
-            <el-table :data="fundsData" style="width: 100%" stripe>
-              <el-table-column prop="account" label="账户" />
-              <el-table-column prop="balance" label="余额" />
-              <el-table-column prop="available" label="可用资金" />
-              <el-table-column prop="frozen" label="冻结资金" />
-              <el-table-column prop="date" label="日期" />
+            <el-table
+              :data="fundsData"
+              style="width: 100%"
+              stripe
+              border
+              :loading="fundsLoading"
+              empty-text="暂无资金数据"
+            >
+              <el-table-column
+                prop="fundAccount"
+                label="资金账号"
+                min-width="140"
+              />
+              <el-table-column
+                prop="accountName"
+                label="账户名称"
+                min-width="140"
+              />
+              <el-table-column label="币种类别" min-width="120">
+                <template #default="scope">
+                  {{ currencyLabel(scope.row.currency) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="资金余额" min-width="140" align="right">
+                <template #default="scope">
+                  {{ formatAmount(scope.row.balance) }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                label="子单可用资金"
+                min-width="150"
+                align="right"
+              >
+                <template #default="scope">
+                  {{ formatAmount(scope.row.subAvailable) }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                label="母单可用资金"
+                min-width="150"
+                align="right"
+              >
+                <template #default="scope">
+                  {{ formatAmount(scope.row.masterAvailable) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="总资产" min-width="140" align="right">
+                <template #default="scope">
+                  {{ formatAmount(scope.row.totalAsset) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="总市值" min-width="140" align="right">
+                <template #default="scope">
+                  {{ formatAmount(scope.row.marketValue) }}
+                </template>
+              </el-table-column>
             </el-table>
           </div>
         </el-tab-pane>
@@ -307,7 +382,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h } from 'vue';
+import { ref, reactive, h, onMounted } from 'vue';
 import { ElMessage, ElTag } from 'element-plus';
 import { tradingAPI } from '@/utils/api';
 import * as XLSX from 'xlsx';
@@ -315,15 +390,56 @@ import * as XLSX from 'xlsx';
 const activeTab = ref('funds');
 
 // 账户数据（示例）
-const accounts = ref([
+const defaultAccounts = [
   { id: '001', name: '主账户' },
   { id: '002', name: '子账户A' },
   { id: '003', name: '子账户B' },
-]);
+];
+const accounts = ref([...defaultAccounts]);
+
+const loadAccounts = async () => {
+  try {
+    const data = await tradingAPI.getStockAccounts();
+    if (Array.isArray(data) && data.length) {
+      accounts.value = data.map((item, index) => {
+        const fallbackId =
+          item.id ??
+          item.accountNumber ??
+          item.account_number ??
+          item.accountName ??
+          item.account_name ??
+          `account-${index}`;
+
+        const nameSource =
+          item.accountName ||
+          item.account_name ||
+          item.accountNumber ||
+          item.account_number ||
+          item.id ||
+          fallbackId;
+
+        return {
+          id: fallbackId.toString(),
+          name: nameSource.toString(),
+        };
+      });
+    }
+  } catch (error) {
+    console.warn('加载账户列表失败:', error);
+  }
+};
 
 // 资金查询
-const fundsForm = reactive({ account: '', dateRange: [] });
+const fundsForm = reactive({
+  fundAccount: '',
+  accountName: '',
+});
 const fundsData = ref([]);
+const fundsLoading = ref(false);
+const fundsExporting = ref(false);
+const fundAccountOptions = ref([]);
+const accountNameOptions = ref([]);
+const allFundsRows = ref([]);
 
 // 持仓查询
 const positionsForm = reactive({
@@ -357,31 +473,142 @@ const handleTabClick = (tab) => {
   console.log('切换到:', tab.props.name);
 };
 
-// 资金查询示例
-const queryFunds = async () => {
-  ElMessage.success('资金查询成功');
-  fundsData.value = [
-    {
-      account: '主账户',
-      balance: '100,000.00',
-      available: '95,000.00',
-      frozen: '5,000.00',
-      date: '2024-01-15',
-    },
-    {
-      account: '子账户A',
-      balance: '50,000.00',
-      available: '48,000.00',
-      frozen: '2,000.00',
-      date: '2024-01-15',
-    },
-  ];
+const formatAmount = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '--';
+  return num.toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
-const resetFunds = () => {
-  fundsForm.account = '';
-  fundsForm.dateRange = [];
-  fundsData.value = [];
+
+const currencyLabel = (currency) => {
+  if (!currency) return '--';
+  const normalized = String(currency).trim().toUpperCase();
+  const labelMap = {
+    CNY: '人民币',
+    RMB: '人民币',
+    USD: '美元',
+    HKD: '港币',
+    JPY: '日元',
+  };
+  return labelMap[normalized] || currency;
 };
+
+const updateFundOptions = (rows) => {
+  const accountSet = new Set();
+  const nameSet = new Set();
+  rows.forEach((row) => {
+    if (!row) return;
+    if (row.fundAccount) {
+      accountSet.add(row.fundAccount);
+    }
+    if (row.accountName) {
+      nameSet.add(row.accountName);
+    }
+  });
+  fundAccountOptions.value = Array.from(accountSet);
+  accountNameOptions.value = Array.from(nameSet);
+};
+
+const buildFundFilters = () => {
+  const filters = {};
+  if (fundsForm.fundAccount) {
+    filters.fundAccount = fundsForm.fundAccount;
+  }
+  if (fundsForm.accountName) {
+    filters.accountName = fundsForm.accountName;
+  }
+  return filters;
+};
+
+const requestFunds = async (filters = {}, { silent = false } = {}) => {
+  fundsLoading.value = true;
+  try {
+    const data = await tradingAPI.getAccountFunds(filters);
+    fundsData.value = Array.isArray(data) ? data : [];
+    const hasFilters = Object.keys(filters).length > 0;
+    if (!hasFilters) {
+      allFundsRows.value = [...fundsData.value];
+      updateFundOptions(fundsData.value);
+    }
+    if (!silent) {
+      const message =
+        fundsData.value.length > 0
+          ? '查询成功，共 ' + fundsData.value.length + ' 条资金记录'
+          : '未查询到资金记录';
+      ElMessage.success(message);
+    }
+  } catch (error) {
+    console.error('获取资金数据失败:', error);
+    ElMessage.error('获取资金数据失败，请稍后重试');
+  } finally {
+    fundsLoading.value = false;
+  }
+};
+
+const queryFunds = () => requestFunds(buildFundFilters());
+
+const resetFunds = async () => {
+  fundsForm.fundAccount = '';
+  fundsForm.accountName = '';
+  if (allFundsRows.value.length) {
+    fundsData.value = [...allFundsRows.value];
+    updateFundOptions(allFundsRows.value);
+    ElMessage.success('已重置资金查询条件');
+    return;
+  }
+  await requestFunds({}, { silent: true });
+  ElMessage.success('已重置资金查询条件');
+};
+
+const toNumber = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  return Number(num.toFixed(2));
+};
+
+const exportFunds = async () => {
+  if (fundsData.value.length === 0) {
+    ElMessage.warning('没有数据可导出');
+    return;
+  }
+
+  fundsExporting.value = true;
+  try {
+    const exportRows = fundsData.value.map((row) => ({
+      资金账号: row.fundAccount,
+      账户名称: row.accountName,
+      币种类别: currencyLabel(row.currency),
+      资金余额: toNumber(row.balance),
+      子单可用资金: toNumber(row.subAvailable),
+      母单可用资金: toNumber(row.masterAvailable),
+      总资产: toNumber(row.totalAsset),
+      总市值: toNumber(row.marketValue),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '资金查询');
+
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+    const filename = '资金查询_' + dateStr + '_' + timeStr + '.xlsx';
+    XLSX.writeFile(wb, filename);
+    ElMessage.success('导出成功');
+  } catch (error) {
+    console.error('资金数据导出失败:', error);
+    ElMessage.error('导出失败，请重试');
+  } finally {
+    fundsExporting.value = false;
+  }
+};
+
+onMounted(() => {
+  loadAccounts();
+  requestFunds({}, { silent: true });
+});
 
 // 持仓查询示例
 const queryPositions = async () => {
@@ -723,6 +950,19 @@ const ordersTableHeight = ref(480);
 }
 .query-form {
   margin-bottom: 20px;
+}
+.funds-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.funds-toolbar .query-form {
+  margin-bottom: 0;
+}
+.funds-toolbar > .el-button {
+  align-self: center;
 }
 .query-form .el-form-item {
   margin-bottom: 10px;

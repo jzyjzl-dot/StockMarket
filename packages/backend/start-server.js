@@ -565,6 +565,7 @@ async function seedStockAccounts() {
   );
 }
 
+
 async function seedAccountGroups() {
   const [rows] = await pool.query('SELECT COUNT(*) AS count FROM account_groups');
   if (rows[0]?.count > 0) return;
@@ -746,6 +747,7 @@ const mapStockAccountRow = (row) => ({
   createdDate: toISOString(row.created_date),
   lastUpdated: toISOString(row.last_updated),
 });
+
 
 const mapAccountGroupRow = (row) => ({
   id: row.id,
@@ -1134,6 +1136,82 @@ app.delete('/tradingSystems/:id', asyncHandler(async (req, res) => {
   }
   res.status(204).end();
 }));
+
+app.get('/accountFunds', asyncHandler(async (req, res) => {
+  const { fundAccount, accountName } = req.query;
+  const conditions = [];
+  const params = [];
+
+  const normalizedFundAccount =
+    typeof fundAccount === 'string'
+      ? fundAccount.trim()
+      : fundAccount != null
+        ? String(fundAccount).trim()
+        : '';
+  const normalizedAccountName =
+    typeof accountName === 'string'
+      ? accountName.trim()
+      : accountName != null
+        ? String(accountName).trim()
+        : '';
+
+  if (normalizedFundAccount) {
+    conditions.push('(account_number LIKE ? OR id LIKE ?)');
+    params.push(`%${normalizedFundAccount}%`, `%${normalizedFundAccount}%`);
+  }
+  if (normalizedAccountName) {
+    conditions.push('account_name LIKE ?');
+    params.push(`%${normalizedAccountName}%`);
+  }
+
+  let sql = 'SELECT * FROM stock_accounts';
+  if (conditions.length) {
+    sql += ' WHERE ' + conditions.join(' AND ');
+  }
+  sql += ' ORDER BY account_name';
+
+  const [rows] = await pool.query(sql, params);
+  const funds = rows.map((row) => {
+    const balance = numeric(row.balance) ?? 0;
+    const availableFunds = numeric(row.available_funds) ?? 0;
+    const subAvailable =
+      numeric(row.sub_available) ??
+      numeric(row.subAvailable) ??
+      availableFunds;
+    const masterAvailable =
+      numeric(row.master_available) ??
+      numeric(row.masterAvailable) ??
+      availableFunds;
+    const totalAsset =
+      numeric(row.total_asset) ??
+      numeric(row.totalAsset) ??
+      balance;
+    const marketValue =
+      numeric(row.market_value) ??
+      numeric(row.marketValue) ??
+      0;
+
+    return {
+      id: row.id,
+      fundAccount: row.account_number || row.id,
+      accountName: row.account_name,
+      currency: row.currency || 'CNY',
+      balance,
+      subAvailable,
+      masterAvailable,
+      totalAsset,
+      marketValue,
+      availableFunds,
+      accountNumber: row.account_number,
+      groupId: row.group_id,
+      createdAt: toISOString(row.created_date),
+      updatedAt: toISOString(row.last_updated),
+    };
+  });
+
+  res.json(funds);
+}));
+
 app.get('/stockAccounts', asyncHandler(async (req, res) => {
   const [rows] = await pool.query('SELECT * FROM stock_accounts ORDER BY account_name');
   res.json(rows.map(mapStockAccountRow));

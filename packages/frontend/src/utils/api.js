@@ -395,6 +395,16 @@ export const stockAccountAPI = {
 
 // 交易订单API
 export const tradingAPI = {
+  // 获取资金数据
+  async getAccountFunds(params = {}) {
+    try {
+      const response = await api.get('/accountFunds', { params });
+      return response.data;
+    } catch (error) {
+      console.error('获取资金数据失败:', error);
+      throw error;
+    }
+  },
   // 获取普通交易订单
   async getNormalOrders() {
     try {
