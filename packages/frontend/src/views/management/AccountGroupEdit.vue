@@ -216,7 +216,9 @@
             :disabled="!activeGroupId || !hasUnsavedChanges"
             @click="saveChanges"
           >
-            确认{{ hasUnsavedChanges ? ' *' : '' }}
+            确认<span v-if="hasUnsavedChanges" class="unsaved-indicator"
+              >*</span
+            >
           </el-button>
         </footer>
       </div>
@@ -866,6 +868,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 16px;
+  padding: 8px 0;
 }
 
 .transfer-controls .el-button {
@@ -873,6 +876,13 @@ onMounted(async () => {
   height: 48px;
   border-radius: 50%;
   box-shadow: 0 2px 6px rgba(64, 158, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transfer-controls .el-button .el-icon {
+  font-size: 16px;
 }
 
 .panel-available .panel-header {
@@ -888,6 +898,12 @@ onMounted(async () => {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
+}
+
+.unsaved-indicator {
+  color: #f56c6c;
+  font-weight: bold;
+  margin-left: 4px;
 }
 
 .fade-enter-active,

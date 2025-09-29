@@ -36,115 +36,271 @@
               </el-button>
             </div>
 
-            <el-form :inline="true" :model="queryForm" class="query-form">
-              <el-form-item label="请选择账户组合">
-                <el-select
-                  v-model="queryForm.accountGroup"
-                  placeholder="请选择"
-                  clearable
-                  style="width: 200px"
+            <!-- 任务监控内容 -->
+            <div v-if="activeSubTab === 'task'" class="task-monitoring">
+              <el-form :inline="true" :model="taskQueryForm" class="query-form">
+                <el-form-item label="请选择账户组合">
+                  <el-select
+                    v-model="taskQueryForm.accountGroup"
+                    placeholder="请选择"
+                    clearable
+                    style="width: 200px"
+                    @change="handleAccountGroupChange"
+                  >
+                    <el-option
+                      v-for="group in accountGroups"
+                      :key="group.groupId"
+                      :label="group.name"
+                      :value="group.groupId"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="queryTaskData"
+                    >查询</el-button
+                  >
+                  <el-button @click="resetTaskQuery">重置</el-button>
+                </el-form-item>
+              </el-form>
+
+              <!-- 统计卡片 -->
+              <div v-if="taskStats" class="stats-cards">
+                <el-card class="stats-card">
+                  <div class="stat-item">
+                    <div class="stat-label">账户组名称</div>
+                    <div class="stat-value">{{ taskStats.groupName }}</div>
+                  </div>
+                </el-card>
+                <el-card class="stats-card">
+                  <div class="stat-item">
+                    <div class="stat-label">账户数量</div>
+                    <div class="stat-value">
+                      {{ taskStats.accounts.length }}
+                    </div>
+                  </div>
+                </el-card>
+                <el-card class="stats-card">
+                  <div class="stat-item">
+                    <div class="stat-label">今日总交易额</div>
+                    <div class="stat-value primary">
+                      {{ formatAmount(taskStats.totalTradingAmount) }}
+                    </div>
+                  </div>
+                </el-card>
+              </div>
+
+              <!-- 账户明细表格 -->
+              <el-table
+                v-if="taskStats && taskStats.accounts.length > 0"
+                :data="taskStats.accounts"
+                style="width: 100%; margin-top: 20px"
+                stripe
+                border
+              >
+                <el-table-column
+                  prop="accountName"
+                  label="账户名称"
+                  min-width="150"
+                  align="center"
+                />
+                <el-table-column
+                  prop="accountNumber"
+                  label="账户编号"
+                  min-width="150"
+                  align="center"
+                />
+                <el-table-column
+                  prop="todayTradingAmount"
+                  label="今日交易额"
+                  min-width="120"
+                  align="center"
                 >
-                  <el-option
-                    v-for="group in accountGroups"
-                    :key="group.id"
-                    :label="group.name"
-                    :value="group.id"
+                  <template #default="scope">
+                    <span class="amount">{{
+                      formatAmount(scope.row.todayTradingAmount)
+                    }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+
+              <!-- 空状态 -->
+              <el-empty
+                v-if="taskStats && taskStats.accounts.length === 0"
+                description="该账户组下暂无账户"
+              />
+
+              <el-empty
+                v-if="!taskStats && taskQueryForm.accountGroup"
+                description="暂无数据"
+              />
+            </div>
+
+            <!-- 篮子监控和废单监控保持原有内容 -->
+            <div v-if="activeSubTab === 'basket'">
+              <el-form :inline="true" :model="queryForm" class="query-form">
+                <el-form-item label="请选择账户组合">
+                  <el-select
+                    v-model="queryForm.accountGroup"
+                    placeholder="请选择"
+                    clearable
+                    style="width: 200px"
+                  >
+                    <el-option
+                      v-for="group in accountGroups"
+                      :key="group.id"
+                      :label="group.name"
+                      :value="group.id"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="queryData">查询</el-button>
+                  <el-button @click="resetQuery">重置</el-button>
+                </el-form-item>
+              </el-form>
+
+              <el-table
+                v-if="showTables"
+                :data="getCurrentData()"
+                style="width: 100%"
+                stripe
+                border
+              >
+                <el-table-column
+                  prop="stockName"
+                  label="股票名称"
+                  min-width="120"
+                  align="center"
+                />
+
+                <!-- 买入 -->
+                <el-table-column label="买入" align="center">
+                  <el-table-column
+                    prop="buyTaskProgress"
+                    label="任务进度"
+                    min-width="80"
+                    align="center"
                   />
-                </el-select>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="queryData">查询</el-button>
-                <el-button @click="resetQuery">重置</el-button>
-              </el-form-item>
-            </el-form>
+                  <el-table-column
+                    prop="buyCompletedAmount"
+                    label="已成(元)"
+                    min-width="100"
+                    align="center"
+                  />
+                  <el-table-column
+                    prop="buyCompletedProgress"
+                    label="任务进度"
+                    min-width="80"
+                    align="center"
+                  />
+                </el-table-column>
 
-            <el-table
-              v-if="showTables"
-              :data="getCurrentData()"
-              style="width: 100%"
-              stripe
-              border
-            >
-              <el-table-column
-                prop="stockName"
-                label="股票名称"
-                min-width="120"
-                align="center"
-              />
+                <!-- 卖出 -->
+                <el-table-column label="卖出" align="center">
+                  <el-table-column
+                    prop="sellTaskProgress"
+                    label="任务进度"
+                    min-width="80"
+                    align="center"
+                  />
+                  <el-table-column
+                    prop="sellCompletedAmount"
+                    label="已成(元)"
+                    min-width="100"
+                    align="center"
+                  />
+                  <el-table-column
+                    prop="sellCompletedProgress"
+                    label="任务进度"
+                    min-width="80"
+                    align="center"
+                  />
+                </el-table-column>
 
-              <!-- 买入 -->
-              <el-table-column label="买入" align="center">
+                <!-- 买入+卖出 -->
+                <el-table-column label="买入+卖出" align="center">
+                  <el-table-column
+                    prop="totalTaskProgress"
+                    label="任务进度"
+                    min-width="80"
+                    align="center"
+                  />
+                  <el-table-column
+                    prop="totalCompletedAmount"
+                    label="已成(元)"
+                    min-width="100"
+                    align="center"
+                  />
+                  <el-table-column
+                    prop="totalCompletedProgress"
+                    label="任务进度"
+                    min-width="80"
+                    align="center"
+                  />
+                </el-table-column>
+
                 <el-table-column
-                  prop="buyTaskProgress"
-                  label="任务进度"
-                  min-width="80"
-                  align="center"
-                />
-                <el-table-column
-                  prop="buyCompletedAmount"
-                  label="已成(元)"
+                  prop="longShortRatio"
+                  label="多空盈比"
                   min-width="100"
                   align="center"
                 />
-                <el-table-column
-                  prop="buyCompletedProgress"
-                  label="任务进度"
-                  min-width="80"
-                  align="center"
-                />
-              </el-table-column>
+              </el-table>
+            </div>
 
-              <!-- 卖出 -->
-              <el-table-column label="卖出" align="center">
-                <el-table-column
-                  prop="sellTaskProgress"
-                  label="任务进度"
-                  min-width="80"
-                  align="center"
-                />
-                <el-table-column
-                  prop="sellCompletedAmount"
-                  label="已成(元)"
-                  min-width="100"
-                  align="center"
-                />
-                <el-table-column
-                  prop="sellCompletedProgress"
-                  label="任务进度"
-                  min-width="80"
-                  align="center"
-                />
-              </el-table-column>
+            <!-- 废单监控内容 -->
+            <div v-if="activeSubTab === '废单'">
+              <el-form :inline="true" :model="queryForm" class="query-form">
+                <el-form-item label="请选择账户组合">
+                  <el-select
+                    v-model="queryForm.accountGroup"
+                    placeholder="请选择"
+                    clearable
+                    style="width: 200px"
+                  >
+                    <el-option
+                      v-for="group in accountGroups"
+                      :key="group.id"
+                      :label="group.name"
+                      :value="group.id"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="queryData">查询</el-button>
+                  <el-button @click="resetQuery">重置</el-button>
+                </el-form-item>
+              </el-form>
 
-              <!-- 买入+卖出 -->
-              <el-table-column label="买入+卖出" align="center">
+              <el-table
+                v-if="showTables"
+                :data="getCurrentData()"
+                style="width: 100%"
+                stripe
+                border
+              >
                 <el-table-column
-                  prop="totalTaskProgress"
-                  label="任务进度"
-                  min-width="80"
+                  prop="stockName"
+                  label="股票名称"
                   align="center"
                 />
                 <el-table-column
-                  prop="totalCompletedAmount"
-                  label="已成(元)"
-                  min-width="100"
+                  prop="rejectedReason"
+                  label="废单原因"
                   align="center"
                 />
                 <el-table-column
-                  prop="totalCompletedProgress"
-                  label="任务进度"
-                  min-width="80"
+                  prop="rejectedAmount"
+                  label="废单金额"
                   align="center"
                 />
-              </el-table-column>
-
-              <el-table-column
-                prop="longShortRatio"
-                label="多空盈比"
-                min-width="100"
-                align="center"
-              />
-            </el-table>
+                <el-table-column
+                  prop="rejectedTime"
+                  label="废单时间"
+                  align="center"
+                />
+              </el-table>
+            </div>
           </div>
         </el-tab-pane>
 
@@ -386,22 +542,27 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import { accountGroupAPI, taskMonitoringAPI } from '../utils/api.js';
 
 // 响应式数据
 const activeTab = ref('algorithm');
 const activeSubTab = ref('task'); // 默认选中任务监控
 
 // 账户组合数据
-const accountGroups = ref([
-  { id: '1', name: 'HTR_G001(首选)' },
-  { id: '2', name: 'HTR_G002' },
-  { id: '3', name: 'HTR_G003' },
-]);
+const accountGroups = ref([]);
 
 // 查询表单
 const queryForm = reactive({
   accountGroup: '',
 });
+
+// 任务监控相关数据
+const taskQueryForm = reactive({
+  accountGroup: '',
+});
+
+const taskStats = ref(null);
+const taskLoading = ref(false);
 
 const showTables = ref(false);
 
@@ -676,8 +837,64 @@ const resetQuery = () => {
   ElMessage.info('查询条件已重置');
 };
 
+// 任务监控相关方法
+const handleAccountGroupChange = (groupId) => {
+  if (groupId) {
+    queryTaskData();
+  } else {
+    taskStats.value = null;
+  }
+};
+
+const queryTaskData = async () => {
+  if (!taskQueryForm.accountGroup) {
+    ElMessage.warning('请先选择账户组');
+    return;
+  }
+
+  taskLoading.value = true;
+  try {
+    const stats = await taskMonitoringAPI.getAccountGroupTradingStats(
+      taskQueryForm.accountGroup
+    );
+    taskStats.value = stats;
+    ElMessage.success('数据查询成功');
+  } catch (error) {
+    console.error('查询任务数据失败:', error);
+    ElMessage.error('查询失败，请重试');
+  } finally {
+    taskLoading.value = false;
+  }
+};
+
+const resetTaskQuery = () => {
+  taskQueryForm.accountGroup = '';
+  taskStats.value = null;
+  ElMessage.info('查询条件已重置');
+};
+
+const formatAmount = (amount) => {
+  if (amount === 0) return '0.00';
+  return new Intl.NumberFormat('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+// 获取账户组数据
+const fetchAccountGroups = async () => {
+  try {
+    const groups = await accountGroupAPI.getAccountGroups();
+    accountGroups.value = groups || [];
+  } catch (error) {
+    console.error('获取账户组失败:', error);
+    ElMessage.error('获取账户组失败');
+  }
+};
+
 // 组件挂载时初始化
 onMounted(() => {
+  fetchAccountGroups();
   queryData();
 });
 </script>
@@ -766,6 +983,60 @@ onMounted(() => {
 
 :deep(.el-table td) {
   padding: 8px 0;
+}
+
+/* 任务监控样式 */
+.task-monitoring {
+  padding: 0;
+}
+
+.stats-cards {
+  display: flex;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.stats-card {
+  flex: 1;
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item {
+  padding: 16px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #606266;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.stat-value.primary {
+  color: #409eff;
+}
+
+.amount {
+  font-weight: 600;
+  color: #409eff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .stats-cards {
+    flex-direction: column;
+  }
+
+  .stats-card {
+    margin-bottom: 12px;
+  }
 }
 
 :deep(.el-table--border .el-table__cell) {

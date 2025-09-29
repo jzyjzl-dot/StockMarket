@@ -604,4 +604,122 @@ export const tradingAPI = {
   },
 };
 
+// 任务监控API
+export const taskMonitoringAPI = {
+  // 获取账户组的今日交易统计
+  async getAccountGroupTradingStats(groupId) {
+    try {
+      // 获取所有账户组信息，找到指定的组
+      const groupsResponse = await api.get('/accountGroups');
+      const allGroups = groupsResponse.data;
+      const group = allGroups.find(
+        (g) => g.id === groupId || g.groupId === groupId
+      );
+
+      if (!group) {
+        throw new Error(`账户组 ${groupId} 不存在`);
+      }
+
+      // 获取该组下的所有账户
+      const accountsResponse = await api.get('/stockAccounts');
+      const allAccounts = accountsResponse.data;
+      const groupAccounts = allAccounts.filter(
+        (account) =>
+          account.group === groupId || account.group === parseInt(groupId)
+      );
+
+      // 获取订单表的数据 - 使用实际存在的端点
+      const [ordersResponse, normalOrdersResponse] = await Promise.all([
+        api.get('/orders'),
+        api.get('/normalOrders'),
+      ]);
+
+      const today = new Date().toISOString().split('T')[0];
+
+      // 统计各账户的今日交易额
+      const accountStats = groupAccounts.map((account) => {
+        let totalAmount = 0;
+
+        // 统计orders表中的交易额 (使用date字段)
+        const orders = ordersResponse.data.orders || [];
+        const todayOrders = orders.filter((order) => {
+          try {
+            if (!order.date) return false;
+            const orderDate = new Date(order.date).toISOString().split('T')[0];
+            return orderDate === today;
+          } catch {
+            console.warn('Invalid date in order:', order.id, order.date);
+            return false;
+          }
+        });
+        totalAmount += todayOrders.reduce(
+          (sum, order) => sum + (order.total || 0),
+          0
+        );
+
+        // 统计normalOrders表中的交易额 (使用time字段)
+        const normalOrders = normalOrdersResponse.data.normalOrders || [];
+        const todayNormalOrders = normalOrders.filter((order) => {
+          try {
+            if (!order.time) return false;
+            const orderDate = new Date(order.time).toISOString().split('T')[0];
+            return (
+              orderDate === today &&
+              (order.account === account.accountNumber ||
+                order.account === 'ALL')
+            );
+          } catch {
+            console.warn('Invalid time in normal order:', order.id, order.time);
+            return false;
+          }
+        });
+        totalAmount += todayNormalOrders.reduce(
+          (sum, order) => sum + (order.amount || 0),
+          0
+        );
+
+        return {
+          accountId: account.id,
+          accountName: account.accountName,
+          accountNumber: account.accountNumber,
+          todayTradingAmount: totalAmount,
+        };
+      });
+
+      const totalGroupAmount = accountStats.reduce(
+        (sum, stat) => sum + stat.todayTradingAmount,
+        0
+      );
+
+      return {
+        groupId,
+        groupName: group.name || '未知组',
+        accounts: accountStats,
+        totalTradingAmount: totalGroupAmount,
+      };
+    } catch (error) {
+      console.error('获取账户组交易统计失败:', error);
+      throw error;
+    }
+  },
+
+  // 获取所有账户组的今日交易统计
+  async getAllAccountGroupsStats() {
+    try {
+      const groupsResponse = await api.get('/accountGroups');
+      const groups = groupsResponse.data;
+
+      const statsPromises = groups.map((group) =>
+        this.getAccountGroupTradingStats(group.id)
+      );
+
+      const allStats = await Promise.all(statsPromises);
+      return allStats;
+    } catch (error) {
+      console.error('获取所有账户组统计失败:', error);
+      throw error;
+    }
+  },
+};
+
 export default api;
