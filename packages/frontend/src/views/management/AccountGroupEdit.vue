@@ -204,16 +204,20 @@
         </div>
 
         <footer class="action-bar">
-          <el-button :disabled="!activeGroupId" @click="resetCurrentGroup"
-            >取消</el-button
+          <el-button
+            :disabled="!activeGroupId || !hasUnsavedChanges"
+            @click="resetCurrentGroup"
           >
+            取消
+          </el-button>
           <el-button
             type="primary"
             :loading="saving"
-            :disabled="!activeGroupId"
+            :disabled="!activeGroupId || !hasUnsavedChanges"
             @click="saveChanges"
-            >确认</el-button
           >
+            确认{{ hasUnsavedChanges ? ' *' : '' }}
+          </el-button>
         </footer>
       </div>
     </el-card>
@@ -242,6 +246,7 @@ const availableSearch = ref('');
 const showCreate = ref(false);
 const newGroupName = ref('');
 const saving = ref(false);
+const originalSelectedAccounts = ref([]); // 记录当前组的原始状态
 
 const normalizeWeight = (value) => {
   const num = Number(value);
@@ -318,6 +323,40 @@ const totalWeight = computed(() =>
   )
 );
 
+// 检测当前组是否有未保存的变更
+const hasUnsavedChanges = computed(() => {
+  if (!activeGroupId.value) {
+    return false;
+  }
+
+  // 比较当前选中账户与原始状态
+  const currentIds = new Set(selectedAccounts.value.map((acc) => acc.id));
+  const originalIds = new Set(
+    originalSelectedAccounts.value.map((acc) => acc.id)
+  );
+
+  // 检查账户是否发生变化
+  if (currentIds.size !== originalIds.size) return true;
+
+  for (const id of currentIds) {
+    if (!originalIds.has(id)) return true;
+  }
+
+  // 检查权重是否发生变化
+  for (const currentAcc of selectedAccounts.value) {
+    const originalAcc = originalSelectedAccounts.value.find(
+      (acc) => acc.id === currentAcc.id
+    );
+    if (!originalAcc) return true;
+
+    const currentWeight = normalizeWeight(currentAcc.weightPercent ?? 0);
+    const originalWeight = normalizeWeight(originalAcc.weightPercent ?? 0);
+    if (currentWeight !== originalWeight) return true;
+  }
+
+  return false;
+});
+
 const toggleCreateMode = () => {
   showCreate.value = !showCreate.value;
   if (!showCreate.value) {
@@ -360,8 +399,29 @@ const createGroup = async () => {
   }
 };
 
-const selectGroup = (groupId) => {
+const selectGroup = async (groupId) => {
   const id = groupId != null ? groupId.toString() : '';
+
+  // 如果要选择的是当前组，直接返回
+  if (activeGroupId.value === id) return;
+
+  // 检查是否有未保存的变更
+  if (hasUnsavedChanges.value) {
+    try {
+      await ElMessageBox.confirm(
+        '当前组有未保存的变更，是否放弃这些变更并切换到其他组？',
+        '确认切换',
+        {
+          confirmButtonText: '放弃变更',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      );
+    } catch {
+      return; // 用户取消切换
+    }
+  }
+
   activeGroupId.value = id;
   availableSearch.value = '';
   populateSelection();
@@ -370,14 +430,19 @@ const selectGroup = (groupId) => {
 const populateSelection = () => {
   if (!activeGroupId.value) {
     selectedAccounts.value = [];
+    originalSelectedAccounts.value = [];
     selectedSelection.value = [];
     availableSelection.value = [];
     return;
   }
   const id = activeGroupId.value.toString();
-  selectedAccounts.value = allAccounts.value
+  const accounts = allAccounts.value
     .filter((account) => (account.group ?? '0').toString() === id)
     .map(cloneAccount);
+
+  selectedAccounts.value = accounts;
+  // 深拷贝保存原始状态
+  originalSelectedAccounts.value = accounts.map((acc) => ({ ...acc }));
   selectedSelection.value = [];
   availableSelection.value = [];
 };
@@ -419,7 +484,12 @@ const removeSelectedAccounts = () => {
 };
 
 const resetCurrentGroup = () => {
-  populateSelection();
+  // 恢复到原始状态
+  selectedAccounts.value = originalSelectedAccounts.value.map((acc) => ({
+    ...acc,
+  }));
+  selectedSelection.value = [];
+  availableSelection.value = [];
 };
 
 const normalizeRowWeight = (row) => {
@@ -437,38 +507,54 @@ const saveChanges = async () => {
   }
 
   const targetGroup = activeGroupId.value.toString();
-  const desiredMap = new Map(
-    selectedAccounts.value.map((account) => [
-      account.id,
-      {
-        group: targetGroup,
-        weightPercent: normalizeWeight(account.weightPercent ?? 0),
-      },
-    ])
-  );
-
   const updates = [];
   const now = new Date().toISOString();
 
-  allAccounts.value.forEach((account) => {
-    const id = account.id;
-    const desired = desiredMap.get(id);
-    const currentGroup = account.group != null ? account.group.toString() : '0';
-    const nextGroup = desired ? desired.group : '0';
-    const nextWeight = desired ? desired.weightPercent : 0;
-    const groupChanged = currentGroup !== nextGroup;
+  // 只处理当前组相关的账户变更
+  // 1. 处理当前选中的账户（需要加入或更新到当前组）
+  selectedAccounts.value.forEach((selectedAccount) => {
+    const originalAccount = allAccounts.value.find(
+      (acc) => acc.id === selectedAccount.id
+    );
+    if (!originalAccount) return;
+
+    const currentGroup =
+      originalAccount.group != null ? originalAccount.group.toString() : '0';
+    const nextWeight = normalizeWeight(selectedAccount.weightPercent ?? 0);
+    const groupChanged = currentGroup !== targetGroup;
     const weightChanged =
-      normalizeWeight(account.weightPercent ?? 0) !== nextWeight;
+      normalizeWeight(originalAccount.weightPercent ?? 0) !== nextWeight;
 
     if (groupChanged || weightChanged) {
       updates.push({
-        ...account,
-        group: nextGroup,
+        ...originalAccount,
+        group: targetGroup,
         weightPercent: nextWeight,
         lastUpdated: now,
       });
     }
   });
+
+  // 2. 处理需要从当前组移除的账户（原本在当前组，但现在不在选中列表中）
+  const selectedAccountIds = new Set(
+    selectedAccounts.value.map((acc) => acc.id)
+  );
+  allAccounts.value
+    .filter((account) => {
+      const accountGroup =
+        account.group != null ? account.group.toString() : '0';
+      return (
+        accountGroup === targetGroup && !selectedAccountIds.has(account.id)
+      );
+    })
+    .forEach((account) => {
+      updates.push({
+        ...account,
+        group: '0', // 移回未分配组
+        weightPercent: 0,
+        lastUpdated: now,
+      });
+    });
 
   if (!updates.length) {
     ElMessage.info('没有需要保存的更改');
